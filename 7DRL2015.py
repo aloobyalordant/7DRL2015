@@ -8,6 +8,9 @@ from gods import God, God_Healer, God_Destroyer, God_Deliverer
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 46
+CAMERA_FOCUS_WIDTH = 8
+CAMERA_FOCUS_HEIGHT = 8
+
 LIMIT_FPS = 20
 
 MAP_WIDTH = 80
@@ -100,6 +103,10 @@ class Object:
 
 
 	def draw(self):
+		global camera
+
+		x_offset = camera.x-SCREEN_WIDTH/2
+		y_offset = camera.y-SCREEN_HEIGHT/2
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
 
@@ -107,11 +114,15 @@ class Object:
 		if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
-			libtcod.console_put_char(con, self.x, self.y, self.char, libtcod.BKGND_NONE)
+			libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod.BKGND_NONE)
 
 	def clear(self):
+		global camera
+
+		x_offset = camera.x-SCREEN_WIDTH/2
+		y_offset = camera.y-SCREEN_HEIGHT/2
 		#erase the character that represents this object
-		libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
+		libtcod.console_put_char(con, self.x-x_offset, self.y - y_offset, ' ', libtcod.BKGND_NONE)
 
 		#erase the character that represents this object
 	#	if libtcod.map_is_in_fov(fov_map, self.x, self.y):
@@ -156,6 +167,11 @@ class Object:
 			if self.decider.ai:
 				self.decider.ai.stun()
 
+
+class Location:
+	def __init__(self, x,y):
+		self.x = x
+		self.y = y
 
 class Tile:
 	#a tile of the map and its properties
@@ -1983,7 +1999,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera
 
 	lev_gen = Level_Generator()
 
@@ -1995,6 +2011,8 @@ def make_map():
 	map = level_data.map
 	player.x = level_data.player_start_x
 	player.y = level_data.player_start_y
+	camera.x = player.x
+	camera.y = player.y
 	nearest_points_array = level_data.nearest_points_array
 	center_points = level_data.center_points
 	spawn_points = level_data.spawn_points
@@ -2891,11 +2909,13 @@ def render_all():
 		fov_recompute = False
 		libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
 
-
+	update_camera()
+	x_offset = camera.x-SCREEN_WIDTH/2
+	y_offset = camera.y-SCREEN_HEIGHT/2
 
 	for y in range(SCREEN_HEIGHT):
 		for x in range(SCREEN_WIDTH):
-			libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET  )
+			libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
 
 
 	#go through all tiles, and set their background color according to the FOV
@@ -2911,17 +2931,17 @@ def render_all():
 				if map[x][y].explored:
 					#it's out of the player's FOV
 					if wall:
-						libtcod.console_set_char_background(con, x, y, color_dark_wall, libtcod.BKGND_SET)
+						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod.BKGND_SET)
 					else:
-						libtcod.console_set_char_background(con, x, y, color_dark_ground, libtcod.BKGND_SET)
+						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_ground, libtcod.BKGND_SET)
 				else: 
-					libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
+					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod.BKGND_SET)
 			else:
 				if wall:
-					libtcod.console_set_char_background(con, x, y, color_light_wall, libtcod.BKGND_SET  )
+					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod.BKGND_SET  )
 				#	libtcod.console_put_char_ex(con, x, y, '#', libtcod.white, libtcod.dark_blue)
 				else:
-					libtcod.console_set_char_background(con, x, y, color_light_ground, libtcod.BKGND_SET )
+					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod.BKGND_SET )
 				#	libtcod.console_put_char_ex(con, x, y, '.', libtcod.white,  color_dark_ground)
 				
 				map[x][y].explored = True
@@ -2933,7 +2953,7 @@ def render_all():
 			for other_object in objects:
 				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
 					if object.attack is not None and other_object.fighter is not None:
-						libtcod.console_set_char_background(con, object.x, object.y, object.attack.faded_color, libtcod.BKGND_SET )
+						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
 					
 
 
@@ -3010,7 +3030,25 @@ def render_all():
 	libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
 	
 	#blit the contents of "panel" to the root console
+
 	libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+
+
+def update_camera():
+	global camera, player
+
+	if camera.x < player.x - CAMERA_FOCUS_WIDTH/2:
+		camera.x = player.x - CAMERA_FOCUS_WIDTH/2
+	elif camera.x > player.x + CAMERA_FOCUS_WIDTH/2:
+		camera.x = player.x + CAMERA_FOCUS_WIDTH/2
+
+	if camera.y < player.y - CAMERA_FOCUS_HEIGHT/2:
+		camera.y = player.y - CAMERA_FOCUS_HEIGHT/2
+	elif camera.y > player.y + CAMERA_FOCUS_HEIGHT/2:
+		camera.y = player.y + CAMERA_FOCUS_HEIGHT/2
+
+#	camera.x = player.x
+#	camera.y = player.y
 
 
 def reorder_objects():
@@ -3027,7 +3065,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera
 	current_big_message = 'You weren\'t supposed to see this'
 
 	#create the list of game messages and their colors, starts empty
@@ -3049,6 +3087,7 @@ def initialise_game():
 	fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death)
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
+	camera = Location(player.x, player.y)
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
