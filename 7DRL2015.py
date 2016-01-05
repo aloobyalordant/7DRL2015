@@ -6,8 +6,8 @@ from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
 
-SCREEN_WIDTH = 80
-SCREEN_HEIGHT = 46
+SCREEN_WIDTH = 70
+SCREEN_HEIGHT = 39
 CAMERA_FOCUS_WIDTH = 8
 CAMERA_FOCUS_HEIGHT = 8
 
@@ -3116,7 +3116,10 @@ def initialise_game():
 
 
 
-libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+#libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+
+libtcod.console_set_custom_font('arial14test2.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+
 
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
 
