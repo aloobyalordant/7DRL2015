@@ -53,11 +53,13 @@ default_message_color = color_light_wall
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
 PANEL_HEIGHT = 9
+MESSAGE_PANEL_HEIGHT = 4
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 
 MSG_X = BAR_WIDTH + 2
-MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_HEIGHT = PANEL_HEIGHT - 1
+#MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
+MSG_WIDTH = SCREEN_WIDTH-2
+MSG_HEIGHT = MESSAGE_PANEL_HEIGHT
 
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
@@ -2971,7 +2973,7 @@ def render_all():
 	
 	# write GUI stuff to "panel"
 	create_GUI_panel()
-	
+	create_message_panel()
 
 
 def create_GUI_panel():
@@ -2989,12 +2991,12 @@ def create_GUI_panel():
 	render_bar(1, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
 	libtcod.light_red, libtcod.darker_red)
 
-	#print the game messages, one line at a time
-	y = 1
-	for (line, color) in game_msgs:
-		libtcod.console_set_default_foreground(panel, color)
-		libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
-		y += 1 
+#	#print the game messages, one line at a time
+#	y = 1
+#	for (line, color) in game_msgs:
+#		libtcod.console_set_default_foreground(panel, color)
+#		libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+#		y += 1 
 
 	#display some sweet moves!
 	libtcod.console_set_default_foreground(panel, libtcod.white)
@@ -3044,6 +3046,26 @@ def create_GUI_panel():
 	#blit the contents of "panel" to the root console
 	libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
 
+
+# Here is where all the messages go
+def create_message_panel():
+
+	#GUI STUFF
+	#prepare to render the GUI panel
+	libtcod.console_set_default_background(message_panel, libtcod.black)
+	libtcod.console_clear(message_panel)	
+	
+	#print the game messages, one line at a time
+	y = 0
+	for (line, color) in game_msgs:
+		libtcod.console_set_default_foreground(message_panel, color)
+		libtcod.console_print_ex(message_panel, 1, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+		#libtcod.console_print_ex(message_panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+		y += 1 
+
+
+	#blit the contents of "message_panel" to the root console
+	libtcod.console_blit(message_panel, 0, 0, SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
 
 
 def update_camera():
@@ -3137,6 +3159,7 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial'
 
 con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
+message_panel = libtcod.console_new(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
 pause_menu = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 mouse = libtcod.Mouse()
