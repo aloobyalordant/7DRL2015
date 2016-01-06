@@ -2968,6 +2968,18 @@ def render_all():
 #	libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
 	libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
+	
+	# write GUI stuff to "panel"
+	create_GUI_panel()
+	
+
+
+def create_GUI_panel():
+	global fov_map, color_dark_wall, color_light_wall
+	global color_dark_ground, color_light_ground
+	global fov_recompute
+
+
 	#GUI STUFF
 	#prepare to render the GUI panel
 	libtcod.console_set_default_background(panel, libtcod.black)
@@ -2987,7 +2999,7 @@ def render_all():
 	#display some sweet moves!
 	libtcod.console_set_default_foreground(panel, libtcod.white)
 	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 2, libtcod.BKGND_NONE, libtcod.CENTER,
-	'Move (1-9) or')
+	'MOWve (1-9) or')
 	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
 	'attack (' + str(player_weapon.command_list) + ')')
 	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
@@ -3028,10 +3040,10 @@ def render_all():
 	#display names of objects under the mouse
 	libtcod.console_set_default_foreground(panel, libtcod.light_gray)
 	libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
-	
-	#blit the contents of "panel" to the root console
 
+	#blit the contents of "panel" to the root console
 	libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+
 
 
 def update_camera():
