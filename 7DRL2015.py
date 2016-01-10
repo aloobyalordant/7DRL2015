@@ -2981,62 +2981,157 @@ def create_GUI_panel():
 	global color_dark_ground, color_light_ground
 	global fov_recompute
 
-
 	#GUI STUFF
 	#prepare to render the GUI panel
 	libtcod.console_set_default_background(panel, libtcod.black)
 	libtcod.console_clear(panel)
 
-	#show the player's stats
-	render_bar(1, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
-	libtcod.light_red, libtcod.darker_red)
+	#Three subpanels within this panel. From left to right: attack panel, player panel, level panel
+	attack_panel_width = 20
+	player_panel_width = 20
+	level_panel_width = 20
+	attack_panel_x = 1
+	player_panel_x = attack_panel_x + attack_panel_width + 1
+	level_panel_x = player_panel_x + player_panel_width + 1
 
-#	#print the game messages, one line at a time
-#	y = 1
-#	for (line, color) in game_msgs:
-#		libtcod.console_set_default_foreground(panel, color)
-#		libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
-#		y += 1 
 
-	#display some sweet moves!
+	#ATTACK PANEL STUFF
 	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 2, libtcod.BKGND_NONE, libtcod.CENTER,
-	'MOWve (1-9) or')
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-	'attack (' + str(player_weapon.command_list) + ')')
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
-	'Weapon: ' + str(player_weapon.name).capitalize())	
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-	'Charge: ' + str(player_weapon.current_charge) + '/' + str(player_weapon.max_charge) + ' (req:' + str(player_weapon.default_usage) + ')')
+	if len(player_weapon.name) <= attack_panel_width - 10:
+		libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
+	'Weapon: ' + str(player_weapon.name).upper())
+	else:
+		libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
+	str(player_weapon.name).upper())
+
+	# list some attacks out.
+	attack_list = str(player_weapon.command_list)
+	libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT, "Attacks:")
+	# set colors based on weapon durability
+	if player_weapon.durability <= 0:
+			libtcod.console_set_default_foreground(panel, libtcod.orange)
+	elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
+			libtcod.console_set_default_foreground(panel, libtcod.orange)
+	else: 
+			libtcod.console_set_default_foreground(panel, libtcod.white)
+		
+	if 'q' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
+		'Q')
+
+	if 'w' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
+		'W')
+
+	if 'e' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
+		'E')
+
+	if 'a' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
+		'A')
+
+
+	if 'd' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
+		'D')
+
+		
+	if 'z' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
+		'Z')
+
+	if 'x' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
+		'X')
+
+	if 'c' in attack_list:
+			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
+		'C')
+	libtcod.console_set_default_foreground(panel, libtcod.white)
+
+	# Display weapon charge details.
+	uncharged_color = libtcod.blue
+	insufficient_charge_color = libtcod.red
+	charge_color = libtcod.green
+	bonus_charge_color = libtcod.darker_green
+	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Charge:')
+	if player_weapon.current_charge < player_weapon.default_usage:
+		libtcod.console_set_default_foreground(panel, insufficient_charge_color)
+		for i in range(player_weapon.current_charge):
+			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	else:
+		libtcod.console_set_default_foreground(panel, bonus_charge_color)
+		for i in range(player_weapon.current_charge - player_weapon.default_usage):
+			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		libtcod.console_set_default_foreground(panel, charge_color)
+		for i in range(player_weapon.current_charge - player_weapon.default_usage, player_weapon.current_charge):
+			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+
+	libtcod.console_set_default_foreground(panel, uncharged_color)
+	for i in range(player_weapon.current_charge, player_weapon.max_charge):
+		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT,
+	'*')
+
+
+	
+	libtcod.console_set_default_foreground(panel, libtcod.white)
+#	if player_weapon.current_charge < player_weapon.default_usage:
+#	else:
+#	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,
+#	'Charge:** ' + str(player_weapon.current_charge) + '/' + str(player_weapon.max_charge) + ' (req:' + str(player_weapon.default_usage) + ')')
 	if player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > 0:
 		libtcod.console_set_default_foreground(panel, libtcod.orange)
 	elif player_weapon.durability <= 0:
 		libtcod.console_set_default_foreground(panel, libtcod.red)
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 6, libtcod.BKGND_NONE, libtcod.CENTER,
+	libtcod.console_print_ex(panel, attack_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Durability: ' + str(player_weapon.durability))
-	
+
+	#PLAYER PANEL STUFF
+
+	#show the player's stats
+	render_bar(player_panel_x, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
+	libtcod.light_red, libtcod.darker_red)
+
+	#display some sweet moves!
 	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 7, libtcod.BKGND_NONE, libtcod.CENTER,
-	'Time: ' + str(time))
+	libtcod.console_print_ex(panel, player_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT, "Moves:")
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '7')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '8')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '9')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '4')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '.')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '6')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '1')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '2')
+	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '3')
+
+
+	#LEVEL PANEL STUFF
+	libtcod.console_set_default_foreground(panel, libtcod.white)
+	libtcod.console_print_ex(panel, level_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
+	'Level: ' + str(dungeon_level))
+	libtcod.console_print_ex(panel, level_panel_x, 2, libtcod.BKGND_NONE, libtcod.LEFT,
+	'Time:  ' + str(time))
 
 	if favoured_by_healer:
-		libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.LEFT,
 		'Favoured by ' + god_healer.name)
 
 	elif favoured_by_destroyer:
-		libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
 		'Favoured by ' + god_destroyer.name)
 
 	elif tested_by_destroyer:
-		libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
 		'Tested by ' + god_destroyer.name + '(' + str(destroyer_test_count) + ')')
 
 	elif favoured_by_deliverer:	# actually for the deliverer you probably never get this message, right? If the mission is to complete level quickly?
-		libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
 		'Favoured by ' + god_deliverer.name)
 
 	elif tested_by_deliverer:
-		libtcod.console_print_ex(panel, 1 + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
 		'Tested by ' + god_deliverer.name + '(' + str(deliverer_test_count) + ')')
 
 	#display names of objects under the mouse
