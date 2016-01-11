@@ -1259,6 +1259,12 @@ class Level_Generator:
 			for j in range(vert_lower_bound, vert_upper_bound - room_max_size):
 				maximal_potential_rooms.append(Rect(i,j, room_max_size, room_max_size))
 		
+		# each time we make a new room from here on, it has a chance of getting doors. 
+		# this array keeps tracks of which rooms should have doors.
+		doorhavers = []
+		for i in range(len(rooms)):
+			doorhavers.append(False)
+
 #		for r in range(0,2):
 		while len(maximal_potential_rooms) > 0:
 
@@ -1289,6 +1295,14 @@ class Level_Generator:
 			self.create_room(new_room, map, center_points, nearest_points_array)
 			rooms.append(new_room)
 			self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
+		
+			# decide whether or not this room has doors. FOR NOW JUST A 1/8 CHANCE OF HAVING DOORS
+			if libtcod.random_get_int(0, 0, 7) == 1:
+				doorhavers.append(True)
+			else:
+				doorhavers.append(False)
+
+
 
 			#Now update the maximal room list to remove rooms that clash with the new room amd replace them with their remainders
 			new_maximal_potential_rooms = []
@@ -1409,6 +1423,25 @@ class Level_Generator:
 							if nearest_points_array[x][corridor_y] is None:
 								nearest_points_array[x][corridor_y] = rooms[j].center()
 	
+						# Add some doors! Maybe. Not if one of the rooms is an elevator.
+						roomidoors = doorhavers[i]
+						roomjdoors = doorhavers[j]
+						if i < len(elevators) or j < len(elevators):
+							roomidoors = False
+							roomjdoors = False
+						# if both rooms are due to have doors, just pick one of them
+						if roomidoors and roomjdoors:
+							if libtcod.random_get_int(0, 0, 1) == 1:
+								roomidoors = False
+							else:
+								roomjdoors = False
+						
+						if roomidoors:
+							map[rooms[i].x2+1][corridor_y].block_sight = True
+							object_data.append(Object_Datum(rooms[i].x2+1, corridor_y, 'door', 'horizontal'))
+						if roomjdoors:
+							map[rooms[j].x1-1][corridor_y].block_sight = True
+							object_data.append(Object_Datum(rooms[j].x1-1, corridor_y, 'door', 'horizontal'))
 						
 
 
@@ -1427,6 +1460,25 @@ class Level_Generator:
 							if nearest_points_array[x][corridor_y] is None:
 								nearest_points_array[x][corridor_y] = rooms[j].center()
 
+						# Add some doors! Maybe. Not if one of the rooms is an elevator.
+						roomidoors = doorhavers[i]
+						roomjdoors = doorhavers[j]
+						if i < len(elevators) or j < len(elevators):
+							roomidoors = False
+							roomjdoors = False
+						# if both rooms are due to have doors, just pick one of them
+						if roomidoors and roomjdoors:
+							if libtcod.random_get_int(0, 0, 1) == 1:
+								roomidoors = False
+							else:
+								roomjdoors = False
+						if roomjdoors:
+							map[rooms[j].x2+1][corridor_y].block_sight = True
+							object_data.append(Object_Datum(rooms[j].x2+1, corridor_y, 'door', 'horizontal'))
+						if roomidoors:
+							map[rooms[i].x1-1][corridor_y].block_sight = True
+							object_data.append(Object_Datum(rooms[i].x1-1, corridor_y, 'door', 'horizontal'))
+						
 
 
 					#is room i just above room j?
@@ -1442,6 +1494,25 @@ class Level_Generator:
 							if nearest_points_array[corridor_x][y] is None:
 								nearest_points_array[corridor_x][y] = rooms[j].center()
 
+						# Add some doors! Maybe. Not if one of the rooms is an elevator.
+						roomidoors = doorhavers[i]
+						roomjdoors = doorhavers[j]
+						if i < len(elevators) or j < len(elevators):
+							roomidoors = False
+							roomjdoors = False
+						# if both rooms are due to have doors, just pick one of them
+						if roomidoors and roomjdoors:
+							if libtcod.random_get_int(0, 0, 1) == 1:
+								roomidoors = False
+							else:
+								roomjdoors = False
+						if roomidoors:
+							map[corridor_x][rooms[i].y2+1].block_sight = True
+							object_data.append(Object_Datum(corridor_x, rooms[i].y2+1, 'door', 'vertical'))
+						if roomjdoors:
+							map[corridor_x][rooms[j].y1-1].block_sight = True
+							object_data.append(Object_Datum(corridor_x, rooms[j].y1-1, 'door', 'vertical'))
+
 
 					#is room i just below room j?
 					if rooms[i].y1 > rooms[j].y2 and rooms[i].y1 - rooms[j].y2 <= dist and rooms[i].x2 > rooms[j].x1 and rooms[j].x2 > rooms[i].x1:
@@ -1455,6 +1526,26 @@ class Level_Generator:
 							map[corridor_x][y].block_sight = False
 							if nearest_points_array[corridor_x][y] is None:
 								nearest_points_array[corridor_x][y] = rooms[j].center()
+
+						# Add some doors! Maybe. Not if one of the rooms is an elevator.
+						roomidoors = doorhavers[i]
+						roomjdoors = doorhavers[j]
+						if i < len(elevators) or j < len(elevators):
+							roomidoors = False
+							roomjdoors = False
+						# if both rooms are due to have doors, just pick one of them
+						if roomidoors and roomjdoors:
+							if libtcod.random_get_int(0, 0, 1) == 1:
+								roomidoors = False
+							else:
+								roomjdoors = False
+						if roomjdoors:
+							map[corridor_x][rooms[j].y2+1].block_sight = True
+							object_data.append(Object_Datum(corridor_x, rooms[j].y2+1, 'door', 'vertical'))
+						if roomidoors:
+							map[corridor_x][rooms[i].y1-1].block_sight = True
+							object_data.append(Object_Datum(corridor_x, rooms[i].y1-1, 'door', 'vertical'))
+
 
 				if adjacent: #update the connectivity list
 					#print str(i) + " and " + str(j) + " joined" + str(connectivity[i]) + " woop " + str(connectivity[j])
