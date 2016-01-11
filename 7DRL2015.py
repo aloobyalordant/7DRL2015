@@ -250,7 +250,21 @@ class Door:
 		nav_data_changed = True
 		initialize_fov()		# this is ok, right? update the field of view stuff
 
+	def open(self):		#normal doors can't be closed after opening, Just one of those things
+		message('The door opens', libtcod.white)
 
+		door = self.owner
+		door.blocks = False
+		door.door = None
+		door.send_to_back()
+		garbage_list.append(door)
+		
+		#update the map to say that this square isn't blocked, and update the nav data
+		map[door.x][door.y].blocked = False
+		map[door.x][door.y].block_sight = False
+		
+		nav_data_changed = True
+		initialize_fov()		# this is ok, right? update the field of view stuff
 
 
 class Fighter:
@@ -1392,7 +1406,7 @@ class BasicAttack:
 				
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.fighter.take_damage(self.damage)
-				elif target.door is not None and target.x == self.owner.x and target.y == self.owner.y:
+				elif target.door is not None and target.name != 'elevator door' and target.x == self.owner.x and target.y == self.owner.y:
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.door.take_damage(self.damage)
 
@@ -2080,6 +2094,7 @@ def make_map():
 			map[ele_door.x][ele_door.y].block_sight = True			
 			objects.append(door)
 			ele.special_door_list.append(door)
+
 			
 		#for (x,y) in ele.door_points:
 		#	door = Object(x, y, '+', 'elevator door', libtcod.red, blocks=True, door = Door(horizontal = False), always_visible=True) 
@@ -3342,7 +3357,9 @@ while not libtcod.console_is_window_closed():
 
 		
 		# decide if there are any 'punch targets'. This is an ordered pair consisting of a fighter wants to move into a space, and another fighter that is currently in that space. If the second fighter doesn't move, they're gonna get punched!
+		# also decide if anyone is trying to open a door! (By walking into it)
 		potential_punch_list = []
+		potential_open_list = []
 		for object in objects:
 			if object.decider:
 				if object.decider.decision is not None:
@@ -3352,6 +3369,7 @@ while not libtcod.console_is_window_closed():
 							target_x = object.x + md.dx
 							target_y = object.y + md.dy	
 							for victim in objects:
+								# try to punch if there's a fighter in this square
 								if victim.fighter and victim.x == target_x and victim.y == target_y:
 									# the following code checks that the victim isn't actually Attacking the puncher	
 									valid_target = True
@@ -3362,7 +3380,10 @@ while not libtcod.console_is_window_closed():
 												valid_target = False
 									if valid_target == True:
 										potential_punch_list.append((object, victim))
-							
+								#try to open if there's a (non-elevator) door in this square
+								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
+									potential_open_list.append((object, victim))
+									print str(victim.name)
 								
 
 		# firstly movement happens
@@ -3371,6 +3392,8 @@ while not libtcod.console_is_window_closed():
 			if player.decider.decision is not None:
 				if player.decider.decision.move_decision is not None:
 					md = player.decider.decision.move_decision
+					if map[player.x + md.dx][player.y + md.dy].blocked:
+						message ("You walk into a wall.")
 					player.move(md.dx, md.dy)
 		for object in objects:
 			if object.decider and object is not player:
@@ -3517,6 +3540,11 @@ while not libtcod.console_is_window_closed():
 				victim.stun()
 				message ('The ' + puncher.name + ' punches the ' + victim.name + ' in the face! The ' + victim.name + ' is stunned!')
 
+
+		# now do door openings!
+		for (opener, victim) in potential_open_list:
+			victim.door.open()
+			
 
 
 		# now create attacks!
