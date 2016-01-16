@@ -143,12 +143,13 @@ class Weapon_Staff:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
-
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 	######################
 
@@ -243,12 +244,14 @@ class Weapon_Spear:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 	######################
 
@@ -259,10 +262,11 @@ class Weapon_Sword:
 	def __init__(self):
 		self.name = 'sword'
 		self.command_list = 'acdeqswxz'
-		self.max_charge = 3
-		self.current_charge = 3
-		self.default_usage = 2
+		self.max_charge = 2
+		self.current_charge = 2
+		self.default_usage = 1
 		self.durability = 50
+		self.just_attacked = False
 		default_usage = self.default_usage
 	
 		self.command_items = []
@@ -396,13 +400,17 @@ class Weapon_Sword:
 		for (com, data, usage) in self.command_items:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
 				return data
-
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 	def recharge(self, recharge_val = 1):
-		self.current_charge = self.current_charge + recharge_val
+		if self.just_attacked == False:
+			self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+		self.just_attacked = False
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 #############
@@ -553,12 +561,15 @@ class Weapon_Dagger:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 
@@ -726,12 +737,14 @@ class Weapon_Sai:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 #############
@@ -892,12 +905,14 @@ class Weapon_Sai_Alt:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 ##############
@@ -1256,6 +1271,7 @@ class Weapon_Nunchuck:
 				if usage <= self.current_charge and self.durability > 0:
 					self.current_charge = self.current_charge - usage
 					return data
+#		return generic_do_attack(choice, self.command_items, self.current_charge, self.durability)
 
 #	def do_attack(self, command):
 #		for (com, data, usage) in self.command_items:
@@ -1268,6 +1284,7 @@ class Weapon_Nunchuck:
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 
@@ -1417,12 +1434,14 @@ class Weapon_Axe:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 #############
@@ -1575,12 +1594,14 @@ class Weapon_Hammer:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 #############
@@ -1724,12 +1745,14 @@ class Weapon_Katana:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 #############
@@ -1917,12 +1940,14 @@ class Weapon_Ring_Of_Power:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 
@@ -1961,12 +1986,14 @@ class Weapon_Strawhands:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
 
 	def recharge(self, recharge_val = 1):
 		self.current_charge = self.current_charge + recharge_val
 		if self.current_charge > self.max_charge:
 			self.current_charge = self.max_charge
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
 
 
 
@@ -1979,4 +2006,19 @@ def create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos):
 				return_array.append((i-ava_x_pos,j-ava_y_pos,temp_array[j][i]))
 	return return_array
 
+
+
+
+#return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+def generic_do_attack(command, command_items, current_charge, durability):
+	for (com, data, usage) in command_items:
+		if com == command and usage <= current_charge and durability > 0:
+			current_charge = current_charge - usage
+			return data
+
+#(recharge_val, self.current_charge, self.max_charge)
+def generic_recharge(current_charge, max_charge, recharge_val = 1,):
+		current_charge = current_charge + recharge_val
+		if current_charge > max_charge:
+			current_charge = max_charge
 
