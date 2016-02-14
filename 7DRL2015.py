@@ -64,7 +64,7 @@ MSG_HEIGHT = MESSAGE_PANEL_HEIGHT
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -91,11 +91,10 @@ class Object:
 		self.door = door
 		if self.door:
 			self.door.owner = self
-		self.currently_invisible = currently_invisible	# I am introducing this as a hack to make elevator doors go away.
-								# Instead of actually going away, they'll be made invisible, not blocking
-								# and not blocking light (different from being invisible).
-								# Video games!
-		
+		self.currently_invisible = currently_invisible	# I am introducing this as a hack 
+								#to make elevator doors go away. Instead of actually going away, 									#they'll be made invisible, not blocking and not blocking light
+								# (different from being invisible). Video games!
+		self.raising_alarm = raising_alarm
 
 	def move(self, dx, dy):
 		if not is_blocked(self.x + dx, self.y + dy):
@@ -1390,7 +1389,7 @@ class BasicAttack:
 			self.faded_color = attacker.fighter.faded_attack_color
 
 	def inflict_damage(self):
-		global player_hit_something
+		global player_hit_something, alarm_level
 		# only attack if the attack is still active
 		if self.lifespan > 0:
 			for target in objects:
@@ -1406,6 +1405,11 @@ class BasicAttack:
 				
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.fighter.take_damage(self.damage)
+					if target.name == 'security system':
+						if target.raising_alarm is False:
+							target.raising_alarm = True
+							alarm_level += 2
+							message('The security system sounds a loud alarm!')
 				elif target.door is not None and target.name != 'elevator door' and target.x == self.owner.x and target.y == self.owner.y:
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.door.take_damage(self.damage)
@@ -2509,11 +2513,14 @@ def monster_death(monster):
 		number_security_systems -= 1
 		message(monster.name.capitalize() + ' is destroyed! ' + str(number_security_systems) + ' systems remain.', libtcod.orange)
 		
-		#increase the alam level! UNless that was the last one, in which case set it to 0
+		#decrease the alarm level alittle bit! Unless that was the last one, in which case set it to 0
 		if number_security_systems > 0:
-			alarm_level += 1
+			if alarm_level > 0:
+				alarm_level -= 1
+				message('The alarms get a little quieter')
 		else:
 			alarm_level = 0
+			message('A sudden silence descends as the alarms stop')
 
 		#security system drops a key?	#EDIT: NOT FOR NOW!
 #		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
