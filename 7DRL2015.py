@@ -2015,7 +2015,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera, alarm_level
 
 	lev_gen = Level_Generator()
 
@@ -2040,6 +2040,8 @@ def make_map():
 	process_nearest_center_points()
 	initialize_nav_data()
 	#calculate_nav_data()
+
+	alarm_level = 1
 
 	# now create objects from object_data! This code resorting thing is actually getting kind of fun now
 	for od in object_data:
@@ -2485,7 +2487,7 @@ def player_death(player):
 	#player.color = libtcod.dark_red
  
 def monster_death(monster):
-	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_security_systems
+	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_security_systems, alarm_level
 	# drop the weapon the monster was carrying, if it had one.
 	if monster.decider:
 		if monster.decider.ai:
@@ -2506,6 +2508,12 @@ def monster_death(monster):
 	if monster.name == 'security system':
 		number_security_systems -= 1
 		message(monster.name.capitalize() + ' is destroyed! ' + str(number_security_systems) + ' systems remain.', libtcod.orange)
+		
+		#increase the alam level! UNless that was the last one, in which case set it to 0
+		if number_security_systems > 0:
+			alarm_level += 1
+		else:
+			alarm_level = 0
 
 		#security system drops a key?	#EDIT: NOT FOR NOW!
 #		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
@@ -2536,7 +2544,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators
+	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -2548,6 +2556,7 @@ def next_level():
 
 
 	dungeon_level += 1
+	alarm_level = 1
 	time_level_started = time
 	message('You ascend to the next level!', libtcod.red)
 	if favoured_by_healer == True:
@@ -2754,6 +2763,7 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 
 
 	dungeon_level = 1
+	alarm_level = 1
     	make_map()  #create a fresh new level!
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
@@ -3128,6 +3138,8 @@ def create_GUI_panel():
 	'Level: ' + str(dungeon_level))
 	libtcod.console_print_ex(panel, level_panel_x, 2, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Time:  ' + str(time))
+	libtcod.console_print_ex(panel, level_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT,
+	'Alarm:  ' + str(alarm_level))
 
 	if favoured_by_healer:
 		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.LEFT,
@@ -3209,7 +3221,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level
 	current_big_message = 'You weren\'t supposed to see this'
 
 	#create the list of game messages and their colors, starts empty
@@ -3217,6 +3229,7 @@ def initialise_game():
 	
 	game_level_settings = Level_Settings()
 	dungeon_level = 0
+	alarm_level = 1
 	god_healer = God(god_type = God_Healer())
 	favoured_by_healer = False
 	god_destroyer = God(god_type = God_Destroyer())
@@ -3649,7 +3662,7 @@ while not libtcod.console_is_window_closed():
 
 
 		# oh let's start creating enemies at random intervals? 
-		if time % enemy_spawn_rate == 0: #and number_security_systems > 0:
+		if alarm_level > 0 and time % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
 		#	reorder_objects() #temp test
 		#	print 'tick'
 		#	print 'enemy spawn rate = ' + str(enemy_spawn_rate)

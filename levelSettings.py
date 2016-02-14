@@ -9,7 +9,7 @@ MAX_ROOMS = 10
 MAX_ROOM_MONSTERS = 5
 MAX_MONSTERS = 30		# maxmum monsters per level? who knows
 
-DEFAULT_ENEMY_SPAWN_RATE = 10	#this is how often enemies spawn. lower number = more enemies!
+DEFAULT_ENEMY_SPAWN_RATE = 20	#this is how often enemies spawn. lower number = more enemies!
 
 # The thing that tells you what the levels should look like and what kinds of enemies there are.
 # We'll just be giving you the names of enemies, what those enemies look like is covered elsewhere.
@@ -74,7 +74,7 @@ class Level_Settings:
 			max_map_height = 20,
 			max_map_width = 40,
 			max_room_monsters = 1,
-			enemy_spawn_rate = 50,
+			enemy_spawn_rate = 100,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs)
 		self.bigArray.append(levsr)
@@ -98,6 +98,23 @@ class Level_Settings:
 		self.bigArray.append(lev1)
 
 
+#		# Levelsurprisesamura has swordsmen, which are your basic mooks? And bomen.
+#		enemy_probs = []
+#		enemy_probs.append(('samurai', 20))
+#		enemy_probs.append(('swordsman', 50))
+#	#	enemy_probs.append(('rook', 50))
+#	#	enemy_probs.append(('flailing strawman', 50))
+#	#	enemy_probs.append(('ninja', 5))
+#		surprisesamurai = Level_Setting(
+#			max_rooms = 8,
+#			room_max_size = 12,
+#			room_min_size = 4,
+#			max_room_monsters = 1,
+#			enemy_spawn_rate = 140,
+#			level_type = 'modern',
+#			enemy_probabilities = enemy_probs)
+#		
+#		self.bigArray.append(surprisesamurai)
 
 
 
@@ -135,7 +152,7 @@ class Level_Settings:
 #			boss = 'hammer sister',
 			boss = 'samurai',
 			enemy_probabilities = enemy_probs,
-			enemy_spawn_rate = 10)
+			enemy_spawn_rate = 20)
 		
 #TODO		self.bigArray.append(levarena)
 
