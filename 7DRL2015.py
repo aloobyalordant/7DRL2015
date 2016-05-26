@@ -2570,7 +2570,7 @@ def next_level():
 
 
 	dungeon_level += 1
-	alarm_level = 1
+	alarm_level = dungeon_level
 	time_level_started = time
 	message('You ascend to the next level!', libtcod.red)
 	if favoured_by_healer == True:

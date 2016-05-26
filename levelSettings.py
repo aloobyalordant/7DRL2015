@@ -74,7 +74,7 @@ class Level_Settings:
 			max_map_height = 20,
 			max_map_width = 40,
 			max_room_monsters = 1,
-			enemy_spawn_rate = 100,
+			#enemy_spawn_rate = 100,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs)
 		self.bigArray.append(levsr)
@@ -91,7 +91,7 @@ class Level_Settings:
 			room_max_size = 20,
 			room_min_size = 15,
 			max_room_monsters = 1,
-			enemy_spawn_rate = 30,
+			#enemy_spawn_rate = 30,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs)
 		
@@ -128,8 +128,9 @@ class Level_Settings:
 		lev3 = Level_Setting(
 			level_type = 'modern',
 			max_room_monsters = 1,
-			enemy_probabilities = enemy_probs,
-			enemy_spawn_rate = 20)
+			enemy_probabilities = enemy_probs
+			#enemy_spawn_rate = 20
+			)
 		
 		self.bigArray.append(lev3)
 
@@ -151,8 +152,9 @@ class Level_Settings:
 			max_room_monsters = 1,
 #			boss = 'hammer sister',
 			boss = 'samurai',
-			enemy_probabilities = enemy_probs,
-			enemy_spawn_rate = 20)
+			enemy_probabilities = enemy_probs
+			#enemy_spawn_rate = 20
+			)
 		
 #TODO		self.bigArray.append(levarena)
 
