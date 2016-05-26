@@ -53,13 +53,17 @@ default_message_color = color_light_wall
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
 PANEL_HEIGHT = 9
-MESSAGE_PANEL_HEIGHT = 4
+#MESSAGE_PANEL_HEIGHT = 4
+MESSAGE_PANEL_HEIGHT = 30
+MESSAGE_PANEL_WIDTH = 25
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 
 MSG_X = BAR_WIDTH + 2
 #MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
-MSG_WIDTH = SCREEN_WIDTH-2
-MSG_HEIGHT = MESSAGE_PANEL_HEIGHT
+#MSG_WIDTH = SCREEN_WIDTH-2
+#MSG_HEIGHT = MESSAGE_PANEL_HEIGHT
+MSG_WIDTH = MESSAGE_PANEL_WIDTH-2
+MSG_HEIGHT = MESSAGE_PANEL_HEIGHT-1
 
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
@@ -106,8 +110,10 @@ class Object:
 	def draw(self):
 		global camera
 
-		x_offset = camera.x-SCREEN_WIDTH/2
-		y_offset = camera.y-SCREEN_HEIGHT/2
+		#x_offset = camera.x-SCREEN_WIDTH/2
+		x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+		#y_offset = camera.y-SCREEN_HEIGHT/2
+		y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
 
@@ -120,8 +126,9 @@ class Object:
 	def clear(self):
 		global camera
 
-		x_offset = camera.x-SCREEN_WIDTH/2
-		y_offset = camera.y-SCREEN_HEIGHT/2
+		x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+		#y_offset = camera.y-SCREEN_HEIGHT/2
+		y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
 		#erase the character that represents this object
 		libtcod.console_put_char(con, self.x-x_offset, self.y - y_offset, ' ', libtcod.BKGND_NONE)
 
@@ -2944,8 +2951,10 @@ def render_all():
 		libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
 
 	update_camera()
-	x_offset = camera.x-SCREEN_WIDTH/2
-	y_offset = camera.y-SCREEN_HEIGHT/2
+	#x_offset = camera.x-SCREEN_WIDTH/2
+	x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+	#y_offset = camera.y-SCREEN_HEIGHT/2
+	y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
 
 	for y in range(SCREEN_HEIGHT):
 		for x in range(SCREEN_WIDTH):
@@ -3194,7 +3203,8 @@ def create_message_panel():
 
 
 	#blit the contents of "message_panel" to the root console
-	libtcod.console_blit(message_panel, 0, 0, SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+	#libtcod.console_blit(message_panel, 0, 0, SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+	libtcod.console_blit(message_panel, 0, 0, MESSAGE_PANEL_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
 
 
 def update_camera():
