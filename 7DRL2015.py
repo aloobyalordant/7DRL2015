@@ -2530,8 +2530,8 @@ def monster_death(monster):
 			message('A sudden silence descends as the alarms stop')
 
 		#security system drops a key?	#EDIT: NOT FOR NOW!
-#		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
-#		objects.append(new_key)
+		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
+		objects.append(new_key)
 	else:	
 		message(monster.name.capitalize() + ' is dead!', libtcod.orange)
 	monster.char = '%'

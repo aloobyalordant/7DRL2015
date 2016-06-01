@@ -9,7 +9,7 @@ MAX_ROOMS = 10
 MAX_ROOM_MONSTERS = 5
 MAX_MONSTERS = 30		# maxmum monsters per level? who knows
 
-DEFAULT_ENEMY_SPAWN_RATE = 20	#this is how often enemies spawn. lower number = more enemies!
+DEFAULT_ENEMY_SPAWN_RATE = 400	#this is how often enemies spawn. lower number = more enemies!
 
 # The thing that tells you what the levels should look like and what kinds of enemies there are.
 # We'll just be giving you the names of enemies, what those enemies look like is covered elsewhere.
