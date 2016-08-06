@@ -49,7 +49,7 @@ elif ControlMode == 'Crypsis':
 #MEDITATE
 #PICKUP
 
-#JUMP ?
+JUMP = 'r'
 
 
 # and now here are some  3-character forms of these string names, to make AI code more readable.
@@ -402,18 +402,28 @@ class Decider:
 		self.decision = None
 
 class Decision:
-	def __init__(self, move_decision=None, attack_decision=None):
+	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None):
 		self.move_decision=move_decision
 		if move_decision is not None:
 			self.move_decision.owner = self
 		self.attack_decision=attack_decision
 		if attack_decision is not None:
 			self.attack_decision.owner = self
+		self.jump_decision=jump_decision
+		if jump_decision is not None:
+			self.jump_decision.owner = self
 
 class Move_Decision:
 	def __init__(self,dx,dy):
 		self.dx = dx
 		self.dy = dy
+
+
+class Jump_Decision:
+	def __init__(self,dx,dy):
+		self.dx = dx
+		self.dy = dy
+
 
 
 class Attack_Decision:
@@ -1603,6 +1613,10 @@ def get_names_under_mouse():
 	names = ', '.join(names)  #join the names, separated by commas
 	return names.capitalize()
 
+
+
+# MAIN CONTROL HANDLING METHOD WOO
+
 def handle_keys():
 	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started
 
@@ -1675,8 +1689,38 @@ def handle_keys():
 		else:
 			return 'pickup_dialog'
 
+	elif player_action == 'jump_dialog':
+		key_char = chr(key.c)
+		# jump direction options
+		if key.vk == libtcod.KEY_KP7 or key.vk == libtcod.KEY_HOME or key_char == 't':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
+		elif key.vk == libtcod.KEY_KP8 or key.vk == libtcod.KEY_UP or key_char == 'y':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,-2)))
+		elif key.vk == libtcod.KEY_KP9 or key.vk == libtcod.KEY_PAGEUP or key_char == 'u':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
+		elif key.vk == libtcod.KEY_KP2 or key.vk == libtcod.KEY_DOWN or key_char == 'n':
+			print "jump down!"
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
+		elif key.vk == libtcod.KEY_KP1 or key.vk == libtcod.KEY_END or key_char == 'b':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
+		elif key.vk == libtcod.KEY_KP4 or key.vk == libtcod.KEY_LEFT or key_char == 'g':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,0)))
+		elif key.vk == libtcod.KEY_KP3 or key.vk == libtcod.KEY_PAGEDOWN or key_char == 'm':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,2)))
+		elif key.vk == libtcod.KEY_KP6 or key.vk == libtcod.KEY_RIGHT or key_char == 'j':
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,0)))
+		#elif key.vk == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
+		#	message('You  perfectly still.')
+		#game_state = 'playing'
+		elif key.vk != 0:
+			game_state = 'playing'
+			message('You stand paralyzed by indecision or maybe bad programming!.')
+		else: 
+			return 'jump_dialog'
+
 	elif game_state == 'playing':
 		key_char = chr(key.c)
+		#print "walk!"
 		#movement keys
 		if key.vk == libtcod.KEY_KP7 or key.vk == libtcod.KEY_HOME or key_char == 't':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,-1)))
@@ -1697,7 +1741,7 @@ def handle_keys():
 		elif key.vk == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
 			message('You stand perfectly still.')
 			pass
-		#attacky keys!
+
 		else:
 			#test for other keys
 			key_char = chr(key.c)
@@ -1737,6 +1781,13 @@ def handle_keys():
 					#handle_keys()	# why do I get the feeling I am going to regret this
 
 
+			elif key_char == JUMP:
+				message_string = ('Jump in which direction?')
+				message(message_string, libtcod.orange)
+				return 'jump_dialog'
+
+
+			#attacky keys!
 			else :			
 				abstract_attack_data = player_weapon.do_attack(key_char)
 				if abstract_attack_data is not None:
@@ -3400,7 +3451,7 @@ while not libtcod.console_is_window_closed():
 	#	break
 
 	# Game things happen woo!
-	elif game_state == 'playing' and player_action != 'didnt-take-turn' and player_action != 'pickup_dialog':
+	elif game_state == 'playing' and player_action != 'didnt-take-turn' and player_action != 'pickup_dialog' and player_action != 'jump_dialog' :
 		
 		
 		time += 1
@@ -3482,6 +3533,11 @@ while not libtcod.console_is_window_closed():
 					if map[player.x + md.dx][player.y + md.dy].blocked:
 						message ("You walk into a wall.")
 					player.move(md.dx, md.dy)
+				elif player.decider.decision.jump_decision is not None:
+					jd = player.decider.decision.jump_decision
+					if map[player.x + jd.dx][player.y + jd.dy].blocked:
+						message ("You leap gracefully into a wall.")
+					player.move(jd.dx, jd.dy)
 		for object in objects:
 			if object.decider and object is not player:
 				if object.decider.decision is not None:
@@ -3536,7 +3592,7 @@ while not libtcod.console_is_window_closed():
 
 		# draw things in their new places
 		if player.decider.decision:
-			if player.decider.decision.move_decision:			
+			if player.decider.decision.move_decision or player.decider.decision.jump_decision:			
 				fov_recompute = True
 
 		for object in objects:
@@ -3816,6 +3872,9 @@ while not libtcod.console_is_window_closed():
 	elif game_state == 'playing' and player_action == 'pickup_dialog':
 		render_all()
 
+
+	elif game_state == 'playing' and player_action == 'jump_dialog':
+		render_all()
 
 
 
