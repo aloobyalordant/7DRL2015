@@ -103,6 +103,7 @@ color_fog_of_war = libtcod.black
 default_weapon_color = libtcod.grey
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
+default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
 
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
@@ -1685,6 +1686,7 @@ def handle_keys():
 			message('Never mind.')
 			#keynum = key
 			#print str(libtcod.KEY_KP7)		# hang on... 41 is 7. So... 35 is 1, right? blah - 34
+			return 'didnt-take-turn'
 
 		else:
 			return 'pickup_dialog'
@@ -1699,7 +1701,6 @@ def handle_keys():
 		elif key.vk == libtcod.KEY_KP9 or key.vk == libtcod.KEY_PAGEUP or key_char == 'u':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
 		elif key.vk == libtcod.KEY_KP2 or key.vk == libtcod.KEY_DOWN or key_char == 'n':
-			print "jump down!"
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
 		elif key.vk == libtcod.KEY_KP1 or key.vk == libtcod.KEY_END or key_char == 'b':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
@@ -1714,7 +1715,7 @@ def handle_keys():
 		#game_state = 'playing'
 		elif key.vk != 0:
 			game_state = 'playing'
-			message('You stand paralyzed by indecision or maybe bad programming!.')
+			message('You stand paralyzed by indecision or maybe bad programming!.')	#TODO probably change this message
 		else: 
 			return 'jump_dialog'
 
@@ -1782,10 +1783,15 @@ def handle_keys():
 
 
 			elif key_char == JUMP:
-				message_string = ('Jump in which direction?')
-				message(message_string, libtcod.orange)
-				return 'jump_dialog'
-
+				canJump = False
+				if canJump:
+					message_string = 'Jump in which direction?'
+					message(message_string, libtcod.orange)
+					return 'jump_dialog'
+				else:
+					message_string = 'Your legs are too tired to jump.'
+					message(message_string, libtcod.orange)
+					return 'didnt-take-turn'
 
 			#attacky keys!
 			else :			
@@ -2201,6 +2207,10 @@ def make_map():
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
+			objects.append(floor_message)
+			floor_message.send_to_back()
+		elif od.name == 'decoration':
+			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True)
 			objects.append(floor_message)
 			floor_message.send_to_back()
 
@@ -3799,6 +3809,10 @@ while not libtcod.console_is_window_closed():
 		#if player_recharge_time > 0:
 		#	player_recharge_time = player_recharge_time - 1
 		player_weapon.recharge(player.fighter.recharge_rate)
+
+
+		#recharge player jump? TODO well, how should jumping work...
+
 		
 		#weapon degradation time!
 		if( player_hit_something == True or player_clashed_something == True) and player_weapon.durability > 0:

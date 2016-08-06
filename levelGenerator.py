@@ -719,11 +719,30 @@ class Level_Generator:
 				#objects.append(new_shrine)
 				#new_shrine.send_to_back()
 				object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
+				self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
 		# or maybe security systems?
 			elif num == 1:
 				if lev_set.final_level is not True:	#don't have sec systems on final levels?
 					(sec_x,sec_y) = room.center()
 					object_data.append(Object_Datum(sec_x,sec_y,'security system'))
+					self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '.')
+
+
+	# Create pretty decorations on the border of the room! Let's see if it looks any good.
+	def decorate_room(self, room, lev_set, map, object_data, dungeon_level,symbol = '~'):
+		# corners
+		object_data.append(Object_Datum(room.x1,room.y1, 'decoration', symbol))
+		object_data.append(Object_Datum(room.x1,room.y2, 'decoration', symbol))
+		object_data.append(Object_Datum(room.x2,room.y1, 'decoration', symbol))
+		object_data.append(Object_Datum(room.x2,room.y2, 'decoration', symbol))
+		#top and bottom
+		for x in range(room.x1+1, room.x2):
+			object_data.append(Object_Datum(x,room.y1, 'decoration', symbol))
+			object_data.append(Object_Datum(x,room.y2, 'decoration', symbol))
+		for y in range(room.y1+1, room.y2):
+			object_data.append(Object_Datum(room.x1,y, 'decoration', symbol))
+			object_data.append(Object_Datum(room.x2,y, 'decoration', symbol))
+
 
 	def is_occupied(self, x, y, map, object_data):
 		#first test the map tile
