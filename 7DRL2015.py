@@ -3535,9 +3535,43 @@ while not libtcod.console_is_window_closed():
 					player.move(md.dx, md.dy)
 				elif player.decider.decision.jump_decision is not None:
 					jd = player.decider.decision.jump_decision
-					if map[player.x + jd.dx][player.y + jd.dy].blocked:
-						message ("You leap gracefully into a wall.")
-					player.move(jd.dx, jd.dy)
+					# Check for things between the player and where they want to be,
+					# and see if they are things that block the player or can be jumped over.
+					# For now, assumes all jumps are of length 2;
+					# Will need to be changed if different jumps come in.
+					tempx = 0
+					if jd.dx == -2:
+						tempx = -1
+					elif jd.dx == 2:
+						tempx = 1
+					tempy = 0
+					if jd.dy == -2:
+						tempy = -1
+					elif jd.dy == 2:
+						tempy = 1
+					somethingInWay = False
+					jumpee = None		#The thing you're jumping over...
+					if map[player.x + tempx][player.y + tempy].blocked:
+						somethingInWay = True
+						message("There's a wall in the way!")
+					else: 
+						#check for doors, and/or find the thing the player is jumping over.
+						for ob in objects:
+							if ob.door and ob.x == player.x + tempx and ob.y == player.y + tempy:
+								somethingInWay = True
+							if ob.fighter and ob.x == player.x + tempx and ob.y == player.y + tempy:
+								jumpee = ob	
+						if somethingInWay == True:
+							message("There's a door in the way!")
+					if somethingInWay == False:
+						if map[player.x + jd.dx][player.y + jd.dy].blocked:
+							message ("You leap gracefully into a wall.")
+							player.move(tempx, tempy)
+						else:
+							if jumpee is not None:
+								message ("You leap over the " + jumpee.name + "\'s head!")
+						player.move(jd.dx, jd.dy)
+
 		for object in objects:
 			if object.decider and object is not player:
 				if object.decider.decision is not None:
