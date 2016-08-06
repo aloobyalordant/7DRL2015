@@ -1,5 +1,30 @@
 import libtcodpy as libtcod
 
+#Controls
+ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
+if ControlMode == 'Glados':
+	ATTCKUPLEFT	 = 'q'
+	ATTCKUP		 = 'w'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'z'
+	ATTCKLEFT	 = 'a'
+
+	ATTCKDOWNALT	 = 's'
+elif ControlMode == 'Crypsis':
+	ATTCKUPLEFT	 = 'a'
+	ATTCKUP		 = 'z'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'w'
+	ATTCKLEFT	 = 'q'
+
+	ATTCKDOWNALT	 = 's'
+
 class Weapon_Staff:
 
 	def __init__(self):
@@ -14,7 +39,7 @@ class Weapon_Staff:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,0,0,0,0],
@@ -28,7 +53,7 @@ class Weapon_Staff:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,1],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -42,7 +67,7 @@ class Weapon_Staff:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,1,0],
@@ -56,7 +81,7 @@ class Weapon_Staff:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -70,7 +95,7 @@ class Weapon_Staff:
 
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -83,7 +108,7 @@ class Weapon_Staff:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -97,7 +122,7 @@ class Weapon_Staff:
 
 
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -111,7 +136,7 @@ class Weapon_Staff:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,1,0,0,0],
@@ -125,7 +150,7 @@ class Weapon_Staff:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[1,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -172,7 +197,7 @@ class Weapon_Spear:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,1,0,0],
 				  [0,0,1,0,0],
 				  [0,0,0,0,0],
@@ -187,7 +212,7 @@ class Weapon_Spear:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,1,1],
@@ -201,7 +226,7 @@ class Weapon_Spear:
 
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -214,7 +239,7 @@ class Weapon_Spear:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -229,7 +254,7 @@ class Weapon_Spear:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [1,1,0,0,0],
@@ -279,7 +304,7 @@ class Weapon_Sword:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,0,0],
 				  [0,0,0,0,0],
@@ -293,7 +318,7 @@ class Weapon_Sword:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -307,7 +332,7 @@ class Weapon_Sword:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,1,0],
@@ -321,7 +346,7 @@ class Weapon_Sword:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -335,7 +360,7 @@ class Weapon_Sword:
 
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -348,7 +373,7 @@ class Weapon_Sword:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -362,7 +387,7 @@ class Weapon_Sword:
 
 
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -376,7 +401,7 @@ class Weapon_Sword:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,0,0],
@@ -390,7 +415,7 @@ class Weapon_Sword:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -440,7 +465,7 @@ class Weapon_Dagger:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,2,0,0],
 				  [0,0,0,0,0],
@@ -454,7 +479,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,2,0],
 				  [0,0,0,0,0],
@@ -468,7 +493,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,2,0],
@@ -482,7 +507,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -496,7 +521,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -509,7 +534,7 @@ class Weapon_Dagger:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -523,7 +548,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -537,7 +562,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,2,0,0,0],
@@ -551,7 +576,7 @@ class Weapon_Dagger:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,2,0,0,0],
 				  [0,0,0,0,0],
@@ -607,7 +632,7 @@ class Weapon_Sai:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [1,1,0,1,1],
@@ -622,7 +647,7 @@ class Weapon_Sai:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,1,1],
@@ -637,7 +662,7 @@ class Weapon_Sai:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -651,7 +676,7 @@ class Weapon_Sai:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -664,20 +689,7 @@ class Weapon_Sai:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'x'
-		temp_array =	 [[0,0,0,0,0],
-				  [0,0,0,0,0],
-				  [1,1,0,1,1],
-				  [0,0,0,0,0],
-				  [0,0,0,0,0]]
-
-		ava_x_pos = 2
-		ava_y_pos = 2
-		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
-		self.command_items.append((command, abstract_attack_data, default_usage))
-
-
-		command = 's'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [1,1,0,1,1],
@@ -690,10 +702,23 @@ class Weapon_Sai:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [1,1,0,1,1],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
 
-		command = 'a'
+
+
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [1,1,0,0,0],
@@ -705,7 +730,7 @@ class Weapon_Sai:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -717,7 +742,7 @@ class Weapon_Sai:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -731,7 +756,7 @@ class Weapon_Sai:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -779,7 +804,7 @@ class Weapon_Sai_Alt:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,0,0],
 				  [0,0,0,0,0],
@@ -794,7 +819,7 @@ class Weapon_Sai_Alt:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,1,0],
@@ -809,7 +834,7 @@ class Weapon_Sai_Alt:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -823,7 +848,7 @@ class Weapon_Sai_Alt:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -836,7 +861,7 @@ class Weapon_Sai_Alt:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,0,0],
 				  [0,0,0,0,0],
@@ -849,7 +874,7 @@ class Weapon_Sai_Alt:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,0,0],
 				  [0,0,0,0,0],
@@ -865,7 +890,7 @@ class Weapon_Sai_Alt:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,1,0],
@@ -877,7 +902,7 @@ class Weapon_Sai_Alt:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -889,7 +914,7 @@ class Weapon_Sai_Alt:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -903,7 +928,7 @@ class Weapon_Sai_Alt:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
@@ -1321,16 +1346,16 @@ class Weapon_Axe:
 	def __init__(self):
 		self.name = 'axe'
 		self.command_list = 'acdeqswxz'
-		self.max_charge = 1
-		self.current_charge = 1
-		self.default_usage = 1
+		self.max_charge = 2
+		self.current_charge = 2
+		self.default_usage = 2
 		self.durability = 50
 		self.just_attacked = False
 		default_usage = self.default_usage
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[1,1,1,1,1],
 				  [1,0,1,0,1],
 				  [0,0,0,0,0],
@@ -1345,7 +1370,7 @@ class Weapon_Axe:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,1,1],
 				  [0,0,0,0,1],
 				  [0,0,0,1,1],
@@ -1360,7 +1385,7 @@ class Weapon_Axe:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,1,1,1,1],
 				  [0,0,0,1,1],
 				  [0,0,0,0,1],
@@ -1374,7 +1399,7 @@ class Weapon_Axe:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,1],
 				  [0,0,0,0,1],
@@ -1387,7 +1412,7 @@ class Weapon_Axe:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1400,7 +1425,7 @@ class Weapon_Axe:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1416,7 +1441,7 @@ class Weapon_Axe:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[1,1,0,0,0],
 				  [1,0,0,0,0],
 				  [1,1,0,0,0],
@@ -1428,7 +1453,7 @@ class Weapon_Axe:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[1,1,1,1,0],
 				  [1,1,0,0,0],
 				  [1,0,0,0,0],
@@ -1440,7 +1465,7 @@ class Weapon_Axe:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [1,0,0,0,0],
 				  [1,0,0,0,0],
@@ -1494,7 +1519,7 @@ class Weapon_Hammer:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,1,0,1,0],
@@ -1509,7 +1534,7 @@ class Weapon_Hammer:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,1,0],
 				  [0,0,0,1,0],
@@ -1524,7 +1549,7 @@ class Weapon_Hammer:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,0,0,1,0],
@@ -1538,7 +1563,7 @@ class Weapon_Hammer:
 
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,1,0],
@@ -1551,7 +1576,7 @@ class Weapon_Hammer:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,1,0],
@@ -1564,7 +1589,7 @@ class Weapon_Hammer:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,1,0],
@@ -1580,7 +1605,7 @@ class Weapon_Hammer:
 
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,0,0],
 				  [0,1,0,0,0],
@@ -1592,7 +1617,7 @@ class Weapon_Hammer:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,1,0,0,0],
@@ -1604,7 +1629,7 @@ class Weapon_Hammer:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,1,0,0,0],
@@ -1653,7 +1678,7 @@ class Weapon_Katana:
 	
 		self.command_items = []
 		
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,0,0],
 				  [0,0,0,0,0],
@@ -1668,7 +1693,7 @@ class Weapon_Katana:
 
 
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,1,0],
@@ -1683,7 +1708,7 @@ class Weapon_Katana:
 
 
 
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,1,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,0,0],
@@ -1697,7 +1722,7 @@ class Weapon_Katana:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,1],
@@ -1710,7 +1735,7 @@ class Weapon_Katana:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1723,7 +1748,7 @@ class Weapon_Katana:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,0,0],
@@ -1735,7 +1760,7 @@ class Weapon_Katana:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [1,0,0,0,0],
@@ -1747,7 +1772,7 @@ class Weapon_Katana:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1759,7 +1784,7 @@ class Weapon_Katana:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1808,7 +1833,7 @@ class Weapon_Ring_Of_Power:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,1,0,0,1,0,0,1,0,0],
 				  [0,0,1,0,0,1,0,0,1,0,0],
 				  [0,0,0,1,0,1,0,1,0,0,0],
@@ -1826,7 +1851,7 @@ class Weapon_Ring_Of_Power:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 's'
+		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -1844,7 +1869,7 @@ class Weapon_Ring_Of_Power:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'x'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -1862,7 +1887,7 @@ class Weapon_Ring_Of_Power:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'a'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [1,1,0,0,0,0,0,0,0,0,0],
@@ -1881,7 +1906,7 @@ class Weapon_Ring_Of_Power:
 
 
 
-		command = 'd'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,1,1],
@@ -1900,7 +1925,7 @@ class Weapon_Ring_Of_Power:
 
 
 
-		command = 'q'
+		command = ATTCKUPLEFT
 		temp_array =	 [[1,0,0,0,0,0,0,0,0,0,0],
 				  [1,1,0,0,0,0,0,0,0,0,0],
 				  [0,1,1,0,0,0,0,0,0,0,0],
@@ -1917,7 +1942,7 @@ class Weapon_Ring_Of_Power:
 		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
-		command = 'e'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,1,1],
 				  [0,0,0,0,0,0,0,0,1,1,0],
 				  [0,0,0,0,0,0,0,1,1,0,0],
@@ -1935,7 +1960,7 @@ class Weapon_Ring_Of_Power:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'c'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -1953,7 +1978,7 @@ class Weapon_Ring_Of_Power:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'z'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
 				  [0,0,0,0,0,0,0,0,0,0,0],
@@ -2000,7 +2025,7 @@ class Weapon_Strawhands:
 	# a bad weapon. Do not use it.
 	def __init__(self):
 		self.name = 'straw hand'
-		self.command_list = 'w'
+		self.command_list = ATTCKUP
 		self.max_charge = 1
 		self.current_charge = 1
 		self.default_usage = 1
@@ -2010,7 +2035,7 @@ class Weapon_Strawhands:
 	
 		self.command_items = []
 		
-		command = 'w'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,1,0],

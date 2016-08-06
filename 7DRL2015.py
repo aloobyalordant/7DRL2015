@@ -13,6 +13,60 @@ CAMERA_FOCUS_HEIGHT = 8
 
 LIMIT_FPS = 20
 
+#Controls
+ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
+
+
+if ControlMode == 'Glados':
+	ATTCKUPLEFT	 = 'q'
+	ATTCKUP		 = 'w'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'z'
+	ATTCKLEFT	 = 'a'
+elif ControlMode == 'Crypsis':
+	ATTCKUPLEFT	 = 'a'
+	ATTCKUP		 = 'z'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'w'
+	ATTCKLEFT	 = 'q'
+
+
+#MOVEUPLEFT
+#MOVEUP
+#MOVEUPRIGHT
+#MOVERIGHT
+#MOVEDOWNRIGHT
+#MOVEDOWN
+#MOVEDOWNLEFT
+#MOVELEFT
+
+#MEDITATE
+#PICKUP
+
+#JUMP ?
+
+
+# and now here are some  3-character forms of these string names, to make AI code more readable.
+# it's gonna use QWERTY-specific terms (like aQa for ATTCKUPLEFT), just because that makes 
+# editing in these terms easier. sorry about that. when it comes to writing AI movement/ attack patterns,
+# you would probably benefit from looking at a QWERTY keyboard.
+oQo = ATTCKUPLEFT
+oWo = ATTCKUP
+oEo = ATTCKUPRIGHT
+oDo = ATTCKRIGHT
+oCo = ATTCKDOWNRIGHT
+oXo = ATTCKDOWN
+oZo = ATTCKDOWNLEFT
+oAo =ATTCKLEFT
+
+
+
 MAP_WIDTH = 80
 MAP_HEIGHT = 43
 
@@ -422,21 +476,21 @@ class BasicMonster:
 					# and now we manually code what keys the monster would press based on where they want to attack.
 					# yes, this isn't great code design. It's a 7drl, deal with it.
 					if dx == 0 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack('w')
+						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 					elif dx == 1 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack('e')
+						abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 					elif dx == 1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack('d')
+						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 					elif dx == 1 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack('c')
+						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 					elif dx == 0 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack('x')
+						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 					elif dx == -1 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack('z')
+						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 					elif dx == -1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack('a')
+						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 					elif dx == -1 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack('q')
+						abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 					else: 
 						abstract_attack_data = None
 					
@@ -494,23 +548,23 @@ class Wizard_AI:
 					if xdiff < 3 and xdiff > -3 and ydiff < 3 and ydiff > -3:
 						#alright close enough, attack!!!
 						if (xdiffabs > ydiffabs + 1 or ydiff == 0) and xdiff > 0:
-							abstract_attack_data = self.weapon.do_attack('d')
+							abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 						elif (xdiffabs > ydiffabs + 1 or ydiff == 0) and xdiff < 0:
-							abstract_attack_data = self.weapon.do_attack('a')
+							abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 						elif (ydiffabs > xdiffabs + 1 or xdiff == 0) and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('x')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 						elif (ydiffabs > xdiffabs + 1 or xdiff == 0) and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('w')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 
 						#ok, so now x and y diff are close, so we are shooting diagonally
 						elif xdiff > 0 and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('c')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 						elif xdiff > 0 and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('e')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 						elif xdiff < 0 and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('q')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 						elif xdiff < 0 and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('z')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 
 						if abstract_attack_data is not None:
 							temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
@@ -530,23 +584,23 @@ class Wizard_AI:
 					if xdiff < 5 and xdiff > -5 and ydiff < 5 and ydiff > -5:
 						#alright close enough, attack!!!
 						if (xdiffabs > ydiffabs + 1 or ydiff == 0) and xdiff > 0:
-							abstract_attack_data = self.weapon.do_attack('d')
+							abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 						elif (xdiffabs > ydiffabs + 1 or ydiff == 0) and xdiff < 0:
-							abstract_attack_data = self.weapon.do_attack('a')
+							abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 						elif (ydiffabs > xdiffabs + 1 or xdiff == 0) and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('x')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 						elif (ydiffabs > xdiffabs + 1 or xdiff == 0) and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('w')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 
 						#ok, so now x and y diff are close, so we are shooting diagonally
 						elif xdiff > 0 and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('c')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 						elif xdiff > 0 and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('e')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 						elif xdiff < 0 and ydiff < 0:
-							abstract_attack_data = self.weapon.do_attack('q')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 						elif xdiff < 0 and ydiff > 0:
-							abstract_attack_data = self.weapon.do_attack('z')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 
 						if abstract_attack_data is not None:
 							temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
@@ -661,17 +715,17 @@ class Samurai_AI:
 						if believe_player_ready:
 							num  = libtcod.random_get_int(0, 0, 2)
 							if num == 0:
-								attack_array = [['q','q','w','e','e'],
-										['q','q','q','e','e'],
-										['a','z', 0 ,'e','d'],
-										['z','z','c','c','c'],
-										['z','z','x','c','c']]
+								attack_array = [[oQo,oQo,oWo,oEo,oEo],
+										[oQo,oQo,oQo,oEo,oEo],
+										[oAo,oZo, 0 ,oEo,oDo],
+										[oZo,oZo,oCo,oCo,oCo],
+										[oZo,oZo,oXo,oCo,oCo]]
 							else:
-								attack_array = [['a','w','w','w','w'],
-										['a','q','q','e','d'],
-										['a','z', 0 ,'e','d'],
-										['a','z','c','c','d'],
-										['x','x','x','x','d']]
+								attack_array = [[oAo,oWo,oWo,oWo,oWo],
+										[oAo,oQo,oQo,oEo,oDo],
+										[oAo,oZo, 0 ,oEo,oDo],
+										[oAo,oZo,oCo,oCo,oDo],
+										[oXo,oXo,oXo,oXo,oDo]]
 							attack_command = attack_array[ydiff+2][xdiff+2]
 	
 						#if the player doesn't have charge, try and cover the squares they might run away to, rather than the square they're standing in (because players tend to run if they can't fight)
@@ -679,15 +733,15 @@ class Samurai_AI:
 							num  = libtcod.random_get_int(0, 0, 2)
 							if num == 0:
 								attack_array = [[ 0 , 0 , 0 , 0 , 0 ],
-										[ 0 ,'a','w','w', 0 ],
-										[ 0 ,'a', 0 ,'d', 0 ],
-										[ 0 ,'x','x','d', 0 ],
+										[ 0 ,oAo,oWo,oWo, 0 ],
+										[ 0 ,oAo, 0 ,oDo, 0 ],
+										[ 0 ,oXo,oXo,oDo, 0 ],
 										[ 0 , 0 , 0 , 0 , 0 ]]
 							else:
 								attack_array = [[ 0 , 0 , 0 , 0 , 0 ],
-										[ 0 ,'q','q','e', 0 ],
-										[ 0 ,'z', 0 ,'e', 0 ],
-										[ 0 ,'z','c','c', 0 ],
+										[ 0 ,oQo,oQo,oEo, 0 ],
+										[ 0 ,oZo, 0 ,oEo, 0 ],
+										[ 0 ,oZo,oCo,oCo, 0 ],
 										[ 0 , 0 , 0 , 0 , 0 ]]
 							attack_command = attack_array[ydiff+2][xdiff+2]
 						#carry out attack
@@ -821,64 +875,64 @@ class Ninja_AI:
 				elif xdiffabs <=2 and ydiffabs <= 2:
 					if self.weapon.current_charge >= self.weapon.default_usage:
 						if xdiff == 2 and ydiff == 0:
-							abstract_attack_data = self.weapon.do_attack('d')
+							abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 						elif xdiff == -2 and ydiff == 0:
-							abstract_attack_data = self.weapon.do_attack('a')
+							abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 						elif xdiff == 0 and ydiff == -2:
-							abstract_attack_data = self.weapon.do_attack('w')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 						elif xdiff ==0 and ydiff == 2:
-							abstract_attack_data = self.weapon.do_attack('x')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 						elif xdiff == 2 and ydiff == 2:
-							abstract_attack_data = self.weapon.do_attack('c')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 						elif xdiff == 2 and ydiff == -2:
-							abstract_attack_data = self.weapon.do_attack('e')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 						elif xdiff == -2 and ydiff == 2:
-							abstract_attack_data = self.weapon.do_attack('z')
+							abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 						elif xdiff == -2 and ydiff == -2:
-							abstract_attack_data = self.weapon.do_attack('q')
+							abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 						else:
 							# okay now there are two choices for square 'in between'... pick one at random? not sure about this
 							num  = libtcod.random_get_int(0, 0, 2)
 							if xdiff == 2 and ydiff == 1:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('d')
+									abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('c')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 							elif xdiff == 1 and ydiff == 2:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('x')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('c')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 							elif xdiff == -1 and ydiff == 2:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('x')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('z')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 							elif xdiff == -2 and ydiff == 1:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('a')
+									abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('z')
+									abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 							elif xdiff == -2 and ydiff == -1:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('a')
+									abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('q')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 							elif xdiff == -1 and ydiff == -2:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('w')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('q')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 							elif xdiff == 1 and ydiff == -2:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('w')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('e')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 							elif xdiff == 2 and ydiff == -1:
 								if num == 0:
-									abstract_attack_data = self.weapon.do_attack('d')
+									abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 								elif num == 1:
-									abstract_attack_data = self.weapon.do_attack('e')
+									abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 					
 					if abstract_attack_data is not None:
 						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
@@ -971,21 +1025,21 @@ class Rook_AI:
 					# and now we manually code what keys the monster would press based on where they want to attack.
 					# yes, this isn't great code design. It's a 7drl, deal with it.
 					if dx == 0 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack('w')
+						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
 				#	elif dx == 1 and dy == -1:
-				#		abstract_attack_data = self.weapon.do_attack('e')
+				#		abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 					elif dx == 1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack('d')
+						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
 				#	elif dx == 1 and dy == 1:
-				#		abstract_attack_data = self.weapon.do_attack('c')
+				#		abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 					elif dx == 0 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack('x')
+						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
 				#	elif dx == -1 and dy == 1:
-				#		abstract_attack_data = self.weapon.do_attack('z')
+				#		abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 					elif dx == -1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack('a')
+						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
 				#	elif dx == -1 and dy == -1:
-				#		abstract_attack_data = self.weapon.do_attack('q')
+				#		abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 					else: 
 						abstract_attack_data = None
 					
@@ -1062,7 +1116,7 @@ class Strawman_on_wheels_AI:
 		self.stunned_time = 2
 
 class Strawman_AI:
-	def __init__(self, weapon, command = 'w'):
+	def __init__(self, weapon, command = ATTCKUP):
 		self.recharge_time = 0
 		self.stunned_time = 0
 		self.weapon = weapon
@@ -3056,39 +3110,39 @@ def create_GUI_panel():
 	else: 
 			libtcod.console_set_default_foreground(panel, libtcod.white)
 		
-	if 'q' in attack_list:
+	if ATTCKUPLEFT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		'Q')
+		ATTCKUPLEFT)
 
-	if 'w' in attack_list:
+	if ATTCKUP in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		'W')
+		ATTCKUP)
 
-	if 'e' in attack_list:
+	if ATTCKUPRIGHT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		'E')
+		ATTCKUPRIGHT)
 
-	if 'a' in attack_list:
+	if ATTCKLEFT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
-		'A')
+		ATTCKLEFT)
 
 
-	if 'd' in attack_list:
+	if ATTCKRIGHT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
-		'D')
+		ATTCKRIGHT)
 
 		
-	if 'z' in attack_list:
+	if ATTCKDOWNLEFT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		'Z')
+		ATTCKDOWNLEFT)
 
-	if 'x' in attack_list:
+	if ATTCKDOWN in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		'X')
+		ATTCKDOWN)
 
-	if 'c' in attack_list:
+	if ATTCKDOWNRIGHT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		'C')
+		ATTCKDOWNRIGHT)
 	libtcod.console_set_default_foreground(panel, libtcod.white)
 
 	# Display weapon charge details.
@@ -3240,6 +3294,9 @@ def reorder_objects():
 def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level
 	current_big_message = 'You weren\'t supposed to see this'
+
+
+	#Initialise controls
 
 	#create the list of game messages and their colors, starts empty
 	game_msgs = []

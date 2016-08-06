@@ -1,6 +1,30 @@
 import libtcodpy as libtcod
 from objectClass import Object
 
+#Controls
+ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
+if ControlMode == 'Glados':
+	ATTCKUPLEFT	 = 'q'
+	ATTCKUP		 = 'w'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'z'
+	ATTCKLEFT	 = 'a'
+
+	ATTCKDOWNALT	 = 's'
+elif ControlMode == 'Crypsis':
+	ATTCKUPLEFT	 = 'a'
+	ATTCKUP		 = 'z'
+	ATTCKUPRIGHT	 = 'e'
+	ATTCKRIGHT	 = 'd'
+	ATTCKDOWNRIGHT	 = 'c'
+	ATTCKDOWN	 = 'x'
+	ATTCKDOWNLEFT	 = 'w'
+	ATTCKLEFT	 = 'q'
+
+	ATTCKDOWNALT	 = 's'
 
 ELEVATOR_DOOR_CLOSURE_PERIOD = 5
 
@@ -993,8 +1017,8 @@ class Level_Generator:
 
 
 		elif code == 'Tut-Avoid-Attacks':
-			A = Object_Name('strawman', 'sai', 'w')
-			B = Object_Name('strawman', 'sai', 'a')
+			A = Object_Name('strawman', 'sai', ATTCKUP)
+			B = Object_Name('strawman', 'sai', ATTCKLEFT)
 			seg_map =      [[0,0,0,0,0,B,0],
 					[0,0,0,0,0,0,0],
 					[0,0,A,0,B,0,B],
@@ -1012,8 +1036,8 @@ class Level_Generator:
 
 
 		elif code == 'Tut-Gauntlet':
-			A = Object_Name('strawman', 'spear', 's')
-			B = Object_Name('strawman', 'spear', 'w')
+			A = Object_Name('strawman', 'spear', ATTCKDOWNALT)
+			B = Object_Name('strawman', 'spear', ATTCKUP)
 			C = Object_Name('door', 'horizontal')
 			D = Object_Name('door', 'vertical')
 			seg_map =      [[1,A,1,A,1,A,1],
@@ -1040,8 +1064,8 @@ class Level_Generator:
 
 		elif code == 'Whole-Tutorial':
 			A = Object_Name('monster', 'strawman')
-			B = Object_Name('strawman', 'sai', 'w')
-			C = Object_Name('strawman', 'sai', 'a')
+			B = Object_Name('strawman', 'sai', ATTCKUP)
+			C = Object_Name('strawman', 'sai', ATTCKLEFT)
 			seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
 					[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,B,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
 					[1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,A,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,],
