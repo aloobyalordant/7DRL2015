@@ -82,6 +82,9 @@ ELEVATOR_DISTANCE_CHECK = 4
 
 CHANCE_OF_ENEMY_DROP = 30
 
+DEFAULT_JUMP_RECHARGE_TIME = 40
+
+
 #color_dark_wall = libtcod.Color(0, 0, 100)
 #color_dark_ground = libtcod.Color(50, 50, 150)
 color_dark_wall = libtcod.Color(100, 100, 100)
@@ -330,7 +333,7 @@ class Door:
 
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
-	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0):
+	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME):
 		self.max_hp = hp
 		self.hp = hp
 		self.defense = defense
@@ -341,6 +344,8 @@ class Fighter:
 		self.extra_strength = extra_strength
 		self.recharge_rate = recharge_rate
 		self.bonus_max_charge = bonus_max_charge
+		self.jump_array = jump_array
+		self.jump_recharge_time = jump_recharge_time
 
 	def take_damage(self, damage):
 		#apply damage if possible
@@ -380,6 +385,29 @@ class Fighter:
 
 	def increase_max_charge(self, amount):
 		self.bonus_max_charge += amount
+
+	def recharge_jumps(self):
+		temp_array = []
+		for i in range(len(self.jump_array)):
+			temp_array.append(max(0, self.jump_array[i]-1))		#reduce charge times on all jumps
+		self.jump_array = temp_array
+
+	# check if any of the jumps in the array are at 0. If so, they are available.
+	def jump_available(self):
+		available = False
+		for i in range(len(self.jump_array)):
+			if self.jump_array[i] == 0:
+				available = True
+		return available
+
+	# use up one jump and start its recharge clock
+	def make_jump(self):
+		jump_used = False
+		for i in range(len(self.jump_array)):
+			if self.jump_array[i] == 0 and jump_used == False:
+				self.jump_array[i] = self.jump_recharge_time
+				jump_used = True
+		
 
 class Decider:
 	def __init__(self, ai=None):
@@ -1783,7 +1811,7 @@ def handle_keys():
 
 
 			elif key_char == JUMP:
-				canJump = False
+				canJump = player.fighter.jump_available()
 				if canJump:
 					message_string = 'Jump in which direction?'
 					message(message_string, libtcod.orange)
@@ -3263,6 +3291,20 @@ def create_GUI_panel():
 	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '3')
 
 
+	#Display some stuff about jumps, woo!
+	jump_charged_color = libtcod.orange
+	jump_uncharged_color = libtcod.red
+	if  len(player.fighter.jump_array) > 0:
+		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT, "Jumps:")
+		for i in range(len(player.fighter.jump_array)):
+			if player.fighter.jump_array[i] == 0:
+				libtcod.console_set_default_foreground(panel, jump_charged_color)
+				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			else:
+				libtcod.console_set_default_foreground(panel, jump_uncharged_color)
+				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+
+
 	#LEVEL PANEL STUFF
 	libtcod.console_set_default_foreground(panel, libtcod.white)
 	libtcod.console_print_ex(panel, level_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
@@ -3376,7 +3418,7 @@ def initialise_game():
 	time = 1
 	
 	#create object representing the player
-	fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death)
+	fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
 	camera = Location(player.x, player.y)
@@ -3561,7 +3603,9 @@ while not libtcod.console_is_window_closed():
 						tempy = 1
 					somethingInWay = False
 					jumpee = None		#The thing you're jumping over...
-					if map[player.x + tempx][player.y + tempy].blocked:
+					if player.fighter.jump_available() == False:
+						message("Your legs are too tired to jump!")
+					elif map[player.x + tempx][player.y + tempy].blocked:
 						somethingInWay = True
 						message("There's a wall in the way!")
 					else: 
@@ -3580,6 +3624,7 @@ while not libtcod.console_is_window_closed():
 						else:
 							if jumpee is not None:
 								message ("You leap over the " + jumpee.name + "\'s head!")
+						player.fighter.make_jump()
 						player.move(jd.dx, jd.dy)
 
 		for object in objects:
@@ -3812,6 +3857,7 @@ while not libtcod.console_is_window_closed():
 
 
 		#recharge player jump? TODO well, how should jumping work...
+		player.fighter.recharge_jumps()
 
 		
 		#weapon degradation time!
