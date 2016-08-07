@@ -1647,7 +1647,7 @@ def get_names_under_mouse():
 # MAIN CONTROL HANDLING METHOD WOO
 
 def handle_keys():
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count
 
 	# key = libtcod.console_wait_for_keypress(True)
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -1779,13 +1779,20 @@ def handle_keys():
 			if key_char == 'p':
 				weapons_found = []
 				weapon_found = False
+				keys_found = []
 				for object in objects:
-					if object.x == player.x and object.y == player.y and object.weapon == True: # and object.name != player_weapon.name:
-					# new rule: you are allowed to pick up an item you already have if you really want? Might be relevant if we bring weapon degredation in
+					if object.x == player.x and object.y == player.y and object.weapon == True: 
 						weapons_found.append(object)
-
-
-				if len(weapons_found) == 1:
+					if object.x == player.x and object.y == player.y and object.name == 'key': 
+						keys_found.append(object)
+				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
+				if len(keys_found) > 0:
+					message('You snatch up the key.')
+					key_count = key_count + 1
+					for ki in keys_found:
+						objects.remove(ki)	
+			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
+				elif len(weapons_found) == 1:
 					new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
 					old_weapon = get_item_from_weapon(player_weapon)
 					player_weapon = new_weapon
@@ -2165,7 +2172,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera, alarm_level
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera, alarm_level, key_count
 
 	lev_gen = Level_Generator()
 
@@ -2192,6 +2199,7 @@ def make_map():
 	#calculate_nav_data()
 
 	alarm_level = 1
+	key_count = 0
 
 	# now create objects from object_data! This code resorting thing is actually getting kind of fun now
 	for od in object_data:
@@ -2672,9 +2680,11 @@ def monster_death(monster):
 			alarm_level = 0
 			message('A sudden silence descends as the alarms stop')
 
-		#security system drops a key?	#EDIT: NOT FOR NOW!
+		#security system drops a key?
 		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
 		objects.append(new_key)
+		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
+		reorder_objects()
 	else:	
 		message(monster.name.capitalize() + ' is dead!', libtcod.orange)
 	monster.char = '%'
@@ -2701,7 +2711,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level
+	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -2714,6 +2724,7 @@ def next_level():
 
 	dungeon_level += 1
 	alarm_level = dungeon_level
+	key_count = 0
 	time_level_started = time
 	message('You ascend to the next level!', libtcod.red)
 	if favoured_by_healer == True:
@@ -2916,11 +2927,12 @@ def create_shrine(x,y,god_type):
 
 
 
-def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART THE GAME IT DOESN'T KNOW THAT THE FINAL LEVEL IS THE FINAL LEVEL??? OK GOOD NEWS THOUGH IT ONLY SEEMS TO BE IF THE FINAL LEVEL IS THE FINAL LEVEL? MAYBE? SO HOPEFULLY WE CAN JUST LEAVE IT
+def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART THE GAME IT DOESN'T KNOW THAT THE FINAL LEVEL IS THE FINAL LEVEL??? OK GOOD NEWS THOUGH IT ONLY SEEMS TO BE IF THE FINAL LEVEL IS THE FIRST LEVEL? MAYBE? SO HOPEFULLY WE CAN JUST LEAVE IT
 
 
 	dungeon_level = 1
 	alarm_level = 1
+	key_count = 0
     	make_map()  #create a fresh new level!
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
@@ -3308,14 +3320,17 @@ def create_GUI_panel():
 	#LEVEL PANEL STUFF
 	libtcod.console_set_default_foreground(panel, libtcod.white)
 	libtcod.console_print_ex(panel, level_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Level: ' + str(dungeon_level))
+	'Level:  ' + str(dungeon_level))
 	libtcod.console_print_ex(panel, level_panel_x, 2, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Time:  ' + str(time))
+	'Time:   ' + str(time))
 	libtcod.console_print_ex(panel, level_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Alarm:  ' + str(alarm_level))
+	libtcod.console_print_ex(panel, level_panel_x, 4, libtcod.BKGND_NONE, libtcod.LEFT,
+	'Keys:   ' + str(key_count))
+
 
 	if favoured_by_healer:
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.LEFT,
+		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
 		'Favoured by ' + god_healer.name)
 
 	elif favoured_by_destroyer:
@@ -3385,13 +3400,36 @@ def reorder_objects():
 	#rearrange the world objects so they appear in the correct order.
 	#for now that order is: moving objects like the player and enemies drawn last, then 'keys', then weapons, then static objects like shrines and messages. Ummmm how do I do this
 	global objects		
-	#rough plan: move all the keys to the back. then, move all the weapons to the back. then, move all the non-movey things to do the back.
+	# Rough plan: move all the keys to the back. then, move all the weapons to the back. then, move all the non-movey things to do the back.
+	# Identifying elements to move is currently done in a very janky object-specific way, and is likely to break when I add new objects.
 	total = len(objects)
-	index = total -1
-	while index >= 0:
+	#index = total -1
+	#step 1: move all keys to back
+	index = 0
+	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		index = index -1 
+		ob = objects[index]
+		if ob.name == 'key':
+			ob.send_to_back()
+		index = index + 1 
+	#step 2: move all weapons to back
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objects[index]
+		if ob.weapon == True:
+			ob.send_to_back()
+		index = index + 1 
 
+	#step 3: move all non-movey backroundy stuff (non-key, non-weapon, non-obstructey) to back
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objects[index]
+		if ob.blocks == False and ob.weapon == False and ob.name != 'key':
+			ob.send_to_back()
+		index = index + 1 
+	# Well; let's see if this works..
 
 
 def initialise_game():
@@ -3646,6 +3684,7 @@ while not libtcod.console_is_window_closed():
 		possible_commands = []
 
 		weapon_found = False
+		key_found = False
 		stairs_found = False
 		shrine_found = False
 		floor_message_found = False
@@ -3654,7 +3693,12 @@ while not libtcod.console_is_window_closed():
 		for obj in objects_here:
 			if weapon_found == False and obj.weapon == True:
 				weapon_found = True
-				possible_commands.append('p to pick up')
+				if key_found == False:
+					possible_commands.append('p to pick up')
+			if key_found == False and obj.name == 'key':
+				key_found = True
+				if weapon_found== False:
+					possible_commands.append('p to pick up')
 			if stairs_found == False and obj.name == 'stairs':
 				stairs_found = True
 				possible_commands.append('< to ascend')
