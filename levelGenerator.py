@@ -394,6 +394,8 @@ class Level_Generator:
 #		elif dungeon_level >= 1 and dungeon_level <= 10:
 		#elif 1 == 0:		#temporarily cutting this out... let's see what happens		
 		
+		#THIS BIT IS WHERE MOST LEVELS GET THEIR DATA FROM
+		# GOODNESS KNOWS WHAT THE OTHER CASES ARE FOR
 		elif lev_set.level_type == 'modern' or lev_set.level_type == 'classic':
 
 			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators)
@@ -409,14 +411,16 @@ class Level_Generator:
 			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[4].center()
 
-			if lev_set.final_level is not True:
-				object_data.append(Object_Datum(new_x,new_y, 'security system'))
+			#if lev_set.final_level is not True:
+			#	object_data.append(Object_Datum(new_x,new_y, 'security system'))
 
 
 			if lev_set.boss is not None:
 				#boss_monster = create_monster(new_x,new_y,lev_set.boss)
 				#objects.append(boss_monster)
 				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
+
+			self.add_security_systems(map, lev_set, dungeon_level, object_data, rooms, elevators, lev_set.number_sec_systems)
 	
 
 
@@ -651,6 +655,35 @@ class Level_Generator:
 
 
 
+	def add_security_systems(self, map, lev_set, dungeon_level, object_data, rooms, elevators, number_sec_systems):
+		# create an initial shortlist of rooms where one could place security system
+		# for now, theshortlist is just anything that's not an elevator. This should probabl change later.
+		initial_shortlist = []
+		for room in rooms:
+			if room in elevators:
+				print "room in elevators..."
+			else:
+				initial_shortlist.append(room)
+		current_shortlist = initial_shortlist
+
+		for i in range(0, number_sec_systems):		
+			# choose a room at random, stick a security system in, strike it off the shortlist
+			num = libtcod.random_get_int(0, 0, len(current_shortlist)-1)
+			selected_room = current_shortlist[num]
+			self.add_security_system(map, lev_set, dungeon_level, object_data, rooms, elevators, selected_room)
+			current_shortlist.remove(selected_room)
+			# have we run out of rooms? then refresh the list, allow doubling up to happen.
+			if len(current_shortlist) == 0:
+				current_shortlist = initial_shortlist
+
+
+	def add_security_system(self, map, lev_set, dungeon_level, object_data, rooms, elevators, security_room):
+		(sec_x,sec_y) = security_room.center()
+		object_data.append(Object_Datum(sec_x,sec_y,'security system'))
+		self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
+	
+
+
 	def place_objects(self, room, lev_set, map, object_data, dungeon_level):
 		#global game_level_settings, dungeon_level, god_healer
 	
@@ -721,11 +754,11 @@ class Level_Generator:
 				object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
 				self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
 		# or maybe security systems?
-			elif num == 1:
-				if lev_set.final_level is not True:	#don't have sec systems on final levels?
-					(sec_x,sec_y) = room.center()
-					object_data.append(Object_Datum(sec_x,sec_y,'security system'))
-					self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '.')
+		#	elif num == 1:
+		#		if lev_set.final_level is not True:	#don't have sec systems on final levels?
+		#			(sec_x,sec_y) = room.center()
+		#			object_data.append(Object_Datum(sec_x,sec_y,'security system'))
+		#			self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '.')
 
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.

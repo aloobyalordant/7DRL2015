@@ -2659,10 +2659,12 @@ def monster_death(monster):
 					# 30% chance of dropping?? If it's not a special item
 					if item.name == 'ring of power':
 						drop_weapon(item)
+						reorder_objects()
 					else:
 						num = libtcod.random_get_int(0,0, 100)
 						if num <= CHANCE_OF_ENEMY_DROP:
 							drop_weapon(item)
+							reorder_objects()
 	
 
 	#transform it into a nasty corpse! it doesn't block, can't be
@@ -3421,12 +3423,20 @@ def reorder_objects():
 			ob.send_to_back()
 		index = index + 1 
 
-	#step 3: move all non-movey backroundy stuff (non-key, non-weapon, non-obstructey) to back
+	#step 3: move all non-movey backroundy stuff (non-key, non-weapon, non-obstructey), except for decorations, to back
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
 		ob = objects[index]
-		if ob.blocks == False and ob.weapon == False and ob.name != 'key':
+		if ob.blocks == False and ob.weapon == False and ob.name != 'key' and ob.name != 'decoration':
+			ob.send_to_back()
+		index = index + 1 	
+	#step 4: finally, decorations, the lowest of the low.
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objects[index]
+		if ob.name == 'decoration':
 			ob.send_to_back()
 		index = index + 1 
 	# Well; let's see if this works..

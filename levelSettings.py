@@ -9,7 +9,7 @@ MAX_ROOMS = 10
 MAX_ROOM_MONSTERS = 5
 MAX_MONSTERS = 30		# maxmum monsters per level? who knows
 
-DEFAULT_ENEMY_SPAWN_RATE = 400	#this is how often enemies spawn. lower number = more enemies!
+DEFAULT_ENEMY_SPAWN_RATE = 200	#this is how often enemies spawn. lower number = more enemies!
 
 # The thing that tells you what the levels should look like and what kinds of enemies there are.
 # We'll just be giving you the names of enemies, what those enemies look like is covered elsewhere.
@@ -76,7 +76,11 @@ class Level_Settings:
 			max_room_monsters = 1,
 			#enemy_spawn_rate = 100,
 			level_type = 'classic',
-			enemy_probabilities = enemy_probs)
+			enemy_probabilities = enemy_probs,
+			number_sec_systems = len(self.bigArray),
+			keys_required = len(self.bigArray),
+			initial_alarm_level = len(self.bigArray)
+			)
 		self.bigArray.append(levsr)
 		
 		# Level 2 has swordsmen, which are your basic mooks? And bomen.
@@ -88,12 +92,16 @@ class Level_Settings:
 		enemy_probs.append(('ninja', 5))
 		lev1 = Level_Setting(
 			max_rooms = 8,
-			room_max_size = 20,
-			room_min_size = 15,
+			room_max_size = 12,	#20,
+			room_min_size = 4,	#15,
 			max_room_monsters = 1,
 			#enemy_spawn_rate = 30,
 			level_type = 'modern',
-			enemy_probabilities = enemy_probs)
+			enemy_probabilities = enemy_probs,
+			number_sec_systems = len(self.bigArray),
+			keys_required = len(self.bigArray),
+			initial_alarm_level = len(self.bigArray)
+			)
 		
 		self.bigArray.append(lev1)
 
@@ -128,8 +136,11 @@ class Level_Settings:
 		lev3 = Level_Setting(
 			level_type = 'modern',
 			max_room_monsters = 1,
-			enemy_probabilities = enemy_probs
+			enemy_probabilities = enemy_probs,
 			#enemy_spawn_rate = 20
+			number_sec_systems = len(self.bigArray),
+			keys_required = len(self.bigArray),
+			initial_alarm_level = len(self.bigArray)
 			)
 		
 		self.bigArray.append(lev3)
@@ -152,11 +163,14 @@ class Level_Settings:
 			max_room_monsters = 1,
 #			boss = 'hammer sister',
 			boss = 'samurai',
-			enemy_probabilities = enemy_probs
+			enemy_probabilities = enemy_probs,
 			#enemy_spawn_rate = 20
+			number_sec_systems = len(self.bigArray),
+			keys_required = len(self.bigArray),
+			initial_alarm_level = len(self.bigArray)
 			)
 		
-#TODO		self.bigArray.append(levarena)
+		self.bigArray.append(levarena)
 
 
 		# Level 4 seems to have  it all.
@@ -173,9 +187,13 @@ class Level_Settings:
 			room_min_size = 10,
 			max_rooms = 8,
 			max_room_monsters = 5,
-			enemy_probabilities = enemy_probs)
+			enemy_probabilities = enemy_probs,
+			number_sec_systems = len(self.bigArray),
+			keys_required = len(self.bigArray),
+			initial_alarm_level = len(self.bigArray)
+			)
 		
-#TODO		self.bigArray.append(lev4)
+		self.bigArray.append(lev4)
 
 
 
@@ -205,7 +223,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_systems = 1, keys_required = 0, initial_alarm_level = 1):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -226,5 +244,8 @@ class Level_Setting:
 		for (name, prob) in enemy_probabilities:
 			total_prob += prob
 		self.total_enemy_prob = total_prob
+		self.number_sec_systems = number_sec_systems
+		self.keys_required = keys_required
+		self.initial_alarm_level = initial_alarm_level
 	
 		
