@@ -3763,7 +3763,7 @@ while not libtcod.console_is_window_closed():
 					player_near_elevator = True
 					# if player not authorised, tell them so. Unless they've been spoken at by an elevator recently.
 					if time_since_last_elevator_message > 10 and not ele.player_authorised :
-						message("\"Access to the next floor is restricted by security.\"")
+						message("\"Access to the next floor is restricted by security. " + str(lev_set.keys_required) + " keys required.\"")
 						time_since_last_elevator_message = 0
 			for (x,y) in ele.door_points:
 				if player.x == x and player.y == y:
@@ -3811,9 +3811,10 @@ while not libtcod.console_is_window_closed():
 			for object in objects:
 				if object.name == lev_set.boss:
 					level_complete = False
-		elif number_security_systems <= 0:
+		#elif number_security_systems <= 0:
+		#	level_complete = True
+		elif lev_set.keys_required <= key_count:
 			level_complete = True
-
 		if level_complete is True:
 			for ele in elevators:
 				if not ele.player_authorised:

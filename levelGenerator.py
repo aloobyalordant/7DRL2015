@@ -660,9 +660,18 @@ class Level_Generator:
 		# for now, theshortlist is just anything that's not an elevator. This should probabl change later.
 		initial_shortlist = []
 		for room in rooms:
-			if room in elevators:
-				print "room in elevators..."
-			else:
+			# Add room to shortlist if it doesn't intersect an elevator
+			# This is a bit of a hacky workaround but whatever.
+			room_near_elevator = False
+			for ele in elevators:
+				for (x,y) in ele.spawn_points:
+					#check this spawn point is not near the room.
+					near_room = True
+					if x < room.x1-1 or x > room.x2 + 1 or y < room.y1 - 1 or y > room.y2 + 1:
+						near_room = False
+					if near_room:
+						room_near_elevator = True
+			if room_near_elevator == False:
 				initial_shortlist.append(room)
 		current_shortlist = initial_shortlist
 
