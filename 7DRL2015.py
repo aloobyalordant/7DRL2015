@@ -3178,6 +3178,8 @@ def create_GUI_panel():
 	global fov_map, color_dark_wall, color_light_wall
 	global color_dark_ground, color_light_ground
 	global fov_recompute
+	global game_level_settings, dungeon_level
+	lev_set = game_level_settings.get_setting(dungeon_level)
 
 	#GUI STUFF
 	#prepare to render the GUI panel
@@ -3328,7 +3330,7 @@ def create_GUI_panel():
 	libtcod.console_print_ex(panel, level_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Alarm:  ' + str(alarm_level))
 	libtcod.console_print_ex(panel, level_panel_x, 4, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Keys:   ' + str(key_count))
+	'Keys:   ' + str(key_count) + '/' + str(lev_set.keys_required))
 
 
 	if favoured_by_healer:
