@@ -491,8 +491,9 @@ class BasicMonster:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 			else:	
+				#As we've now spotted the player, stop being on guard duty
+				self.guard_duty = False
 				# ok first question. where is the player and how do we get to them?
-
 				dx = 0
 				dy = 0
 
@@ -1040,6 +1041,8 @@ class Rook_AI:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
 			else:	
+				#As we've now spotted the player, stop being on guard duty
+				self.guard_duty = False
 				# ok first question. where is the player and how do we get to them?
 
 				dx = 0
@@ -1489,7 +1492,7 @@ class BasicAttack:
 			self.faded_color = attacker.fighter.faded_attack_color
 
 	def inflict_damage(self):
-		global player_hit_something, alarm_level
+		global player_hit_something, alarm_level, spawn_timer
 		# only attack if the attack is still active
 		if self.lifespan > 0:
 			for target in objects:
@@ -1510,6 +1513,8 @@ class BasicAttack:
 							target.raising_alarm = True
 							alarm_level += 2
 							message('The security system sounds a loud alarm!')
+							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
+							spawn_timer = 1	#This is not always working as I'd like???
 				elif target.door is not None and target.name != 'elevator door' and target.x == self.owner.x and target.y == self.owner.y:
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.door.take_damage(self.damage)
@@ -2713,7 +2718,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count
+	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -2725,7 +2730,7 @@ def next_level():
 
 
 	dungeon_level += 1
-	alarm_level = dungeon_level
+	alarm_level = dungeon_level + 1
 	key_count = 0
 	time_level_started = time
 	message('You ascend to the next level!', libtcod.red)
@@ -2782,6 +2787,7 @@ def next_level():
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 	enemy_spawn_rate = lev_set.enemy_spawn_rate
+	spawn_timer = int(enemy_spawn_rate/alarm_level)
 
 	#for ele in elevators:			#open the doors when the level starts?
 	#	ele.set_doors_open(True)
@@ -3445,7 +3451,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -3523,6 +3529,7 @@ initialise_game()
 lev_set = game_level_settings.get_setting(dungeon_level)
 
 enemy_spawn_rate = lev_set.enemy_spawn_rate
+spawn_timer = int(enemy_spawn_rate/alarm_level)
 
 time_since_last_elevator_message = 0
 
@@ -3557,6 +3564,7 @@ while not libtcod.console_is_window_closed():
 		
 		
 		time += 1
+		spawn_timer -= 1
 		update_nav_data()
 
 		player_hit_something = False
@@ -3943,7 +3951,11 @@ while not libtcod.console_is_window_closed():
 
 
 		# oh let's start creating enemies at random intervals? 
-		if alarm_level > 0 and time % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
+		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
+		if alarm_level > 0 and spawn_timer <= 0:
+			#reset timer
+			spawn_timer = int(enemy_spawn_rate/alarm_level)
+
 		#	reorder_objects() #temp test
 		#	print 'tick'
 		#	print 'enemy spawn rate = ' + str(enemy_spawn_rate)
