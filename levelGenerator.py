@@ -689,7 +689,9 @@ class Level_Generator:
 	def add_security_system(self, map, lev_set, dungeon_level, object_data, rooms, elevators, security_room):
 		(sec_x,sec_y) = security_room.center()
 		object_data.append(Object_Datum(sec_x,sec_y,'security system'))
-		self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
+		# commenting this out, because now that sec systems can activate if they see you for too long, it's kind of 
+		# fun to stumble upon them by accident. Hopefully.
+		#self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
 	
 
 

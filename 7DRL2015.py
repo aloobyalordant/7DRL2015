@@ -126,7 +126,7 @@ MSG_HEIGHT = MESSAGE_PANEL_HEIGHT-1
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -156,7 +156,8 @@ class Object:
 		self.currently_invisible = currently_invisible	# I am introducing this as a hack 
 								#to make elevator doors go away. Instead of actually going away, 									#they'll be made invisible, not blocking and not blocking light
 								# (different from being invisible). Video games!
-		self.raising_alarm = raising_alarm
+		#self.raising_alarm = raising_alarm
+		self.alarmer = alarmer
 
 	def move(self, dx, dy):
 		if not is_blocked(self.x + dx, self.y + dy):
@@ -429,6 +430,63 @@ class Decider:
 	def refresh(self):
 		self.decision_made = False
 		self.decision = None
+
+# Something that can spot the player and raise/lower the alarm
+class Alarmer:
+	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = libtcod.dark_blue, suspicious_color = libtcod.white, alarmed_color = libtcod.dark_red):
+		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
+		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
+		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
+		self.alarm_value = alarm_value		# How much to raise the alar by when you know 
+		self.dead_alarm_value = dead_alarm_value	# How much of the alarm stays behind after you are destroyed.
+		self.idle_color = idle_color
+		self.suspicious_color = suspicious_color
+		self.alarmed_color = alarmed_color
+		self.alarm_countdown = alarm_time
+		self.pre_alarm_countdown = pre_alarm_time
+		self.prev_suspicious = False
+		
+
+	def update(self, intruder_spotted):
+		if self.status == 'suspicious':
+			self.prev_suspicious = True
+		else:
+			self.prev_suspicious = False
+
+		if intruder_spotted:
+			if self.status =='idle':
+				self.status = 'pre-suspicious'
+				self.pre_alarm_countdown = self.pre_alarm_time
+				if self.pre_alarm_countdown <= 0:
+					self.status = 'suspicious'
+			elif self.status == 'pre-suspicious':
+				self.pre_alarm_countdown -= 1
+				if self.pre_alarm_countdown <= 0:
+					self.status = 'suspicious'
+					self.alarm_countdown = self.alarm_time
+			elif self.status == 'suspicious':
+				self.alarm_countdown -= 1
+				if self.alarm_countdown <= 0:
+					self.status = 'raising-alarm'
+			elif self.status ==  'raising-alarm':
+				self.status = 'alarm-raised'
+			# if self.status = 'alarm-raised', don't do anything
+
+		else:
+			#if self.status =='idle', keep doing what you're doing
+			if self.status == 'suspicious' or self.status == 'pre-suspicious':
+				self.status = 'idle'	# false alarm, go back to sleep
+			elif self.status ==  'raising-alarm':
+				self.status = 'alarm-raised'
+			# if self.status == 'alarm-raised', keep being alarmed!
+		
+
+		
+	def get_hit(self):		# If you get hit, raise the alarm if you haven't already! 
+		if self.status != 'alarm-raised':
+			self.status = 'raising-alarm'
+
+
 
 class Decision:
 	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None):
@@ -1496,28 +1554,33 @@ class BasicAttack:
 		# only attack if the attack is still active
 		if self.lifespan > 0:
 			for target in objects:
-				if target.fighter is not None and target.x == self.owner.x and target.y == self.owner.y:
-					if self.attacker is not None:
-						if target is player:
-							message('The ' + self.attacker.name.capitalize() + ' hits!', libtcod.red)	
-						elif self.attacker is player:
-							message('You hit the ' + target.name.capitalize() + '!')
-							player_hit_something = True	
-						else:
-							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
+				if target.x == self.owner.x and target.y == self.owner.y:
+					if target.fighter is not None:
+						if self.attacker is not None:
+							if target is player:
+								message('The ' + self.attacker.name.capitalize() + ' hits!', libtcod.red)	
+							elif self.attacker is player:
+								message('You hit the ' + target.name.capitalize() + '!')
+								player_hit_something = True	
+							else:
+								message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
 				
-					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
-					target.fighter.take_damage(self.damage)
-					if target.name == 'security system':
-						if target.raising_alarm is False:
-							target.raising_alarm = True
-							alarm_level += 2
-							message('The security system sounds a loud alarm!')
-							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
-							spawn_timer = 1	#This is not always working as I'd like???
-				elif target.door is not None and target.name != 'elevator door' and target.x == self.owner.x and target.y == self.owner.y:
-					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
-					target.door.take_damage(self.damage)
+						libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+						target.fighter.take_damage(self.damage)
+#					if target.name == 'security system':
+#						if target.raising_alarm is False:
+#							target.raising_alarm = True
+#							alarm_level += 2
+#							message('The security system sounds a loud alarm!')
+#							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
+#							spawn_timer = 1	#This is not always working as I'd like???
+					elif target.door is not None and target.name != 'elevator door':
+						libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+						target.door.take_damage(self.damage)
+
+					if target.alarmer is not None:
+						target.alarmer.get_hit()
+
 
 	def fade(self): 
 		# reduce lifespan
@@ -2061,6 +2124,7 @@ def place_objects(room):
 
 
 def create_monster(x,y, name, guard_duty = False):
+	global number_alarmers
 	if name == 'strawman':
 		# let's make a strawman!
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
@@ -2157,12 +2221,16 @@ def create_monster(x,y, name, guard_duty = False):
 		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'O', 'security system', libtcod.dark_blue, blocks=True, fighter=strawman_component, decider=decider_component, always_visible = True)
+		alarmer_component = Alarmer()
+		monster = Object(x, y, 'O', 'security system', libtcod.dark_blue, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
 
 
 
 	else:
 		monster = None
+	
+	if monster.alarmer is not None:
+		number_alarmers += 1
 
 	return monster
 
@@ -2177,14 +2245,14 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_security_systems, camera, alarm_level, key_count
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count
 
 	lev_gen = Level_Generator()
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 	level_data = lev_gen.make_level(dungeon_level, lev_set)
 
-	number_security_systems = 0		# keeps track of how many security systems need to be destroyed before you can get out?
+	number_alarmers = 0		# how many things in the level do stuff with the alarm? If this becomes 0, all alarms stuff
 
 	map = level_data.map
 	player.x = level_data.player_start_x
@@ -2235,7 +2303,7 @@ def make_map():
 		elif  od.name == 'security system':
 			monster = create_monster(od.x,od.y, 'security system', guard_duty = True)
 			objects.append(monster)	
-			number_security_systems = number_security_systems + 1	
+			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door':
 			if od.info == 'horizontal':
 				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
@@ -2254,6 +2322,7 @@ def make_map():
 			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True)
 			objects.append(floor_message)
 			floor_message.send_to_back()
+			
 
 	# elevator data because elevators are complicated! Do you know how to build an elevator? I sure don't!
 	for ele in elevators:
@@ -2654,7 +2723,7 @@ def player_death(player):
 	#player.color = libtcod.dark_red
  
 def monster_death(monster):
-	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_security_systems, alarm_level
+	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_alarmers, alarm_level
 	# drop the weapon the monster was carrying, if it had one.
 	if monster.decider:
 		if monster.decider.ai:
@@ -2674,21 +2743,21 @@ def monster_death(monster):
 
 	#transform it into a nasty corpse! it doesn't block, can't be
 	#attacked and doesn't move
-	if monster.name == 'security system':
-		number_security_systems -= 1
-		message(monster.name.capitalize() + ' is destroyed! ' + str(number_security_systems) + ' systems remain.', libtcod.orange)
-		
+	#if monster.name == 'security system':
+	if monster.alarmer is not None:
+		number_alarmers -= 1
+		message(monster.name.capitalize() + ' is destroyed!', libtcod.orange)		
 		#decrease the alarm level alittle bit! Unless that was the last one, in which case set it to 0
-		if number_security_systems > 0:
+		if number_alarmers > 0:
 			if alarm_level > 0:
-				alarm_level -= 1
-				message('The alarms get a little quieter')
+				alarm_level += (-monster.alarmer.alarm_value + monster.alarmer.dead_alarm_value)
+				message('The alarms get a little quieter.')
 		else:
 			alarm_level = 0
-			message('A sudden silence descends as the alarms stop')
+			message('A sudden silence descends as the alarms stop.')
 
-		#security system drops a key?
-		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False)
+		#security system drops a key?	# TODO this should probably get separated from 'being an alarmer' at some point
+		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
 		objects.append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
 		reorder_objects()
@@ -2813,7 +2882,7 @@ def initialize_fov():
 		for x in range(MAP_WIDTH):
 			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
 
-
+	print "FOV intialized"
 
 
 def get_weapon_from_item(item, bonus_max_charge= 0):
@@ -3603,6 +3672,8 @@ while not libtcod.console_is_window_closed():
 				tested_by_deliverer = False
 
 
+
+
 		
 		# decide if there are any 'punch targets'. This is an ordered pair consisting of a fighter wants to move into a space, and another fighter that is currently in that space. If the second fighter doesn't move, they're gonna get punched!
 		# also decide if anyone is trying to open a door! (By walking into it)
@@ -3838,11 +3909,32 @@ while not libtcod.console_is_window_closed():
 				message ('The ' + puncher.name + ' punches the ' + victim.name + ' in the face! The ' + victim.name + ' is stunned!')
 
 
+
+
 		# now do door openings!
 		for (opener, victim) in potential_open_list:
+			print "opening door"
 			victim.door.open()
-			
+			# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
+			libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+		
 
+
+		spotted = False
+
+		#UPDATE THE ALARMERS
+		for ob in objects:
+			if ob.alarmer is not None:
+				if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):
+					ob.alarmer.update(True)
+					spotted = True
+				else: 
+					ob.alarmer.update(False)
+
+		if spotted == True:
+			print "Alarmage status: spotted"
+		else: 
+			print "Alarmage status: NOT spotted"
 
 		# now create attacks!
 		deletionList = []
@@ -3950,6 +4042,32 @@ while not libtcod.console_is_window_closed():
 
 
 
+		# Now do alarm soundings! and other alarmer-based stuff
+		for ob in objects:
+			if ob.alarmer is not None:
+				#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+
+				# first, update the alarmer
+				
+				#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+
+				# next, do things depending on the alarmer's state
+				if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
+					ob.color = ob.alarmer.idle_color
+				elif ob.alarmer.status == 'suspicious':
+					if ob.alarmer.prev_suspicious == False:
+						message('The ' + ob.name + ' is suspicious!', libtcod.orange)		
+						ob.color = ob.alarmer.suspicious_color
+
+				elif ob.alarmer.status == 'raising-alarm':
+					alarm_level += ob.alarmer.alarm_value
+					spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
+					message('The ' + ob.name + ' sounds a loud alarm!', libtcod.red)
+					ob.color = ob.alarmer.alarmed_color
+				elif ob.alarmer.status == 'alarm-raised':
+					ob.color = ob.alarmer.alarmed_color	
+
+
 		# oh let's start creating enemies at random intervals? 
 		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
 		if alarm_level > 0 and spawn_timer <= 0:
@@ -3971,7 +4089,9 @@ while not libtcod.console_is_window_closed():
 				for object in objects:
 					if object.name == lev_set.boss:
 						level_complete = False
-			elif number_security_systems <= 0:
+			#elif number_security_systems <= 0:
+			#	level_complete = True
+			elif lev_set.keys_required <= key_count:
 				level_complete = True
 
 			# are there too many monsters?
