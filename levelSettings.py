@@ -31,7 +31,8 @@ class Level_Settings:
 			max_rooms = 5,
 			level_type = 'classic',
 			max_room_monsters = 3,
-			enemy_probabilities = enemy_probs)
+			enemy_probabilities = enemy_probs,
+			initial_alarm_level = 0)
 
 		self.bigArray.append(lev0)
 

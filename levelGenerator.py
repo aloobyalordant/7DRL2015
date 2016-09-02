@@ -679,16 +679,20 @@ class Level_Generator:
 			# choose a room at random, stick a security system in, strike it off the shortlist
 			num = libtcod.random_get_int(0, 0, len(current_shortlist)-1)
 			selected_room = current_shortlist[num]
-			self.add_security_system(map, lev_set, dungeon_level, object_data, rooms, elevators, selected_room)
+			# Make it be a thing that drops keys!
+			self.add_security_system(map, lev_set, dungeon_level, object_data, selected_room, True)
 			current_shortlist.remove(selected_room)
 			# have we run out of rooms? then refresh the list, allow doubling up to happen.
 			if len(current_shortlist) == 0:
 				current_shortlist = initial_shortlist
 
 
-	def add_security_system(self, map, lev_set, dungeon_level, object_data, rooms, elevators, security_room):
+	def add_security_system(self, map, lev_set, dungeon_level, object_data, security_room, drops_key):
 		(sec_x,sec_y) = security_room.center()
-		object_data.append(Object_Datum(sec_x,sec_y,'security system'))
+		if drops_key:
+			object_data.append(Object_Datum(sec_x,sec_y,'security system', 'drops-key'))
+		else: 
+			object_data.append(Object_Datum(sec_x,sec_y,'security system'))
 		# commenting this out, because now that sec systems can activate if they see you for too long, it's kind of 
 		# fun to stumble upon them by accident. Hopefully.
 		#self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
@@ -765,12 +769,36 @@ class Level_Generator:
 				object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
 				self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
 		# or maybe security systems?
-		#	elif num == 1:
-		#		if lev_set.final_level is not True:	#don't have sec systems on final levels?
+			elif num == 1:
+				if lev_set.final_level is not True:	#don't have sec systems on final levels?
+					keyval = libtcod.random_get_int(0,0,4)  #maybe drop a key
+					if keyval == 0:
+						self.add_security_system(map, lev_set, dungeon_level, object_data, room, True)
+					else:
+						self.add_security_system(map, lev_set, dungeon_level, object_data, room, False)
+				
+					#chance of key dropping nearby?
+					keyval = libtcod.random_get_int(0,0,2)  #maybe drop a key
+					if keyval == 0:
+						(sec_x,sec_y) = room.center()
+						xval= libtcod.random_get_int(0,room.x1,room.x2) 
+						yval= libtcod.random_get_int(0,room.y1,room.y2) 
+						object_data.append(Object_Datum(xval,yval,'key'))
+						#TODO Make the code actually drop the key in a random place in the room.
+					
+
+				
 		#			(sec_x,sec_y) = room.center()
 		#			object_data.append(Object_Datum(sec_x,sec_y,'security system'))
 		#			self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '.')
 
+		# Orrr maybe just drop a key??
+		#	elif num == 2:
+		#		keyval = libtcod.random_get_int(0,0,1)
+		#		if lev_set.final_level is not True:	#don't have sec systems on final levels?
+		#			if keyval == 0:
+		#				(sec_x,sec_y) = room.center()
+		#				object_data.append(Object_Datum(sec_x,sec_y,'key'))
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.
 	def decorate_room(self, room, lev_set, map, object_data, dungeon_level,symbol = '~'):
@@ -1158,6 +1186,22 @@ class Level_Generator:
 					[0,0,D,0,0],
 					[0,0,D,0,0],
 					[0,0,1,1,1]]
+
+		elif code == 'Ominous-Statues':
+			A = Object_Name('monster', 'strawman')
+			#B = Object_Name('strawman', 'sai', 'w')
+			#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+			seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,A,0,0,A,0,0,A,0,0,A,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,A,0,0,A,0,0,A,0,0,A,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,A,0,0,A,0,0,A,0,0,A,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,0,0,0,0]]
+
 
 		else:
 			H = Object_Name('shrine', 'healer')	

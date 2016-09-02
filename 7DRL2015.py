@@ -126,7 +126,7 @@ MSG_HEIGHT = MESSAGE_PANEL_HEIGHT-1
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, drops_key = False):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -158,6 +158,7 @@ class Object:
 								# (different from being invisible). Video games!
 		#self.raising_alarm = raising_alarm
 		self.alarmer = alarmer
+		self.drops_key = drops_key
 
 	def move(self, dx, dy):
 		if not is_blocked(self.x + dx, self.y + dy):
@@ -1856,7 +1857,7 @@ def handle_keys():
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0:
 					message('You snatch up the key.')
-					key_count = key_count + 1
+					key_count = key_count + len(keys_found)
 					for ki in keys_found:
 						objects.remove(ki)	
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
@@ -1909,7 +1910,9 @@ def handle_keys():
 					return 'didnt-take-turn'
 
 				elif key_char in player_weapon.command_list and player_weapon.current_charge < player_weapon.default_usage:
-					message('Cannot attack, need to recharge (current charge ' + str(player_weapon.current_charge) + ', ' + str(player_weapon.default_usage) + ' required).')
+#					message('Cannot attack, need to recharge (current charge ' + str(player_weapon.current_charge) + ', ' + str(player_weapon.default_usage) + ' required).', libtcod.orange
+					message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange
+)
 					return 'didnt-take-turn'
 			# Cutting out all this 'stars' business because these days it's all about elevators!
 			#	elif key_char == '<':
@@ -2286,7 +2289,11 @@ def make_map():
 			weapon.send_to_back()
 		elif od.name == 'monster' or od.name == 'boss':		# maybe these cases will be treated differently in future
 			monster = create_monster(od.x,od.y, od.info, guard_duty = True)
-			objects.append(monster)			
+			objects.append(monster)	
+			# Hackiest of all hacks - make the tutorial rook drop a key
+			if dungeon_level == 0:
+				if od.info == 'rook':
+					monster.drops_key = True
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
 			objects.append(strawman)
@@ -2302,6 +2309,8 @@ def make_map():
 			shrine.send_to_back()
 		elif  od.name == 'security system':
 			monster = create_monster(od.x,od.y, 'security system', guard_duty = True)
+			if od.info == 'drops-key':
+				monster.drops_key = True
 			objects.append(monster)	
 			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door':
@@ -2314,6 +2323,9 @@ def make_map():
 				map[od.x][od.y].block_sight = True
 				objects.append(door)
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
+		elif od.name == 'key':
+			new_key = Object(od.x, od.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
+			objects.append(new_key)
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
 			objects.append(floor_message)
@@ -2756,11 +2768,7 @@ def monster_death(monster):
 			alarm_level = 0
 			message('A sudden silence descends as the alarms stop.')
 
-		#security system drops a key?	# TODO this should probably get separated from 'being an alarmer' at some point
-		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
-		objects.append(new_key)
-		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
-		reorder_objects()
+
 	else:	
 		message(monster.name.capitalize() + ' is dead!', libtcod.orange)
 	monster.char = '%'
@@ -2771,6 +2779,13 @@ def monster_death(monster):
 	monster.name = 'remains of ' + monster.name
 	monster.send_to_back()
 	garbage_list.append(monster)
+
+	#monster may drop a key?
+	if monster.drops_key == True:
+		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
+		objects.append(new_key)
+		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
+		reorder_objects()
 
 	#killing a monster affects some test stuff for the god of destruction
 	if tested_by_destroyer:
@@ -2882,7 +2897,7 @@ def initialize_fov():
 		for x in range(MAP_WIDTH):
 			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
 
-	print "FOV intialized"
+	#print "FOV intialized"
 
 
 def get_weapon_from_item(item, bonus_max_charge= 0):
@@ -3271,7 +3286,17 @@ def create_GUI_panel():
 
 
 	#ATTACK PANEL STUFF
-	libtcod.console_set_default_foreground(panel, libtcod.white)
+	#change color based on weapon status
+	attack_panel_default_color = libtcod.white
+	if player_weapon.durability <= 0:
+		attack_panel_default_color = libtcod.red
+	elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
+		attack_panel_default_color = libtcod.orange
+	elif player_weapon.current_charge < player_weapon.default_usage:
+		attack_panel_default_color = libtcod.blue
+
+
+	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 	if len(player_weapon.name) <= attack_panel_width - 10:
 		libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Weapon: ' + str(player_weapon.name).upper())
@@ -3282,13 +3307,13 @@ def create_GUI_panel():
 	# list some attacks out.
 	attack_list = str(player_weapon.command_list)
 	libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT, "Attacks:")
-	# set colors based on weapon durability
-	if player_weapon.durability <= 0:
-			libtcod.console_set_default_foreground(panel, libtcod.orange)
-	elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
-			libtcod.console_set_default_foreground(panel, libtcod.orange)
-	else: 
-			libtcod.console_set_default_foreground(panel, libtcod.white)
+	## set colors based on weapon durability
+	#if player_weapon.durability <= 0:
+	#		libtcod.console_set_default_foreground(panel, libtcod.orange)
+	#elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
+	#		libtcod.console_set_default_foreground(panel, libtcod.orange)
+	#else: 
+	#		libtcod.console_set_default_foreground(panel, libtcod.white)
 		
 	if ATTCKUPLEFT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
@@ -3323,7 +3348,7 @@ def create_GUI_panel():
 	if ATTCKDOWNRIGHT in attack_list:
 			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
 		ATTCKDOWNRIGHT)
-	libtcod.console_set_default_foreground(panel, libtcod.white)
+	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 
 	# Display weapon charge details.
 	uncharged_color = libtcod.blue
@@ -3350,7 +3375,8 @@ def create_GUI_panel():
 
 
 	
-	libtcod.console_set_default_foreground(panel, libtcod.white)
+	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
+
 #	if player_weapon.current_charge < player_weapon.default_usage:
 #	else:
 #	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,
@@ -3564,7 +3590,7 @@ def initialise_game():
 	player_action = None
 	
 	#a warm welcoming message!
-	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', libtcod.red)
+	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', libtcod.cyan)
 
 
 	libtcod.console_set_default_foreground(con, libtcod.white)
@@ -3802,7 +3828,7 @@ while not libtcod.console_is_window_closed():
 			
 		if floor_message_found == True:
 			message('You see a message on the floor:')
-			message('\"' + floor_message_text + '\"')
+			message('\"' + floor_message_text + '\"', libtcod.cyan)
 
 		if len(names) > 0:
 			names = ', '.join(names)
@@ -3913,7 +3939,7 @@ while not libtcod.console_is_window_closed():
 
 		# now do door openings!
 		for (opener, victim) in potential_open_list:
-			print "opening door"
+			#print "opening door"
 			victim.door.open()
 			# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
 			libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
@@ -3931,10 +3957,10 @@ while not libtcod.console_is_window_closed():
 				else: 
 					ob.alarmer.update(False)
 
-		if spotted == True:
-			print "Alarmage status: spotted"
-		else: 
-			print "Alarmage status: NOT spotted"
+		#if spotted == True:
+		#	print "Alarmage status: spotted"
+		#else: 
+		#	print "Alarmage status: NOT spotted"
 
 		# now create attacks!
 		deletionList = []
@@ -4100,7 +4126,9 @@ while not libtcod.console_is_window_closed():
 				if object.fighter is not None:
 					total_monsters = total_monsters + 1
 
-			if level_complete == False and total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
+			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
+			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
+			if total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
 				elevator_shortlist = []
 				if lev_set.level_type == 'arena':	#pick one elvator at random
 					choice =  libtcod.random_get_int(0, 0, len(elevators)-1)
