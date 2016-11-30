@@ -223,12 +223,19 @@ class Object:
 		objects.remove(self)
 		objects.insert(0, self)
 
+	def send_to_almost_back(self):
+		#make this object be drawn just above the decorations but below all other objects.
+		global objects, decoration_count
+		objects.remove(self)
+		objects.insert(decoration_count, self)
 
 	def send_to_front(self):
 		#make this object be drawn last, so all others appear below it if they're in the same tile.
 		global objects
 		objects.remove(self)
 		objects.append(self)
+
+
 
 	def stun(self):
 		if self.decider:
@@ -1592,7 +1599,7 @@ class BasicAttack:
 			attack_object = self.owner
 			attack_object.color = self.faded_color
 			attack_object.name = 'attack'
-			attack_object.send_to_back()
+			attack_object.send_to_almost_back()			
 		# if lifespan is down to 0, destroy the attack
 		if self.lifespan < 0:
 			self.existing = False
@@ -2249,7 +2256,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count
 
 	lev_gen = Level_Generator()
 
@@ -2277,6 +2284,7 @@ def make_map():
 
 	alarm_level = 1
 	key_count = 0
+	decoration_count = 0
 
 	# now create objects from object_data! This code resorting thing is actually getting kind of fun now
 	for od in object_data:
@@ -2335,6 +2343,7 @@ def make_map():
 			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True)
 			objects.append(floor_message)
 			floor_message.send_to_back()
+			decoration_count += 1
 			
 
 	# elevator data because elevators are complicated! Do you know how to build an elevator? I sure don't!
@@ -3530,14 +3539,24 @@ def reorder_objects():
 			ob.send_to_back()
 		index = index + 1 
 
-	#step 3: move all non-movey backroundy stuff (non-key, non-weapon, non-obstructey), except for decorations, to back
+	#step 3: move all non-movey backroundy stuff (non-key, non-weapon, non-obstructey), except for decorations and attacks, to back
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
 		ob = objects[index]
-		if ob.blocks == False and ob.weapon == False and ob.name != 'key' and ob.name != 'decoration':
+		if ob.blocks == False and ob.weapon == False and ob.name != 'key' and ob.name != 'decoration' and not ob.attack:
 			ob.send_to_back()
 		index = index + 1 	
+
+	#step 3.5: move all attacks to back
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objects[index]
+		if ob.attack:
+			ob.send_to_back()
+		index = index + 1 
+
 	#step 4: finally, decorations, the lowest of the low.
 	index = 0
 	while index < total: 				# >= 0:	
