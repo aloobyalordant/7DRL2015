@@ -1886,7 +1886,8 @@ def handle_keys():
 					#handle_keys()	# why do I get the feeling I am going to regret this
 
 
-			elif key_char == JUMP:
+			#elif key_char == JUMP:
+			elif key.vk == libtcod.KEY_SPACE:		#todo make this mappable somehow
 				canJump = player.fighter.jump_available()
 				if canJump:
 					message_string = 'Jump in which direction?'

@@ -80,7 +80,7 @@ class Level_Settings:
 			enemy_probabilities = enemy_probs,
 			number_sec_systems = len(self.bigArray),
 			keys_required = len(self.bigArray),
-			initial_alarm_level = len(self.bigArray)
+			initial_alarm_level = 0	#len(self.bigArray)
 			)
 		self.bigArray.append(levsr)
 		
