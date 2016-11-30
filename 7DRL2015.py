@@ -2249,7 +2249,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set
 
 	lev_gen = Level_Generator()
 
@@ -2870,6 +2870,7 @@ def next_level():
 				#print "bloo (" + str(x) + "," + str(y) + ")" 
     	initialize_fov()
 
+
 	lev_set = game_level_settings.get_setting(dungeon_level)
 	enemy_spawn_rate = lev_set.enemy_spawn_rate
 	spawn_timer = int(enemy_spawn_rate/alarm_level)
@@ -3021,9 +3022,9 @@ def create_shrine(x,y,god_type):
 
 
 def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART THE GAME IT DOESN'T KNOW THAT THE FINAL LEVEL IS THE FINAL LEVEL??? OK GOOD NEWS THOUGH IT ONLY SEEMS TO BE IF THE FINAL LEVEL IS THE FIRST LEVEL? MAYBE? SO HOPEFULLY WE CAN JUST LEAVE IT
+	global dungeon_level
 
-
-	dungeon_level = 1
+	dungeon_level = 0
 	alarm_level = 1
 	key_count = 0
     	make_map()  #create a fresh new level!
@@ -3270,6 +3271,8 @@ def create_GUI_panel():
 	global color_dark_ground, color_light_ground
 	global fov_recompute
 	global game_level_settings, dungeon_level
+
+
 	lev_set = game_level_settings.get_setting(dungeon_level)
 
 	#GUI STUFF
