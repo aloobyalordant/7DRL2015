@@ -1723,7 +1723,7 @@ def get_names_under_mouse():
 # MAIN CONTROL HANDLING METHOD WOO
 
 def handle_keys():
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level
 
 	# key = libtcod.console_wait_for_keypress(True)
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -1960,8 +1960,13 @@ def handle_keys():
 						favoured_by_deliverer = False
 						tested_by_deliverer = False
 						if current_god.god_type.type == 'healer':
-							player.fighter.heal(3)
-							message("You feel a little better")
+							if already_healed_this_level == False:
+								if player.fighter.hp < player.fighter.max_hp:
+									already_healed_this_level = True
+									player.fighter.heal(3)
+									message("You feel a little better")
+							else:
+								message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', libtcod.orange)
 							favoured_by_healer = True
 						elif current_god.god_type.type == 'destroyer':
 							tested_by_destroyer = True
@@ -2812,7 +2817,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer
+	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer,  already_healed_this_level
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -2855,6 +2860,8 @@ def next_level():
 		message('You feel faster!')
 		favoured_by_deliverer = False
 		tested_by_deliverer = False
+
+	already_healed_this_level = False
 
 	objects = [player]
 
@@ -3569,7 +3576,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -3589,6 +3596,7 @@ def initialise_game():
 	god_deliverer = God(god_type = God_Deliverer())
 	tested_by_deliverer = False
 	favoured_by_deliverer = False
+	already_healed_this_level = False
 	time = 1
 	
 	#create object representing the player
