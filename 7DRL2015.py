@@ -1,7 +1,7 @@
 import libtcodpy as libtcod
 import math
 import textwrap
-from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer,Weapon_Ring_Of_Power
+from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
@@ -1134,20 +1134,12 @@ class Rook_AI:
 					# yes, this isn't great code design. It's a 7drl, deal with it.
 					if dx == 0 and dy == -1:
 						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
-				#	elif dx == 1 and dy == -1:
-				#		abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
 					elif dx == 1 and dy == 0:
 						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
-				#	elif dx == 1 and dy == 1:
-				#		abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
 					elif dx == 0 and dy == 1:
 						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
-				#	elif dx == -1 and dy == 1:
-				#		abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
 					elif dx == -1 and dy == 0:
 						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
-				#	elif dx == -1 and dy == -1:
-				#		abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 					else: 
 						abstract_attack_data = None
 					
@@ -2925,10 +2917,12 @@ def get_weapon_from_item(item, bonus_max_charge= 0):
 
 def get_weapon_from_name(name, bonus_max_charge = 0):
 	if name == 'sword':
+		#new_weapon =  Weapon_Wierd_Sword()
 		new_weapon =  Weapon_Sword()
 	elif name == 'dagger':
 		new_weapon =  Weapon_Dagger()
 	elif name == 'bo staff':
+		#new_weapon =  Weapon_Wierd_Staff()
 		new_weapon =  Weapon_Staff()
 	elif name == 'spear':
 		new_weapon =  Weapon_Spear()
@@ -3607,6 +3601,7 @@ def initialise_game():
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
+	#player_weapon = Weapon_Wierd_Staff()
 	#player_weapon = Weapon_Katana()
 	#player_weapon = Weapon_Dagger()
 	

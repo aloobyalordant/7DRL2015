@@ -183,6 +183,166 @@ class Weapon_Staff:
 	######################
 
 
+
+class Weapon_Wierd_Staff:
+
+	def __init__(self):
+		self.name = 'wierd bo staff'
+		self.command_list = 'acdeqswxz'
+		self.max_charge = 10
+		self.current_charge = 10
+		self.default_usage = 3
+		self.durability = 50
+		self.just_attacked = False
+		default_usage = self.default_usage
+	
+		self.command_items = []
+		
+		command = ATTCKUP
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,0,1],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,1,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,1]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [1,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,1,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKUPLEFT
+		temp_array =	 [[1,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+	
+	def do_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and usage <= self.current_charge and self.durability > 0:
+				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
+				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	def recharge(self, recharge_val = 1):
+		if self.just_attacked == False:
+			self.current_charge = self.current_charge + recharge_val
+		if self.current_charge > self.max_charge:
+			self.current_charge = self.max_charge
+		self.just_attacked = False
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
+
+	######################
+
+
+
 class Weapon_Spear:
 
 	def __init__(self):
@@ -448,6 +608,165 @@ class Weapon_Sword:
 
 #############
 
+
+# ok, bear with me, trying a thing. What if you hadlots more charge but your  weapons used more energy / recharged slower
+class Weapon_Wierd_Sword:
+
+	def __init__(self):
+		self.name = 'wierd sword'
+		self.command_list = 'acdeqswxz'
+		self.max_charge = 10
+		self.current_charge = 10
+		self.default_usage = 2
+		self.durability = 50
+		self.just_attacked = False
+		default_usage = self.default_usage
+	
+		self.command_items = []
+		
+		command = ATTCKUP
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKUPLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+	
+	def do_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and usage <= self.current_charge and self.durability > 0:
+				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
+				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	def recharge(self, recharge_val = 1):
+		if self.just_attacked == False:
+			self.current_charge = self.current_charge + recharge_val
+		if self.current_charge > self.max_charge:
+			self.current_charge = self.max_charge
+		self.just_attacked = False
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
+
+
+#############
 
 
 
