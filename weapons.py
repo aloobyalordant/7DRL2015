@@ -172,6 +172,25 @@ class Weapon_Staff:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
+
+
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
 			self.current_charge = self.current_charge + recharge_val
@@ -331,6 +350,22 @@ class Weapon_Wierd_Staff:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
 			self.current_charge = self.current_charge + recharge_val
@@ -347,14 +382,14 @@ class Weapon_Spear:
 
 	def __init__(self):
 		self.name = 'spear'
-		self.command_list = 'adswx'
+		#self.command_list = 'adswx'
 		self.max_charge = 1
 		self.current_charge = 1
 		self.default_usage = 1
 		self.durability = 50
 		self.just_attacked = False
 		default_usage = self.default_usage
-	
+		self.command_list = []
 		self.command_items = []
 		
 		command = ATTCKUP
@@ -427,6 +462,9 @@ class Weapon_Spear:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
+		for (command, data,usage) in self.command_items:
+			self.command_list.append(command)
+
 
 	
 	def do_attack(self, command):
@@ -436,6 +474,22 @@ class Weapon_Spear:
 				self.just_attacked = True
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -597,6 +651,22 @@ class Weapon_Sword:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
 			self.current_charge = self.current_charge + recharge_val
@@ -757,6 +827,22 @@ class Weapon_Wierd_Sword:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
 			self.current_charge = self.current_charge + recharge_val
@@ -916,6 +1002,22 @@ class Weapon_Dagger:
 				self.just_attacked = True
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 
 
 
@@ -1097,6 +1199,22 @@ class Weapon_Sai:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -1268,6 +1386,22 @@ class Weapon_Sai_Alt:
 				self.just_attacked = True
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -1639,6 +1773,24 @@ class Weapon_Nunchuck:
 					return data
 #		return generic_do_attack(choice, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
+				(com, data, usage) = self.command_items[choice]
+				if self.durability > 0:
+					self.just_attacked = True
+					return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 #	def do_attack(self, command):
 #		for (com, data, usage) in self.command_items:
 #			if com == command and usage <= self.current_charge and self.durability > 0:
@@ -1806,6 +1958,22 @@ class Weapon_Axe:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -1970,6 +2138,22 @@ class Weapon_Hammer:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -2124,6 +2308,22 @@ class Weapon_Katana:
 				self.just_attacked = True
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -2324,6 +2524,22 @@ class Weapon_Ring_Of_Power:
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
 
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -2373,6 +2589,22 @@ class Weapon_Strawhands:
 				self.just_attacked = True
 				return data
 #		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print 'attack not found, returning cost 0'
+		return 0
+
 
 
 	def recharge(self, recharge_val = 1):

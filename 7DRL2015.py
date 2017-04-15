@@ -82,7 +82,7 @@ ELEVATOR_DISTANCE_CHECK = 4
 
 CHANCE_OF_ENEMY_DROP = 30
 
-DEFAULT_JUMP_RECHARGE_TIME = 40
+DEFAULT_JUMP_RECHARGE_TIME = 5		#40
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -417,6 +417,118 @@ class Fighter:
 				self.jump_array[i] = self.jump_recharge_time
 				jump_used = True
 		
+
+
+class Energy_Fighter:
+	# combat-related properties and methods (player).
+	# trying out an exciting new 'energy system'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
+	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME):
+		self.max_hp = hp
+		self.hp = hp
+		self.defense = defense
+		self.power = power
+		self.death_function=death_function
+		self.attack_color = attack_color
+		self.faded_attack_color = faded_attack_color
+		self.extra_strength = extra_strength
+		self.recharge_rate = recharge_rate
+		self.bonus_max_charge = bonus_max_charge
+		self.jump_array = jump_array
+		self.jump_recharge_time = jump_recharge_time
+		self.wounds = 0
+
+	def take_damage(self, damage):
+		#apply damage if possible
+		if damage > 0:
+			self.hp -= damage
+			#check for death. if there's a death function, call it
+			if self.hp <= 0:
+				function = self.death_function
+				if function is not None:
+					function(self.owner)
+			#add wounds!
+			self.wounds += damage
+			if self.wounds > self.max_hp:
+				self.wounds = self.max_hp
+
+	def attack(self, target):
+		#a simple formula for attack damage
+		damage = self.power - target.fighter.defense
+
+	#	if target.fighter is not None:
+	#		if damage > 0:
+	#		#	#make the target take some damage
+	#		#	message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+	#		#	target.fighter.take_damage(damage)
+	#		else:
+	#		#	message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+
+	def fully_heal(self):
+		self.hp = self.max_hp - self.wounds
+
+	def heal(self, amount):
+		self.hp += amount
+		if self.hp > self.max_hp - self.wounds:
+			self.hp = self.max_hp - self.wounds
+
+	def increase_strength(self, amount):
+		self.extra_strength += amount
+
+	def increase_recharge_rate(self, amount):
+		self.recharge_rate += amount
+
+	def increase_max_charge(self, amount):
+		self.bonus_max_charge += amount
+
+	def recharge_jumps(self):
+		temp_array = []
+		for i in range(len(self.jump_array)):
+			temp_array.append(max(0, self.jump_array[i]-1))		#reduce charge times on all jumps
+		self.jump_array = temp_array
+
+	#check if the energy fighter has enough energy to make an attack
+	def can_attack(self, energy_cost):
+		if self.hp >= energy_cost:
+			return True
+		else:
+			return False
+
+	#lose the required amount of energy, down to a minimum of 0
+	def lose_energy(self, energy_cost):
+		if energy_cost > 0:
+			self.hp -= energy_cost
+			if self.hp <= 0:
+				self.hp = 0
+
+	#lose the required amount of energy, down to a minimum of 0
+	def gain_energy(self, energy_amount):
+		if energy_amount > 0:
+			self.hp += energy_amount
+			if self.hp > self.max_hp - self.wounds:
+				self.hp = self.max_hp - self.wounds
+	
+	# check if any of the jumps in the array are at 0. If so, they are available.
+	def jump_available(self):
+		if self.hp >= self.jump_recharge_time:
+			return True
+		else:
+			return False
+		#available = False
+		#for i in range(len(self.jump_array)):
+		#	if self.jump_array[i] == 0:
+		#		available = True
+		#return available
+
+	# use up one jump and start its recharge clock
+	def make_jump(self):
+		self.hp = self.hp - self.jump_recharge_time
+		#jump_used = False
+		#for i in range(len(self.jump_array)):
+		#	if self.jump_array[i] == 0 and jump_used == False:
+		#		self.jump_array[i] = self.jump_recharge_time
+		#		jump_used = True
+		
+
 
 class Decider:
 	def __init__(self, ai=None):
@@ -1899,37 +2011,25 @@ def handle_keys():
 
 			#attacky keys!
 			else :			
-				abstract_attack_data = player_weapon.do_attack(key_char)
-				if abstract_attack_data is not None:
-				#	if player_recharge_time <= 0:
-					temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
-					player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+	
 
-				elif key_char in player_weapon.command_list and player_weapon.durability <= 0:
-					message('Your ' +  str(player_weapon.name) + ' is broken!')
-					return 'didnt-take-turn'
+				if key_char in player_weapon.command_list:
+					return process_player_attack(key_char)
 
-				elif key_char in player_weapon.command_list and player_weapon.current_charge < player_weapon.default_usage:
-#					message('Cannot attack, need to recharge (current charge ' + str(player_weapon.current_charge) + ', ' + str(player_weapon.default_usage) + ' required).', libtcod.orange
-					message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange
-)
-					return 'didnt-take-turn'
-			# Cutting out all this 'stars' business because these days it's all about elevators!
-			#	elif key_char == '<':
-        	        #	#go down stairs, if the player is on them
-        	        #		if stairs.x == player.x and stairs.y == player.y:
-			#			
-			#			lev_set = game_level_settings.get_setting(dungeon_level)
-			#			if lev_set.final_level != True:
-        	         # 				next_level()
-			#			elif player_weapon.name == 'ring of power':
-			#				beat_game()
-			#			else:
-			#				message('The stairs will only yield before the ring of power!')
-			#				return 'didnt-take-turn'
-			#				
-			#		else:
-			#			return 'didnt-take-turn'
+		#		abstract_attack_data = player_weapon.do_attack(key_char)
+		#		if abstract_attack_data is not None:
+		#		#	if player_recharge_time <= 0:
+		#			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
+		#			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+		#
+		#		elif key_char in player_weapon.command_list and player_weapon.durability <= 0:
+		#			message('Your ' +  str(player_weapon.name) + ' is broken!')
+		#			return 'didnt-take-turn'
+		#
+		#		elif key_char in player_weapon.command_list and player_weapon.current_charge < player_weapon.default_usage:
+		#			message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
+		#			return 'didnt-take-turn'
+
 				elif key_char == 'o':
 					# is there a shrine here?
 					shrine_here = False
@@ -2715,6 +2815,26 @@ def player_move_or_attack(dx, dy):
 
 
 
+#Processing player attack, woop woo! we want the decision for whether an attack is possible to belong to the player's Fighter class rather than the weapon itself; we're putting the wrapper for all that stuff around here.
+def process_player_attack(key_char):
+
+	if player_weapon.durability <= 0:
+		message('Your ' +  str(player_weapon.name) + ' is broken!')
+		return 'didnt-take-turn'
+	else:
+		energy_cost = player_weapon.get_usage_cost(key_char)
+		if player.fighter.can_attack(energy_cost):
+			abstract_attack_data = player_weapon.do_energy_attack(key_char)
+			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
+			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+			player.fighter.lose_energy(energy_cost)
+		
+		#Note: this code might need to change in future if we decide to have other reasons for not being able to attack
+		else:
+			#message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
+			message('You are too tired to attack', libtcod.orange)
+			return 'didnt-take-turn'
+
 def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
@@ -2728,6 +2848,7 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
 		temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength, attacker=attacker))
 		temp_attack_list.append(temp_attack)
 	return temp_attack_list
+
 	
 
 def player_death(player):
@@ -3405,7 +3526,7 @@ def create_GUI_panel():
 	#PLAYER PANEL STUFF
 
 	#show the player's stats
-	render_bar(player_panel_x, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp,
+	render_bar(player_panel_x, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp - player.fighter.wounds,
 	libtcod.light_red, libtcod.darker_red)
 
 	#display some sweet moves!
@@ -3594,7 +3715,8 @@ def initialise_game():
 	time = 1
 	
 	#create object representing the player
-	fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
+	fighter_component = Energy_Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
+	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
 	camera = Location(player.x, player.y)
@@ -3690,6 +3812,8 @@ while not libtcod.console_is_window_closed():
 
 		player_hit_something = False
 		player_clashed_something = False
+		player_got_hit = False
+		player_just_jumped = False
 
 		if nearest_points_array[player.x][player.y] is not None:
 			nearest_center_to_player =  nearest_points_array[player.x][player.y]
@@ -3807,6 +3931,7 @@ while not libtcod.console_is_window_closed():
 								message ("You leap over the " + jumpee.name + "\'s head!")
 						player.fighter.make_jump()
 						player.move(jd.dx, jd.dy)
+						player_just_jumped = True
 
 		for object in objects:
 			if object.decider and object is not player:
@@ -4019,6 +4144,14 @@ while not libtcod.console_is_window_closed():
 
 		# process attacks!
 
+		#check if the player is getting 'hit' (whether or not the attack gets deflected)
+
+		for object in objects:
+			if object.attack:
+				attackee = object.attack.find_attackee()
+				if attackee == player:
+					player_got_hit = True
+
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
 		clashing_pairs_list = []
 		deletionList = []
@@ -4063,10 +4196,19 @@ while not libtcod.console_is_window_closed():
 		#if player_recharge_time > 0:
 		#	player_recharge_time = player_recharge_time - 1
 		player_weapon.recharge(player.fighter.recharge_rate)
+	
 
 
-		#recharge player jump? TODO well, how should jumping work...
-		player.fighter.recharge_jumps()
+
+
+		# refresh the player's energy
+		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
+		if player_just_attacked == False and player_got_hit == False and player_just_jumped == False:
+			player.fighter.gain_energy(1)
+
+
+		##recharge player jump? TODO well, how should jumping work...
+		#player.fighter.recharge_jumps()
 
 		
 		#weapon degradation time!
