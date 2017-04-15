@@ -471,6 +471,11 @@ class Energy_Fighter:
 		if self.hp > self.max_hp - self.wounds:
 			self.hp = self.max_hp - self.wounds
 
+	def cure_wounds(self, amount):
+		self.wounds = self.wounds - amount
+		if self.wounds < 0:
+			self.wounds = 0
+
 	def increase_strength(self, amount):
 		self.extra_strength += amount
 
@@ -2055,8 +2060,10 @@ def handle_keys():
 							if already_healed_this_level == False:
 								if player.fighter.hp < player.fighter.max_hp:
 									already_healed_this_level = True
-									player.fighter.heal(3)
+									#player.fighter.heal(3)
+									player.fighter.cure_wounds(1)
 									message("You feel a little better")
+									player.fighter.fully_heal()
 							else:
 								message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', libtcod.orange)
 							favoured_by_healer = True
@@ -2822,7 +2829,7 @@ def process_player_attack(key_char):
 		message('Your ' +  str(player_weapon.name) + ' is broken!')
 		return 'didnt-take-turn'
 	else:
-		energy_cost = player_weapon.get_usage_cost(key_char)
+		energy_cost = player_weapon.get_usage_cost(key_char) + 1   #let's try and make weapons a bit harder to use...
 		if player.fighter.can_attack(energy_cost):
 			abstract_attack_data = player_weapon.do_energy_attack(key_char)
 			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
@@ -2950,6 +2957,7 @@ def next_level():
 		message('You hear the voice of ' + god_healer.name)
 		message('\"Behold my child! Faith in me shall always be rewarded.\"', libtcod.orange)
 		player.fighter.max_hp = player.fighter.max_hp + 1
+		player.fighter.heal_wounds(3)
 		player.fighter.fully_heal()
 		#player.fighter.heal(5)
 		message('You feel rejuvenated!')
@@ -3715,7 +3723,7 @@ def initialise_game():
 	time = 1
 	
 	#create object representing the player
-	fighter_component = Energy_Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
+	fighter_component = Energy_Fighter(hp=6, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
