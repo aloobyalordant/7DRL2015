@@ -82,7 +82,7 @@ ELEVATOR_DISTANCE_CHECK = 4
 
 CHANCE_OF_ENEMY_DROP = 30
 
-DEFAULT_JUMP_RECHARGE_TIME = 5		#40
+DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -436,13 +436,16 @@ class Energy_Fighter:
 		self.jump_array = jump_array
 		self.jump_recharge_time = jump_recharge_time
 		self.wounds = 0
+		self.adrenaline_mode = False
+		self.adrenaline_threshold = 2
+		self.adrenaline_level = self.max_hp
 
 	def take_damage(self, damage):
 		#apply damage if possible
 		if damage > 0:
 			self.hp -= damage
 			#check for death. if there's a death function, call it
-			if self.hp <= 0:
+			if self.hp < 0:
 				function = self.death_function
 				if function is not None:
 					function(self.owner)
@@ -450,6 +453,12 @@ class Energy_Fighter:
 			self.wounds += damage
 			if self.wounds > self.max_hp:
 				self.wounds = self.max_hp
+
+			#check to see if we should announce the start of ADRENALINE MODE
+			if self.adrenaline_mode == False and self.max_hp - self.wounds < self.adrenaline_threshold:
+				message('You feel a surge of adrenaline.', libtcod.green)
+			self.adjust_adrenaline()
+				
 
 	def attack(self, target):
 		#a simple formula for attack damage
@@ -475,6 +484,7 @@ class Energy_Fighter:
 		self.wounds = self.wounds - amount
 		if self.wounds < 0:
 			self.wounds = 0
+		self.adjust_adrenaline()
 
 	def increase_strength(self, amount):
 		self.extra_strength += amount
@@ -491,12 +501,26 @@ class Energy_Fighter:
 			temp_array.append(max(0, self.jump_array[i]-1))		#reduce charge times on all jumps
 		self.jump_array = temp_array
 
+	# decide if we should be in ADRENALINE MODE, with the rush of energy and whatnot.
+	def adjust_adrenaline(self):
+		if self.max_hp - self.wounds < self.adrenaline_threshold:
+			self.adrenaline_mode = True
+		else:
+			self.adrenaline_mode = False
+
+
 	#check if the energy fighter has enough energy to make an attack
 	def can_attack(self, energy_cost):
-		if self.hp >= energy_cost:
-			return True
+		if self.adrenaline_mode == False:
+			if self.hp >= energy_cost:
+				return True
+			else:
+				return False
 		else:
-			return False
+			if self.adrenaline_level >= energy_cost:
+				return True
+			else:
+				return False
 
 	#lose the required amount of energy, down to a minimum of 0
 	def lose_energy(self, energy_cost):
@@ -504,6 +528,9 @@ class Energy_Fighter:
 			self.hp -= energy_cost
 			if self.hp <= 0:
 				self.hp = 0
+			self.adrenaline_level -= energy_cost
+			if self.adrenaline_level <= 0:
+				self.adrenaline_level = 0
 
 	#lose the required amount of energy, down to a minimum of 0
 	def gain_energy(self, energy_amount):
@@ -511,13 +538,24 @@ class Energy_Fighter:
 			self.hp += energy_amount
 			if self.hp > self.max_hp - self.wounds:
 				self.hp = self.max_hp - self.wounds
+			self.adrenaline_level += energy_amount
+			# adrenaline doesn't care about wounds!
+			if self.adrenaline_level > self.max_hp:
+				self.adrenaline_level  = self.max_hp
+
 	
 	# check if any of the jumps in the array are at 0. If so, they are available.
 	def jump_available(self):
-		if self.hp >= self.jump_recharge_time:
-			return True
+		if self.adrenaline_mode == False:
+			if self.hp >= self.jump_recharge_time:
+				return True
+			else:
+				return False
 		else:
-			return False
+			if self.adrenaline_level >= self.jump_recharge_time:
+				return True
+			else:
+				return False
 		#available = False
 		#for i in range(len(self.jump_array)):
 		#	if self.jump_array[i] == 0:
@@ -2047,7 +2085,7 @@ def handle_keys():
 						current_god = current_shrine.god
 						message('You close your eyes and focus your mind.')
 						current_shrine.visit()
-						message('You here the voice of ' + current_god.name + ' whisper to you...')
+						message('You hear the voice of ' + current_god.name + ' whisper to you...')
 						message(current_god.first_prayer_message, current_god.color)
 						#message('\"Be at peace, my child. I watch over all who come to me with faith in their hearts.\"', libtcod.orange)
 
@@ -2861,7 +2899,7 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
 def player_death(player):
 	#the game ended!
 	global game_state
-	message('You died!', libtcod.red)
+	message('You collapse to the floor...', libtcod.red)
 	message('Press R to restart, Q to quit')
 	game_state = 'dead'
  
@@ -2957,7 +2995,7 @@ def next_level():
 		message('You hear the voice of ' + god_healer.name)
 		message('\"Behold my child! Faith in me shall always be rewarded.\"', libtcod.orange)
 		player.fighter.max_hp = player.fighter.max_hp + 1
-		player.fighter.heal_wounds(3)
+		player.fighter.cure_wounds(3)
 		player.fighter.fully_heal()
 		#player.fighter.heal(5)
 		message('You feel rejuvenated!')
@@ -3494,27 +3532,28 @@ def create_GUI_panel():
 	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 
 	# Display weapon charge details.
-	uncharged_color = libtcod.blue
-	insufficient_charge_color = libtcod.red
-	charge_color = libtcod.green
-	bonus_charge_color = libtcod.darker_green
-	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Charge:')
-	if player_weapon.current_charge < player_weapon.default_usage:
-		libtcod.console_set_default_foreground(panel, insufficient_charge_color)
-		for i in range(player_weapon.current_charge):
-			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-	else:
-		libtcod.console_set_default_foreground(panel, bonus_charge_color)
-		for i in range(player_weapon.current_charge - player_weapon.default_usage):
-			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-		libtcod.console_set_default_foreground(panel, charge_color)
-		for i in range(player_weapon.current_charge - player_weapon.default_usage, player_weapon.current_charge):
-			libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-
-	libtcod.console_set_default_foreground(panel, uncharged_color)
-	for i in range(player_weapon.current_charge, player_weapon.max_charge):
-		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT,
-	'*')
+	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
+	#uncharged_color = libtcod.blue
+	#insufficient_charge_color = libtcod.red
+	#charge_color = libtcod.green
+	#bonus_charge_color = libtcod.darker_green
+	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Charge:')
+	#if player_weapon.current_charge < player_weapon.default_usage:
+	#	libtcod.console_set_default_foreground(panel, insufficient_charge_color)
+	#	for i in range(player_weapon.current_charge):
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#else:
+	#	libtcod.console_set_default_foreground(panel, bonus_charge_color)
+	#	for i in range(player_weapon.current_charge - player_weapon.default_usage):
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#	libtcod.console_set_default_foreground(panel, charge_color)
+	#	for i in range(player_weapon.current_charge - player_weapon.default_usage, player_weapon.current_charge):
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#
+	#libtcod.console_set_default_foreground(panel, uncharged_color)
+	#for i in range(player_weapon.current_charge, player_weapon.max_charge):
+	#	libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT,
+	#'*')
 
 
 	
@@ -3533,9 +3572,43 @@ def create_GUI_panel():
 
 	#PLAYER PANEL STUFF
 
-	#show the player's stats
-	render_bar(player_panel_x, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp - player.fighter.wounds,
-	libtcod.light_red, libtcod.darker_red)
+	#show the player's energy stats
+	energy_color = libtcod.cyan
+	non_energy_color = libtcod.blue
+	wound_color = libtcod.red	
+	adrenaline_color = libtcod.green
+	non_adrenaline_color = libtcod.darker_green
+	if player.fighter.adrenaline_mode == False:
+		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "Energy:")
+		for i in range(player.fighter.max_hp):
+			if i < player.fighter.wounds:
+				libtcod.console_set_default_foreground(panel, wound_color)
+				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			elif i < player.fighter.wounds + player.fighter.hp:			
+				libtcod.console_set_default_foreground(panel, energy_color)
+				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			else: 
+				libtcod.console_set_default_foreground(panel, non_energy_color)
+				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+	else:
+		libtcod.console_set_default_foreground(panel, adrenaline_color)
+		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "ENERGY:")
+		for i in range(player.fighter.max_hp):
+			if i < player.fighter.adrenaline_level:
+				libtcod.console_set_default_foreground(panel, adrenaline_color)
+				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			#elif i < player.fighter.wounds + player.fighter.hp:			
+			#	libtcod.console_set_default_foreground(panel, adrenaline_color)
+			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			else: 
+				libtcod.console_set_default_foreground(panel, non_adrenaline_color)
+				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+
+
+			
+
+	#render_bar(player_panel_x, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp - player.fighter.wounds,
+	#libtcod.light_red, libtcod.darker_red)
 
 	#display some sweet moves!
 	libtcod.console_set_default_foreground(panel, libtcod.white)
@@ -3551,18 +3624,18 @@ def create_GUI_panel():
 	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '3')
 
 
-	#Display some stuff about jumps, woo!
-	jump_charged_color = libtcod.orange
-	jump_uncharged_color = libtcod.red
-	if  len(player.fighter.jump_array) > 0:
-		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT, "Jumps:")
-		for i in range(len(player.fighter.jump_array)):
-			if player.fighter.jump_array[i] == 0:
-				libtcod.console_set_default_foreground(panel, jump_charged_color)
-				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-			else:
-				libtcod.console_set_default_foreground(panel, jump_uncharged_color)
-				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#	#Display some stuff about jumps, woo!
+#	jump_charged_color = libtcod.orange
+#	jump_uncharged_color = libtcod.red
+#	if  len(player.fighter.jump_array) > 0:
+#		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT, "Jumps:")
+#		for i in range(len(player.fighter.jump_array)):
+#			if player.fighter.jump_array[i] == 0:
+#				libtcod.console_set_default_foreground(panel, jump_charged_color)
+#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#			else:
+#				libtcod.console_set_default_foreground(panel, jump_uncharged_color)
+#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
 
 
 	#LEVEL PANEL STUFF
@@ -3731,6 +3804,7 @@ def initialise_game():
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
+	#player_weapon = Weapon_Staff()
 	#player_weapon = Weapon_Wierd_Staff()
 	#player_weapon = Weapon_Katana()
 	#player_weapon = Weapon_Dagger()
@@ -3822,6 +3896,7 @@ while not libtcod.console_is_window_closed():
 		player_clashed_something = False
 		player_got_hit = False
 		player_just_jumped = False
+		number_hit_by_player = 0
 
 		if nearest_points_array[player.x][player.y] is not None:
 			nearest_center_to_player =  nearest_points_array[player.x][player.y]
@@ -4152,13 +4227,16 @@ while not libtcod.console_is_window_closed():
 
 		# process attacks!
 
-		#check if the player is getting 'hit' (whether or not the attack gets deflected)
-
+		# check how many enemies the player has hit, and 
+		# check if the player is getting 'hit' (whether or not the attack gets deflected)
 		for object in objects:
 			if object.attack:
 				attackee = object.attack.find_attackee()
 				if attackee == player:
 					player_got_hit = True
+				elif object.attack.attacker == player and attackee is not None:
+					number_hit_by_player += 1
+
 
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
 		clashing_pairs_list = []
@@ -4211,8 +4289,16 @@ while not libtcod.console_is_window_closed():
 
 		# refresh the player's energy
 		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
-		if player_just_attacked == False and player_got_hit == False and player_just_jumped == False:
+		# disregard if the player isin ADRENALINE MODE
+		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False) or player.fighter.adrenaline_mode == True:
 			player.fighter.gain_energy(1)
+
+		# bonus recharge for combos
+		if number_hit_by_player > 1:
+			bonus = number_hit_by_player - 1
+			player.fighter.gain_energy(bonus)
+			message("Combo! +" + str(bonus) + " energy", libtcod.cyan)
+			
 
 
 		##recharge player jump? TODO well, how should jumping work...

@@ -188,6 +188,12 @@ class Weapon_Staff:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 
 
@@ -365,6 +371,12 @@ class Weapon_Wierd_Staff:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -489,6 +501,11 @@ class Weapon_Spear:
 				return usage
 		print 'attack not found, returning cost 0'
 		return 0
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
 
 
 
@@ -666,6 +683,12 @@ class Weapon_Sword:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -842,6 +865,12 @@ class Weapon_Wierd_Sword:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -1017,6 +1046,12 @@ class Weapon_Dagger:
 				return usage
 		print 'attack not found, returning cost 0'
 		return 0
+
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
 
 
 
@@ -1214,6 +1249,12 @@ class Weapon_Sai:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -1401,6 +1442,12 @@ class Weapon_Sai_Alt:
 				return usage
 		print 'attack not found, returning cost 0'
 		return 0
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
 
 
 
@@ -1791,6 +1838,12 @@ class Weapon_Nunchuck:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 #	def do_attack(self, command):
 #		for (com, data, usage) in self.command_items:
 #			if com == command and usage <= self.current_charge and self.durability > 0:
@@ -1973,6 +2026,12 @@ class Weapon_Axe:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -2154,6 +2213,12 @@ class Weapon_Hammer:
 		return 0
 
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 	def recharge(self, recharge_val = 1):
 		if self.just_attacked == False:
@@ -2323,6 +2388,12 @@ class Weapon_Katana:
 				return usage
 		print 'attack not found, returning cost 0'
 		return 0
+
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
 
 
 
@@ -2539,6 +2610,12 @@ class Weapon_Ring_Of_Power:
 		print 'attack not found, returning cost 0'
 		return 0
 
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
 
 
 	def recharge(self, recharge_val = 1):
@@ -2604,6 +2681,12 @@ class Weapon_Strawhands:
 				return usage
 		print 'attack not found, returning cost 0'
 		return 0
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
 
 
 
