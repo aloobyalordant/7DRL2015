@@ -729,7 +729,7 @@ class BasicMonster:
 				
 
 				#close enough, attack! (if the player is still alive.)
-				elif player.fighter.hp > 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
+				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
 					attackList = []
 
 					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
@@ -1280,7 +1280,7 @@ class Rook_AI:
 				
 
 				#close enough, attack! (if the player is still alive.)
-				elif player.fighter.hp > 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
+				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
 					attackList = []
 
 					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
