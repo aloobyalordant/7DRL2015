@@ -718,8 +718,15 @@ class BasicMonster:
 				# but only go looking if you're not on guard duty!
 				if self.guard_duty == False:
 					(dx,dy) = Head_Towards_Players_Room(monster.x, monster.y)
-					if is_blocked(monster.x+dx, monster.y+dy) == False:
+					block = is_blocked(monster.x+dx, monster.y+dy, True) 
+					if block == False: 
+		#			if is_blocked(monster.x+dx, monster.y+dy) == False:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+					elif block == 'closed-door':
+						num  = libtcod.random_get_int(0, 0, 1)
+						if num == 0:
+							decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+							
 
 			else:	
 				#As we've now spotted the player, stop being on guard duty
@@ -1268,8 +1275,15 @@ class Rook_AI:
 				# but only if you're not on guard duty!
 				if self.guard_duty == False:
 					(dx,dy) = Head_Towards_Players_Room(monster.x, monster.y, rook_moves = True)
-					if is_blocked(monster.x+dx, monster.y+dy) == False:
+					#if is_blocked(monster.x+dx, monster.y+dy) == False:
+					#	decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+					block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True) 
+					if block == False: 
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+					elif block == 'closed-door':
+						num  = libtcod.random_get_int(0, 0, 1)
+						if num == 0:
+							decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
 			else:	
 				#As we've now spotted the player, stop being on guard duty
@@ -2835,15 +2849,23 @@ def update_nav_data():
 	# okay, I think that concludes calculating the distance to things? Let's see.
 	
 	
-def is_blocked(x, y):
+def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True):
 	#first test the map tile
 	if map[x][y].blocked:
 		return True
 
+
 	#now check for any blocking objects
 	for object in objects:
 		if object.blocks and object.x == x and object.y == y:
-			return True
+			if object.door is not None:
+				if care_about_doors == True:
+					return 'closed-door'
+				elif generally_ignore_doors == False:
+					return True
+			else:
+				return True
+
 	return False
 
 
