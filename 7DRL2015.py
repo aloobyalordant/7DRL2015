@@ -294,8 +294,10 @@ class Floor_Message:
 
 
 class Door:
-	def __init__(self, horizontal):
+	def __init__(self, horizontal, default_looseness = 3):
 		self.horizontal = horizontal
+		self.default_loosness = default_looseness
+		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
 
 	def take_damage(self, damage):
 		#destroy the door!
@@ -307,7 +309,6 @@ class Door:
 		#		if function is not None:
 		#			function(self.owner)
 
-		
 		message('The door crashes down!', libtcod.orange)
 
 		door = self.owner
@@ -324,20 +325,29 @@ class Door:
 		initialize_fov()		# this is ok, right? update the field of view stuff
 
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
-		message('The door opens', libtcod.white)
+		
+		
+		
+		
+		if libtcod.random_get_int(0, 0, self.looseness-1) < 2:		#opening unsuccesful
+			message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
+			self.looseness = self.looseness + 1		#increase chance of opening in future though
 
-		door = self.owner
-		door.blocks = False
-		door.door = None
-		door.send_to_back()
-		garbage_list.append(door)
-		
-		#update the map to say that this square isn't blocked, and update the nav data
-		map[door.x][door.y].blocked = False
-		map[door.x][door.y].block_sight = False
-		
-		nav_data_changed = True
-		initialize_fov()		# this is ok, right? update the field of view stuff
+		else: 
+			message('The door opens', libtcod.white)
+
+			door = self.owner
+			door.blocks = False
+			door.door = None
+			door.send_to_back()
+			garbage_list.append(door)
+			
+			#update the map to say that this square isn't blocked, and update the nav data
+			map[door.x][door.y].blocked = False
+			map[door.x][door.y].block_sight = False
+			
+			nav_data_changed = True
+			initialize_fov()		# this is ok, right? update the field of view stuff
 
 
 class Fighter:
