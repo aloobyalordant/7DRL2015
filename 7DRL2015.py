@@ -177,8 +177,8 @@ class Object:
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
 
-		#if True:	# temporary hack to test enemy naviation
-		if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
+		if True:	# temporary hack to test enemy naviation
+		#if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
 			libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod.BKGND_NONE)
@@ -1808,14 +1808,16 @@ def next_step_towards_center(current_x, current_y, center_number, rook_moves = F
 	# for now, rooks will consider walking to places if they are the same distance from the center point. This is a hack to get around the fact that the distance array allows for diagonal moves, which rooks can't do, so sometimes rooks have to pass through two squares of the same distance.
 	# This should mean that rooks are a lot slower to get to you but hopefully will get there in the end.
 	# It's a hack. What you really want to do is have a separate distance calculation for rook moves, and also spread the calculating out over the first few moves of the level to avoid that long delay at the start of the level.
-	if current_x > 0 and nav_data[current_x-1][current_y][center_number] ==  nav_data[current_x][current_y][center_number] and not is_blocked(current_x-1, current_y) and rook_moves == True:
-		temp_array.append((-1,0))
-	if current_x < MAP_WIDTH-1 and nav_data[current_x+1][current_y][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x+1, current_y)and rook_moves == True:
-		temp_array.append((1,0))
-	if current_y > 0 and nav_data[current_x][current_y-1][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x, current_y-1) and rook_moves == True:
-		temp_array.append((0, -1))
-	if current_y < MAP_HEIGHT-1 and nav_data[current_x][current_y+1][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x, current_y+1) and rook_moves == True:
-		temp_array.append((0,1))
+	#Update: actually it should be enough to only add the following moves if there's no current shortlist. This should avoid rooks e.g. randomly moving north when east was clearly the better option.
+	if len(temp_array) == 0 and rook_moves == True:
+		if current_x > 0 and nav_data[current_x-1][current_y][center_number] ==  nav_data[current_x][current_y][center_number] and not is_blocked(current_x-1, current_y):
+			temp_array.append((-1,0))
+		if current_x < MAP_WIDTH-1 and nav_data[current_x+1][current_y][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x+1, current_y):
+			temp_array.append((1,0))
+		if current_y > 0 and nav_data[current_x][current_y-1][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x, current_y-1):
+			temp_array.append((0, -1))
+		if current_y < MAP_HEIGHT-1 and nav_data[current_x][current_y+1][center_number] ==  nav_data[current_x][current_y][center_number]and not is_blocked(current_x, current_y+1):
+			temp_array.append((0,1))
 
 	# if multiple options, pick one at random. If no options, stay where we are
 	if len(temp_array) > 0:
@@ -3397,7 +3399,8 @@ def render_all():
 			#if False:
 			if not visible:
 				#if it's not visible right now, the player can only see it if it's explored	
-				if map[x][y].explored:
+				#if map[x][y].explored:
+				if True: 	#temp making walls and such visible to check enemy behaviour
 					#it's out of the player's FOV
 					if wall:
 						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod.BKGND_SET)
