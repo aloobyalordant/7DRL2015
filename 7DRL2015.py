@@ -161,7 +161,7 @@ class Object:
 		self.drops_key = drops_key
 
 	def move(self, dx, dy):
-		if not is_blocked(self.x + dx, self.y + dy):
+		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = False):
 			#move by the given amount
 		        self.x += dx
 		        self.y += dy
@@ -296,8 +296,9 @@ class Floor_Message:
 class Door:
 	def __init__(self, horizontal, default_looseness = 3):
 		self.horizontal = horizontal
-		self.default_loosness = default_looseness
+		self.default_looseness = default_looseness
 		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
+		self.recently_rattled = False
 
 	def take_damage(self, damage):
 		#destroy the door!
@@ -326,12 +327,10 @@ class Door:
 
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
 		
-		
-		
-		
 		if libtcod.random_get_int(0, 0, self.looseness-1) < 2:		#opening unsuccesful
 			message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
 			self.looseness = self.looseness + 1		#increase chance of opening in future though
+			self.recently_rattled = True
 
 		else: 
 			message('The door opens', libtcod.white)
@@ -348,6 +347,13 @@ class Door:
 			
 			nav_data_changed = True
 			initialize_fov()		# this is ok, right? update the field of view stuff
+
+	def update(self):
+		#decrease looseness back to default, unless someone recently tried to open me
+		if self.recently_rattled == False:
+			if self.looseness > self.default_looseness:
+				self.looseness = self.looseness - 1
+		self.recently_rattled = False
 
 
 class Fighter:
@@ -4225,6 +4231,11 @@ while not libtcod.console_is_window_closed():
 					spotted = True
 				else: 
 					ob.alarmer.update(False)
+
+		#UPDATE THE DOORS
+			if ob.door is not None:
+				ob.door.update()
+
 
 		#if spotted == True:
 		#	print "Alarmage status: spotted"
