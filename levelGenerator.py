@@ -47,7 +47,7 @@ class Object_Name:
 
 class Level_Data:
 
-	def __init__(self, map, player_start_x, player_start_y,  object_data = [],  nearest_points_array = [[]], center_points = [], spawn_points = [], elevators = []):
+	def __init__(self, map, player_start_x, player_start_y,  object_data = [],  nearest_points_array = [[]], center_points = [], spawn_points = [], elevators = [], room_adjacencies = []):
 		self.map = map
 		self.object_data = object_data
 		self.player_start_x = player_start_x
@@ -56,6 +56,7 @@ class Level_Data:
 		self.center_points = center_points
 		self.spawn_points = spawn_points
 		self.elevators = elevators
+		self.room_adjacencies = room_adjacencies
 
 class Tile:
 	#a tile of the map and its properties
@@ -206,6 +207,7 @@ class Level_Generator:
 		center_points = []
 		object_data = []
 		elevators = []
+		room_adjacencies = []
  
 	
 		if dungeon_level == 0:
@@ -399,7 +401,9 @@ class Level_Generator:
 		# GOODNESS KNOWS WHAT THE OTHER CASES ARE FOR
 		elif lev_set.level_type == 'modern' or lev_set.level_type == 'classic':
 
-			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators)
+			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
+			
+			print "super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)) 
 
 #			new_room = Rect(20,20,5,5)
 #			self.create_room(new_room, map, center_points, nearest_points_array)
@@ -632,7 +636,7 @@ class Level_Generator:
 		#self.append_segment(map, self.create_segment(), player_start_x, player_start_y, object_data)
 
 
-		return Level_Data(map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators)
+		return Level_Data(map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 
 			
 	#	process_nearest_center_points()
@@ -1350,7 +1354,7 @@ class Level_Generator:
 
 
 	# method of creating rooms that is basically "try and pack rooms into a particular rectangular area until there's no room
-	def fill_a_rectangle(self, map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators):
+	def fill_a_rectangle(self, map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, adjacency):
 
 
 
@@ -1399,8 +1403,6 @@ class Level_Generator:
 
 #		for r in range(0,2):
 		while len(maximal_potential_rooms) > 0:
-
-		
 
 
 			# pick a random room from the maximal potential rooms list
@@ -1520,10 +1522,14 @@ class Level_Generator:
 
 		# The process below will mostly join everything up. But once in a blue moon you get a tiny room that's isolated from the rest.
 		# So to get round this, we're going to do some connectivity checking.
+		# And also list adjacencies while we're at it, because that will become useful later!
 		connectivity = []	#2d matrix saying which rooms are connected to each other. Initally, rooms only connected to themselves.
+		#adjacency = []		#array of sets listing the nieghbors of each room. Initially, nothing has any neighbors.
 		for i in range(0, len(rooms)):
 			temprow = []
 			connectivity.append(temprow)
+			tempSet = set()
+			adjacency.append(tempSet)
 			for j in range(0, len(rooms)):
 				if i==j:
 					connectivity[i].append(1)
@@ -1680,6 +1686,8 @@ class Level_Generator:
 
 
 				if adjacent: #update the connectivity list
+					adjacency[i].add(j)
+					adjacency[j].add(i)
 					#print str(i) + " and " + str(j) + " joined" + str(connectivity[i]) + " woop " + str(connectivity[j])
 					for h in range(0, len(rooms)):
 						for k in range(0, len(rooms)):
@@ -1705,6 +1713,7 @@ class Level_Generator:
 
 
 
+		print "super length " + str(len(adjacency))
 
 		# now, append some elevators? Just slap bang in the middle of everything....
 

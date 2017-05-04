@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 import math
 import textwrap
+import random
 from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
@@ -710,6 +711,8 @@ class BasicMonster:
 			self.weapon.owner = self
 		self.guard_duty = guard_duty		# monsters on 'guard duty' don't come looking for you
 		self.attack_dist = attack_dist
+		self.previous_center = None
+		self.target_room = None
 
 	def decide(self):
 		#a basic monster takes its turn. If you can see it, it can see you
@@ -721,17 +724,37 @@ class BasicMonster:
 			# if you can't see the player, go where you think the player is
 			if not libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
 
-				# but only go looking if you're not on guard duty!
-				if self.guard_duty == False:
-					(dx,dy) = Head_Towards_Players_Room(monster.x, monster.y)
-					block = is_blocked(monster.x+dx, monster.y+dy, True) 
-					if block == False: 
-		#			if is_blocked(monster.x+dx, monster.y+dy) == False:
+				#actually right now we are trying wandering around aimlessly.
+				current_room = nearest_points_array[monster.x][monster.y]
+				
+				if self.target_room is None or self.target_room == current_room:
+					#choose new target room
+					self.target_room = AI_choose_adjacent_room(self)
+					self.previous_room = current_room
+
+				(dx,dy) = next_step_towards_center(monster.x, monster.y, self.target_room)
+
+
+				block = is_blocked(monster.x+dx, monster.y+dy, True) 
+				if block == False: 
+					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+				elif block == 'closed-door':
+					num  = libtcod.random_get_int(0, 0, 1)
+					if num == 0:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-					elif block == 'closed-door':
-						num  = libtcod.random_get_int(0, 0, 1)
-						if num == 0:
-							decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+				#TEMP COMMENTING OUTSO I CAN TRY OTHER SHIZZLE
+		#		# but only go looking if you're not on guard duty!
+		#		if self.guard_duty == False:
+		#			(dx,dy) = Head_Towards_Players_Room(monster.x, monster.y)
+		#			block = is_blocked(monster.x+dx, monster.y+dy, True) 
+		#			if block == False: 
+		##			if is_blocked(monster.x+dx, monster.y+dy) == False:
+		#				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+		#			elif block == 'closed-door':
+		#				num  = libtcod.random_get_int(0, 0, 1)
+		#				if num == 0:
+		#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 							
 
 			else:	
@@ -1881,7 +1904,31 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 	return(dx, dy)
 
 
-		
+def AI_choose_adjacent_room(AI):
+	global nearest_points_array
+	monster = AI.owner.owner
+	current_center = nearest_points_array[monster.x][monster.y]
+	previous_center = AI.previous_center
+	return choose_adjacent_room(current_center, previous_center)
+
+def choose_adjacent_room(current_center = 0, previous_center = None, avoid_previous_room = True):
+	global room_adjacencies
+	#print "current room " + str(current_center) + " adjacencies " + str(room_adjacencies[current_center]) + ", previous " + str(previous_center)
+	candidate_set = room_adjacencies[current_center].copy()
+	if previous_center is not None and avoid_previous_room == True:
+		if previous_center in candidate_set:
+	#		print "removing previous..."
+			candidate_set.remove(previous_center)
+
+	#print "----- updated adjacencies " + str(candidate_set)
+	if len(candidate_set) == 0:
+		if previous_center is not None:
+			return previous_center
+		else:
+			return current_center
+	else:
+		new_target = random.choice(tuple(candidate_set))	#returns arbitrary element from candidate_set
+		return new_target
 
 
 def get_names_under_mouse():
@@ -1902,7 +1949,7 @@ def get_names_under_mouse():
 # MAIN CONTROL HANDLING METHOD WOO
 
 def handle_keys():
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center
 
 	# key = libtcod.console_wait_for_keypress(True)
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
@@ -1977,6 +2024,7 @@ def handle_keys():
 	elif player_action == 'jump_dialog':
 		key_char = chr(key.c)
 		# jump direction options
+		#TODO HEY THIS STUFF IS HARDCODED AND SHOULD BE FIXED UP, ESPECIALLY WHAT WITH ME NO LONGER USING THIS LAYOUT:
 		if key.vk == libtcod.KEY_KP7 or key.vk == libtcod.KEY_HOME or key_char == 't':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
 		elif key.vk == libtcod.KEY_KP8 or key.vk == libtcod.KEY_UP or key_char == 'y':
@@ -2152,6 +2200,19 @@ def handle_keys():
 						message('There is no shrine here.')
 						return 'didnt-take-turn'
 
+
+				elif key_char == 'l':
+					message('You think it\'s time to blow this scene.')
+					current_center = nearest_points_array[player.x][player.y]
+					if current_center is not None:
+						target_center = choose_adjacent_room(current_center,  previous_center = TEMP_player_previous_center)
+						TEMP_player_previous_center = current_center
+						(point_x, point_y) =  center_points[target_center]
+						player.x = point_x
+						player.y = point_y 
+					else:
+						message('However, you\'re not really sure where this scene is')
+
 				else:
 					return 'didnt-take-turn'
 
@@ -2160,7 +2221,6 @@ def handle_keys():
 
 def create_room(room):
 	global map, spawn_points, center_points, nearest_points_array
-
 
 	(new_x, new_y) = room.center()
 	center_points.append((new_x,new_y))
@@ -2430,7 +2490,7 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center
 
 	lev_gen = Level_Generator()
 
@@ -2449,12 +2509,16 @@ def make_map():
 	spawn_points = level_data.spawn_points
 	object_data = level_data.object_data
 	elevators = level_data.elevators
+	room_adjacencies = level_data.room_adjacencies
 	MAP_WIDTH = len(map)
 	MAP_HEIGHT = len(map[0])
+
 
 	process_nearest_center_points()
 	initialize_nav_data()
 	#calculate_nav_data()
+
+	TEMP_player_previous_center = None
 
 	alarm_level = 1
 	key_count = 0
@@ -3823,7 +3887,7 @@ def initialise_game():
 	game_msgs = []
 	
 	game_level_settings = Level_Settings()
-	dungeon_level = 0
+	dungeon_level = 1	#SO HEY currently there is a game-crashing flaw on the first level because room_adjacencies is not properly initialised, that's great
 	alarm_level = 1
 	god_healer = God(god_type = God_Healer())
 	favoured_by_healer = False
@@ -4214,10 +4278,11 @@ while not libtcod.console_is_window_closed():
 
 		# now do door openings!
 		for (opener, victim) in potential_open_list:
-			#print "opening door"
-			victim.door.open()
-			# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
-			libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+			if victim.door is not None:
+				#print "opening door"
+				victim.door.open()
+				# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
+				libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
 		
 
 
