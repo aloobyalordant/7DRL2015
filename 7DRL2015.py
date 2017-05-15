@@ -732,8 +732,10 @@ class BasicMonster:
 					self.target_room = AI_choose_adjacent_room(self)
 					self.previous_room = current_room
 
-				(dx,dy) = next_step_towards_center(monster.x, monster.y, self.target_room)
+				#(dx,dy) = next_step_towards_center(monster.x, monster.y, self.target_room)
 
+				temp_message = " "
+				(dx,dy) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_straight_lines = True, rook_moves = False, return_message = temp_message)
 
 				block = is_blocked(monster.x+dx, monster.y+dy, True) 
 				if block == False: 
@@ -742,6 +744,11 @@ class BasicMonster:
 					num  = libtcod.random_get_int(0, 0, 1)
 					if num == 0:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+				if temp_message == "No good options":  #give up and try going somewhere new?
+					#choose new target room
+					self.target_room = AI_choose_adjacent_room(self)
+					
 
 				#TEMP COMMENTING OUTSO I CAN TRY OTHER SHIZZLE
 		#		# but only go looking if you're not on guard duty!
@@ -769,7 +776,9 @@ class BasicMonster:
 				#move towards player if far away
 				if monster.distance_to(player) >= self.attack_dist + 1:
 
-					(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
+
+					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				#	(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 				
@@ -1904,6 +1913,66 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 	return(dx, dy)
 
 
+
+
+
+
+def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_straight_lines = False, rook_moves = False, return_message = None):
+	# Make a list of possible moves (in future this might be set as a parameter)
+	possible_moves = [(+1,0), (0,-1), (0,+1), (-1,0)]
+	if rook_moves == False:
+		possible_moves.append((+1,+1))
+		possible_moves.append((+1,-1))
+		possible_moves.append((-1,+1))
+		possible_moves.append((-1,-1))
+	
+	# Construct list of moves that are closest to target, amongst those that are *at most* as far as current position, and are not blocked
+	current_dist = distance_from_target(current_x, current_y, target_x, target_y, target_center, aiming_for_center, rook_moves)
+	shortest_dist = current_dist	
+	shortlist = []
+	for (dx,dy) in possible_moves:
+		if not is_blocked(current_x +dx, current_y + dy, False):	#hmmm... what's our take on doors here?
+			temp_dist = distance_from_target(current_x +dx, current_y + dy, target_x, target_y, target_center, aiming_for_center, rook_moves)
+			if temp_dist < shortest_dist:	#oh hey new minimum
+				shortlist = [(dx,dy)]	
+				shortest_dist = temp_dist
+			elif temp_dist == shortest_dist:	#add to shortlist
+				shortlist.append((dx,dy))		
+			
+
+	# If prioritising straight lines, restrict to only straight line moves if there are any
+	if prioritise_straight_lines == True:
+		shorterlist = []
+		for (dx,dy) in shortlist:
+			if dx == 0 or dy == 0:
+				shorterlist.append((dx,dy))
+		if len(shorterlist) > 0:
+			shortlist = shorterlist
+
+	# Choose from remaining available options at random (should create 'wiggling' when the obvious route is blocked)
+	if len(shortlist) > 0:
+		chosen_move = random.choice(tuple(shortlist))
+	else:	# If there are no  good options, say this in return message
+		chosen_move = (0,0)
+		return_message = "No good options"
+	return chosen_move
+
+	
+
+def distance_from_target(current_x, current_y, target_x = None, target_y = None, center_number = None, aiming_for_center = False, rook_moves = False):
+	global nav_data, center_points
+	if aiming_for_center == True:	#use nav data to calculate distance to a given room center
+		return nav_data[current_x][current_y][center_number]
+	else:		#otherwise, assume heading for a visible target across an open room
+		if rook_moves == True:
+			return math.fabs(current_x - target_x) + math.fabs(current_y - target_y)
+		else:
+			return max(math.fabs(current_x - target_x), math.fabs(current_y - target_y))
+
+
+
+
+
 def AI_choose_adjacent_room(AI):
 	global nearest_points_array
 	monster = AI.owner.owner
@@ -2933,6 +3002,9 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True):
 					return 'closed-door'
 				elif generally_ignore_doors == False:
 					return True
+		#	elif object.name == 'swordsman':
+		#		print "blocky swordsman"
+		#		return True
 			else:
 				return True
 
