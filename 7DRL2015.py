@@ -713,6 +713,8 @@ class BasicMonster:
 		self.attack_dist = attack_dist
 		self.previous_center = None
 		self.target_room = None
+		self.ally_in_the_way_o_meter = 0		 #decreases by 1 each turn, and goes up by 3 if ally in way
+		self.impatience_threshold_for_allies_being_in_the_way = 7
 
 	def decide(self):
 		#a basic monster takes its turn. If you can see it, it can see you
@@ -735,20 +737,39 @@ class BasicMonster:
 				#(dx,dy) = next_step_towards_center(monster.x, monster.y, self.target_room)
 
 				temp_message = " "
-				(dx,dy) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_straight_lines = True, rook_moves = False, return_message = temp_message)
+				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
 
-				block = is_blocked(monster.x+dx, monster.y+dy, True) 
+				block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
 				if block == False: 
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 				elif block == 'closed-door':
 					num  = libtcod.random_get_int(0, 0, 1)
 					if num == 0:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			#	elif block == 'blocky-fighter':
+			#		# Oh no! Enemies are  getting in each other's way offscreen! 
+			#		# This is a thing I somehow have to solve by getting enemies to shuffle around a bit randomly when 				#		# there's actually a problem, and I'm not sure what the proper way to do that is!
+#
+#					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
+#					# Why 3? To avoid cycling back and forth when there's someone in the way
+#					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
+#						#for now, just pick a new destination. This may not be enough.
+#						num  = libtcod.random_get_int(0, 0, 5)
+#						if num != 0:
+#							self.target_room = AI_choose_adjacent_room(self, allow_previous_room = True)
 
-				if temp_message == "No good options":  #give up and try going somewhere new?
+				if return_message == "No good options":  #give up and try going somewhere new?
 					#choose new target room
 					self.target_room = AI_choose_adjacent_room(self)
-					
+				
+				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
+					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
+					print "hmmm" + str(self.ally_in_the_way_o_meter)
+					# Why 3? To avoid cycling back and forth when there's someone in the way
+					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
+						print "crew this"
+						self.target_room = AI_choose_adjacent_room(self)
+
 
 				#TEMP COMMENTING OUTSO I CAN TRY OTHER SHIZZLE
 		#		# but only go looking if you're not on guard duty!
@@ -777,7 +798,8 @@ class BasicMonster:
 				if monster.distance_to(player) >= self.attack_dist + 1:
 
 
-					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+					#So hey there's a navigation bug that can happen, based around this line or the method it calls, whereby the enely sees the player, and so picks the quickest route to get to the plater, but because that 'nearest step' decision is based entirely on their respective co-ordinates (and because it prioritises straights lines?), the 'next step' can take it out of sight of the player. At which point it goes back to aimless wandering, and can walk backwards into the space where it first saw the player, and ends up in a loop.	A fix might be: prioritise keeping the player in your sights if possible? That's probably not a great fix if we introduce obstacels that can be seen through. But also hopefully at some point we'll add a 'go to the room you think the player was in' clause, and that should hopefully deal with most of the problem.
+					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 				#	(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
@@ -817,6 +839,9 @@ class BasicMonster:
 
 			if self.weapon:
 				self.weapon.recharge()
+
+			if self.ally_in_the_way_o_meter > 0:
+				self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter - 1
 		if self.stunned_time > 0:
 			self.stunned_time = self.stunned_time - 1
 
@@ -1917,7 +1942,7 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 
 
 
-def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_straight_lines = False, rook_moves = False, return_message = None):
+def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False):
 	# Make a list of possible moves (in future this might be set as a parameter)
 	possible_moves = [(+1,0), (0,-1), (0,+1), (-1,0)]
 	if rook_moves == False:
@@ -1928,17 +1953,34 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 	
 	# Construct list of moves that are closest to target, amongst those that are *at most* as far as current position, and are not blocked
 	current_dist = distance_from_target(current_x, current_y, target_x, target_y, target_center, aiming_for_center, rook_moves)
-	shortest_dist = current_dist	
+	shortest_dist = current_dist
+	shortest_fighter_dist = current_dist + 1	
 	shortlist = []
 	for (dx,dy) in possible_moves:
-		if not is_blocked(current_x +dx, current_y + dy, False):	#hmmm... what's our take on doors here?
+		block =  is_blocked(current_x +dx, current_y + dy, care_about_doors = False, care_about_fighters = True)	#hmmm... what's our take on doors here?
+		if block == False:
 			temp_dist = distance_from_target(current_x +dx, current_y + dy, target_x, target_y, target_center, aiming_for_center, rook_moves)
 			if temp_dist < shortest_dist:	#oh hey new minimum
 				shortlist = [(dx,dy)]	
 				shortest_dist = temp_dist
 			elif temp_dist == shortest_dist:	#add to shortlist
-				shortlist.append((dx,dy))		
+				shortlist.append((dx,dy))	
+		elif block == 'blocky-fighter':			#and here we track the shortest distance of space blocked by a fighter
+			temp_dist = distance_from_target(current_x +dx, current_y + dy, target_x, target_y, target_center, aiming_for_center, rook_moves)
+			if temp_dist < shortest_fighter_dist:	#oh hey new minimum
+				shortest_fighter_dist = temp_dist
+
 			
+
+	# If prioritising visible, restrict spaces visible to player, if there are any
+	if prioritise_visible == True:
+		shorterlist = []
+		for (dx,dy) in shortlist:
+			if libtcod.map_is_in_fov(fov_map, current_x + dx, current_y + dy):
+				shorterlist.append((dx,dy))
+		if len(shorterlist) > 0:
+			shortlist = shorterlist
+
 
 	# If prioritising straight lines, restrict to only straight line moves if there are any
 	if prioritise_straight_lines == True:
@@ -1955,7 +1997,15 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 	else:	# If there are no  good options, say this in return message
 		chosen_move = (0,0)
 		return_message = "No good options"
-	return chosen_move
+
+
+	if shortest_fighter_dist < shortest_dist:		#let people know that someone was standing in the way of best route
+		return_message = "Fighter blocking best option"
+		print "yep"
+	if request_message == True:
+		return (chosen_move, return_message)
+	else :
+		return chosen_move
 
 	
 
@@ -1973,11 +2023,14 @@ def distance_from_target(current_x, current_y, target_x = None, target_y = None,
 
 
 
-def AI_choose_adjacent_room(AI):
+def AI_choose_adjacent_room(AI, allow_previous_room = False):
 	global nearest_points_array
 	monster = AI.owner.owner
 	current_center = nearest_points_array[monster.x][monster.y]
-	previous_center = AI.previous_center
+	if allow_previous_room == True:
+		previous_center = None
+	else:
+		previous_center = AI.previous_center
 	return choose_adjacent_room(current_center, previous_center)
 
 def choose_adjacent_room(current_center = 0, previous_center = None, avoid_previous_room = True):
@@ -2988,7 +3041,7 @@ def update_nav_data():
 	# okay, I think that concludes calculating the distance to things? Let's see.
 	
 	
-def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True):
+def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, care_about_fighters = False, generally_ignore_fighters = False):
 	#first test the map tile
 	if map[x][y].blocked:
 		return True
@@ -3001,6 +3054,11 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True):
 				if care_about_doors == True:
 					return 'closed-door'
 				elif generally_ignore_doors == False:
+					return True
+			elif object.fighter is not None:
+				if care_about_fighters == True:
+					return 'blocky-fighter'
+				elif generally_ignore_fighters == False:
 					return True
 		#	elif object.name == 'swordsman':
 		#		print "blocky swordsman"
