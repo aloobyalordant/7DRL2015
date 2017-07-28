@@ -66,7 +66,7 @@ class Level_Settings:
 		# A level with small rooms and few enemies
 		enemy_probs = []
 		enemy_probs.append(('swordsman', 50))
-	#	enemy_probs.append(('rook', 50))		#TEMP TAKING OUT ROOKS
+		enemy_probs.append(('rook', 30))		#TEMP TAKING OUT ROOKS
 	#	enemy_probs.append(('nunchuck fanatic', 50))
 	#	enemy_probs.append(('ninja', 5))
 		levsr = Level_Setting(

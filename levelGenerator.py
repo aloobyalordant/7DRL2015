@@ -262,8 +262,8 @@ class Level_Generator:
 			self.create_half_corridor(new_room, 53, 5, map, center_points, nearest_points_array, object_data)
 
 
-			object_data.append(Object_Datum(53,19,'message', 'Lesson 4. A warrior is not their weapon. A warrior knows when it is time to trade their weapon for another. PS BEWARE THERE IS AN ENEMY LYING IN WAIT IN THIS ROOM'))
-			object_data.append(Object_Datum(58,19,'monster', 'swordsman'))
+			object_data.append(Object_Datum(53,19,'message', 'Lesson 4. A warrior is not their weapon. A warrior knows when it is time to trade their weapon for another.')) #. PS BEWARE THERE IS AN ENEMY LYING IN WAIT IN THIS ROOM'))
+			#object_data.append(Object_Datum(58,19,'monster', 'swordsman'))
 			old_room = new_room
 			new_room = Rect(50,20,7,5)
 			self.create_room(new_room, map, center_points, nearest_points_array)

@@ -83,6 +83,8 @@ ELEVATOR_DISTANCE_CHECK = 4
 
 CHANCE_OF_ENEMY_DROP = 30
 
+STARTING_ENERGY  = 10
+
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 
 
@@ -703,7 +705,7 @@ class BasicMonster:
 	global nearest_center_to_player
 
 	#AI for a basic monster.
-	def __init__(self, weapon, guard_duty  = False, attack_dist = 1):
+	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
 		self.recharge_time = 0
 		self.stunned_time = 0
 		self.weapon = weapon
@@ -715,6 +717,9 @@ class BasicMonster:
 		self.target_room = None
 		self.ally_in_the_way_o_meter = 0		 #decreases by 1 each turn, and goes up by 3 if ally in way
 		self.impatience_threshold_for_allies_being_in_the_way = 7
+		self.state = state
+		self.target_x = player.x
+		self.target_y = player.y
 
 	def decide(self):
 		#a basic monster takes its turn. If you can see it, it can see you
@@ -722,19 +727,56 @@ class BasicMonster:
 		monster = decider.owner #yaaay
 		# only do thing (including weapon recharge? maybe not) if not stunned
 		if self.stunned_time <= 0:
-			
-			# if you can't see the player, go where you think the player is
-			if not libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
 
-				#actually right now we are trying wandering around aimlessly.
-				current_room = nearest_points_array[monster.x][monster.y]
+
+
+
+
+			# Welcome to basic monster ai business! Let's try and get the structure of this  cleared up a bit.
+
+
+			# Step 0: put some details about external stuff here?
+			current_room = nearest_points_array[monster.x][monster.y]
+		
+
+			# Step 1: Decide your current state, and maybe a few other bits.
+			# Currently planned possible states:
+			# 'guard-duty'			Stay where you are till something comes along
+			# 'head-towards-room'		Try and walk towards a target room (generally the one you think player is in)
+			# 'wander-aimlessly'		Pick adjacent rooms at random to walk into, preferably avoiding the previous room
+			# 'pursue-visible-target'	When the player is near you, go towards them! Includes attacking?
+			# 'flee-visible-danger'		Run away from a thing you can see (the player, when you're scared of them?)
+
+			#keeping it pretty simple for now... pursue the player if you see them
+			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+				self.state = 'pursue-visible-target'
+
+			elif self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
+				self.state = 'wander-aimlessly'		# since player no longer visible, wander aimlessly!
 				
-				if self.target_room is None or self.target_room == current_room:
-					#choose new target room
-					self.target_room = AI_choose_adjacent_room(self)
-					self.previous_room = current_room
+			#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in); if heading towards room and you reach that room, switch to wandering aimlessly
 
-				#(dx,dy) = next_step_towards_center(monster.x, monster.y, self.target_room)
+
+
+			# Step 2: Now you know yourself, or at least your state, decide your target (either a room or a specific, generally visible space).
+			# Maybe generally update navigation stuff here as well?
+			if  self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
+				self.target_x = player.x
+				self.target_y = player.y
+
+			elif self.target_room  == None or self.target_room == current_room:		#pick a new target room if you need to...
+				self.target_room  =   AI_choose_adjacent_room(self)
+				self.previous_room = current_room
+
+		
+
+			# Step 3: Given the above, decide on a plan of action (a move or attack; decision depends a lot on state)
+
+			# Step 4: Do we have another thing here about 'wiggling' ?
+
+			
+			# Do the things that you do when going towards a target room rather than a specific grid reference
+			if self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
 
 				temp_message = " "
 				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
@@ -746,17 +788,6 @@ class BasicMonster:
 					num  = libtcod.random_get_int(0, 0, 1)
 					if num == 0:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-			#	elif block == 'blocky-fighter':
-			#		# Oh no! Enemies are  getting in each other's way offscreen! 
-			#		# This is a thing I somehow have to solve by getting enemies to shuffle around a bit randomly when 				#		# there's actually a problem, and I'm not sure what the proper way to do that is!
-#
-#					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
-#					# Why 3? To avoid cycling back and forth when there's someone in the way
-#					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
-#						#for now, just pick a new destination. This may not be enough.
-#						num  = libtcod.random_get_int(0, 0, 5)
-#						if num != 0:
-#							self.target_room = AI_choose_adjacent_room(self, allow_previous_room = True)
 
 				if return_message == "No good options":  #give up and try going somewhere new?
 					#choose new target room
@@ -764,28 +795,18 @@ class BasicMonster:
 				
 				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
 					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
-					print "hmmm" + str(self.ally_in_the_way_o_meter)
+					# print "hmmm" + str(self.ally_in_the_way_o_meter)
 					# Why 3? To avoid cycling back and forth when there's someone in the way
 					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
-						print "crew this"
+						# print "crew this"
 						self.target_room = AI_choose_adjacent_room(self)
 
-
-				#TEMP COMMENTING OUTSO I CAN TRY OTHER SHIZZLE
-		#		# but only go looking if you're not on guard duty!
-		#		if self.guard_duty == False:
-		#			(dx,dy) = Head_Towards_Players_Room(monster.x, monster.y)
-		#			block = is_blocked(monster.x+dx, monster.y+dy, True) 
-		#			if block == False: 
-		##			if is_blocked(monster.x+dx, monster.y+dy) == False:
-		#				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-		#			elif block == 'closed-door':
-		#				num  = libtcod.random_get_int(0, 0, 1)
-		#				if num == 0:
-		#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 							
 
-			else:	
+			# Now do things for the other cases?
+		
+			elif self.state != 'guard-duty':
+			# else:	
 				#As we've now spotted the player, stop being on guard duty
 				self.guard_duty = False
 				# ok first question. where is the player and how do we get to them?
@@ -798,7 +819,6 @@ class BasicMonster:
 				if monster.distance_to(player) >= self.attack_dist + 1:
 
 
-					#So hey there's a navigation bug that can happen, based around this line or the method it calls, whereby the enely sees the player, and so picks the quickest route to get to the plater, but because that 'nearest step' decision is based entirely on their respective co-ordinates (and because it prioritises straights lines?), the 'next step' can take it out of sight of the player. At which point it goes back to aimless wandering, and can walk backwards into the space where it first saw the player, and ends up in a loop.	A fix might be: prioritise keeping the player in your sights if possible? That's probably not a great fix if we introduce obstacels that can be seen through. But also hopefully at some point we'll add a 'go to the room you think the player was in' clause, and that should hopefully deal with most of the problem.
 					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 				#	(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
@@ -2001,7 +2021,7 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 
 	if shortest_fighter_dist < shortest_dist:		#let people know that someone was standing in the way of best route
 		return_message = "Fighter blocking best option"
-		print "yep"
+		# print "yep"
 	if request_message == True:
 		return (chosen_move, return_message)
 	else :
@@ -4017,7 +4037,7 @@ def initialise_game():
 	game_msgs = []
 	
 	game_level_settings = Level_Settings()
-	dungeon_level = 1	#SO HEY currently there is a game-crashing flaw on the first level because room_adjacencies is not properly initialised, that's great
+	dungeon_level = 0	#SO HEY currently there is a game-crashing flaw on the first level because room_adjacencies is not properly initialised, that's great
 	alarm_level = 1
 	god_healer = God(god_type = God_Healer())
 	favoured_by_healer = False
@@ -4031,7 +4051,7 @@ def initialise_game():
 	time = 1
 	
 	#create object representing the player
-	fighter_component = Energy_Fighter(hp=6, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
+	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
@@ -4196,7 +4216,7 @@ while not libtcod.console_is_window_closed():
 								#try to open if there's a (non-elevator) door in this square
 								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
 									potential_open_list.append((object, victim))
-									print str(victim.name)
+									#print str(victim.name)
 								
 
 		# firstly movement happens
