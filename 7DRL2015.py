@@ -27,6 +27,8 @@ if ControlMode == 'Glados':
 	ATTCKDOWN	 = 'x'
 	ATTCKDOWNLEFT	 = 'z'
 	ATTCKLEFT	 = 'a'
+
+	ATTCKDOWNALT	 = 's'
 elif ControlMode == 'Crypsis':
 	ATTCKUPLEFT	 = 'a'
 	ATTCKUP		 = 'z'
@@ -37,6 +39,7 @@ elif ControlMode == 'Crypsis':
 	ATTCKDOWNLEFT	 = 'w'
 	ATTCKLEFT	 = 'q'
 
+	ATTCKDOWNALT	 = 's'
 
 #MOVEUPLEFT
 #MOVEUP
@@ -826,14 +829,14 @@ class BasicMonster:
 					for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
 						for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
 							if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:		#then this attack command could work
-								attackList.append(temp_command)
-								break
+								if temp_command != ATTCKDOWNALT:  #here's a bad hack to get round a bad hack
+									attackList.append(temp_command)
+									break
 
 
 				# Now we know if attacking is possible, and have built up a list of attacks:
 				# if there are some attacks we could do, pick one
 				if len(attackList) > 0:
-					print str(len(attackList))
 					command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
 					abstract_attack_data = self.weapon.do_attack(command_choice)
 					# now do the attack! or, you know, decide to
@@ -841,7 +844,7 @@ class BasicMonster:
 					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
 
 				# otherwise, walk towards the player if possible.
-				else: 
+				elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
 					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
