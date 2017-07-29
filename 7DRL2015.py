@@ -717,6 +717,8 @@ class BasicMonster:
 		self.target_room = None
 		self.ally_in_the_way_o_meter = 0		 #decreases by 1 each turn, and goes up by 3 if ally in way
 		self.impatience_threshold_for_allies_being_in_the_way = 7
+		self.blocked_by_door_o_meter = 0		 #decreases by 1 each turn, and goes up by 2 if blocked door in way
+		self.impatience_threshold_for_doors_being_in_the_way = 4
 		self.state = state
 		self.target_x = player.x
 		self.target_y = player.y
@@ -729,11 +731,7 @@ class BasicMonster:
 		if self.stunned_time <= 0:
 
 
-
-
-
 			# Welcome to basic monster ai business! Let's try and get the structure of this  cleared up a bit.
-
 
 			# Step 0: put some details about external stuff here?
 			current_room = nearest_points_array[monster.x][monster.y]
@@ -754,77 +752,73 @@ class BasicMonster:
 			elif self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
 				self.state = 'wander-aimlessly'		# since player no longer visible, wander aimlessly!
 				
-			#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in); if heading towards room and you reach that room, switch to wandering aimlessly
+			#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in);
+			# if heading towards room and you reach that room, switch to wandering aimlessly
 
 
 
-			# Step 2: Now you know yourself, or at least your state, decide your target (either a room or a specific, generally visible space).
+			# Step 2: Now you know yourself, or at least your state, decide your target (either a room or a specific space).
 			# Maybe generally update navigation stuff here as well?
 			if  self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
 				self.target_x = player.x
 				self.target_y = player.y
 
-			elif self.target_room  == None or self.target_room == current_room:		#pick a new target room if you need to...
+			elif self.target_room  == None or self.target_room == current_room:	#pick a new target room if you need to...
 				self.target_room  =   AI_choose_adjacent_room(self)
 				self.previous_room = current_room
 
 		
 
 			# Step 3: Given the above, decide on a plan of action (a move or attack; decision depends a lot on state)
-
-			# Step 4: Do we have another thing here about 'wiggling' ?
-
 			
 			# Do the things that you do when going towards a target room rather than a specific grid reference
 			if self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
 
-				temp_message = " "
+				# Choose an option that gets you closest to where you want to go
 				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
 
+				# Move if possible
 				block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
 				if block == False: 
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+				# If the door is closed, maybe try to open it (do we need to give up after a while?)
 				elif block == 'closed-door':
+					self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
+					#try to open the door, maybe
 					num  = libtcod.random_get_int(0, 0, 1)
 					if num == 0:
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+					# or, if not, maybe you want to give up and try something else?
+					if self.blocked_by_door_o_meter > self.impatience_threshold_for_doors_being_in_the_way:
+						self.state = 'wander-aimlessly'
+						self.target_room = AI_choose_adjacent_room(self)
 
-				if return_message == "No good options":  #give up and try going somewhere new?
-					#choose new target room
+				#if there's actually nothing to do, give up and try going somewhere new?
+				if return_message == "No good options": 
+					self.state = 'wander-aimlessly'
 					self.target_room = AI_choose_adjacent_room(self)
 				
+				# if other fighters are blocking the way, eventually get impatient and go elsewhere
 				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
 					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
-					# print "hmmm" + str(self.ally_in_the_way_o_meter)
 					# Why 3? To avoid cycling back and forth when there's someone in the way
+					# Try going somewhere else if you've been blocked like this for a while
 					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
-						# print "crew this"
+						self.state = 'wander-aimlessly'
 						self.target_room = AI_choose_adjacent_room(self)
 
 							
 
-			# Now do things for the other cases?
-		
+			# Now do things for the other cases!
 			elif self.state != 'guard-duty':
-			# else:	
-				#As we've now spotted the player, stop being on guard duty
-				self.guard_duty = False
-				# ok first question. where is the player and how do we get to them?
-				dx = 0
-				dy = 0
-
-
 
 				#move towards player if far away
 				if monster.distance_to(player) >= self.attack_dist + 1:
-
-
 					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
-				#	(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 				
-
 				#close enough, attack! (if the player is still alive.)
 				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
 					attackList = []
@@ -857,11 +851,13 @@ class BasicMonster:
 						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
 
 
+			# Update various cooldowns and counters and such
 			if self.weapon:
 				self.weapon.recharge()
-
 			if self.ally_in_the_way_o_meter > 0:
 				self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter - 1
+			if self.blocked_by_door_o_meter > 0:
+				self.blocked_by_door_o_meter = self.blocked_by_door_o_meter - 1
 		if self.stunned_time > 0:
 			self.stunned_time = self.stunned_time - 1
 
