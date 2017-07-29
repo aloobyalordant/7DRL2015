@@ -811,44 +811,78 @@ class BasicMonster:
 							
 
 			# Now do things for the other cases!
-			elif self.state != 'guard-duty':
+			elif self.state == 'pursue-visible-target':
 
-				#move towards player if far away
-				if monster.distance_to(player) >= self.attack_dist + 1:
+				# First off, see if you can attack the player from where you are
+				attackList = []
+				# Is the player alive and do you have enough 'weapon charge'?
+				if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
+					# figure out the vector that the player is from you
+					dist_x = self.target_x  - monster.x
+					dist_y = self.target_y  - monster.y
+
+					# ok, now see if any of your attacks could hit the player
+					# TODO: optimising the weapon code to avoid all these loops might be nice some time
+					for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
+						for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
+							if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:		#then this attack command could work
+								attackList.append(temp_command)
+								break
+
+
+				# Now we know if attacking is possible, and have built up a list of attacks:
+				# if there are some attacks we could do, pick one
+				if len(attackList) > 0:
+					print str(len(attackList))
+					command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+					abstract_attack_data = self.weapon.do_attack(command_choice)
+					# now do the attack! or, you know, decide to
+					chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+
+				# otherwise, walk towards the player if possible.
+				else: 
 					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
-				
-				#close enough, attack! (if the player is still alive.)
-				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
-					attackList = []
 
-					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
-					
-					# and now we manually code what keys the monster would press based on where they want to attack.
-					# yes, this isn't great code design. It's a 7drl, deal with it.
-					if dx == 0 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
-					elif dx == 1 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
-					elif dx == 1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
-					elif dx == 1 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
-					elif dx == 0 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
-					elif dx == -1 and dy == 1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
-					elif dx == -1 and dy == 0:
-						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
-					elif dx == -1 and dy == -1:
-						abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
-					else: 
-						abstract_attack_data = None
-					
-					if abstract_attack_data is not None:
-						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+
+#				#move towards player if far away
+#				if monster.distance_to(player) >= self.attack_dist + 1:
+#					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+#
+#				
+#				#close enough, attack! (if the player is still alive.)
+#				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
+#					attackList = []
+#
+#					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
+#					
+#					# and now we manually code what keys the monster would press based on where they want to attack.
+#					# yes, this isn't great code design. It's a 7drl, deal with it.
+#					if dx == 0 and dy == -1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
+#					elif dx == 1 and dy == -1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
+#					elif dx == 1 and dy == 0:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
+#					elif dx == 1 and dy == 1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
+#					elif dx == 0 and dy == 1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
+#					elif dx == -1 and dy == 1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
+#					elif dx == -1 and dy == 0:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
+#					elif dx == -1 and dy == -1:
+#						abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
+#					else: 
+#						abstract_attack_data = None
+#					
+#					if abstract_attack_data is not None:
+#						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+#						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
 
 
 			# Update various cooldowns and counters and such
