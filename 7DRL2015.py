@@ -183,8 +183,8 @@ class Object:
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
 
-		if True:	# temporary hack to test enemy naviation
-		#if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
+		#if True:	# temporary hack to test enemy naviation
+		if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 			#set the color and then draw the character that represents this object at its position
 			libtcod.console_set_default_foreground(con, self.color)
 			libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod.BKGND_NONE)
@@ -738,154 +738,61 @@ class BasicMonster:
 
 			# Step 0: put some details about external stuff here?
 			current_room = nearest_points_array[monster.x][monster.y]
-		
 
 			# Step 1: Decide your current state, and maybe a few other bits.
-			# Currently planned possible states:
-			# 'guard-duty'			Stay where you are till something comes along
-			# 'head-towards-room'		Try and walk towards a target room (generally the one you think player is in)
-			# 'wander-aimlessly'		Pick adjacent rooms at random to walk into, preferably avoiding the previous room
-			# 'pursue-visible-target'	When the player is near you, go towards them! Includes attacking?
-			# 'flee-visible-danger'		Run away from a thing you can see (the player, when you're scared of them?)
-
-			#keeping it pretty simple for now... pursue the player if you see them
-			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
-				self.state = 'pursue-visible-target'
-
-			elif self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
-				self.state = 'wander-aimlessly'		# since player no longer visible, wander aimlessly!
-				
-			#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in);
-			# if heading towards room and you reach that room, switch to wandering aimlessly
-
-
+			self.decideState(monster)
 
 			# Step 2: Now you know yourself, or at least your state, decide your target (either a room or a specific space).
-			# Maybe generally update navigation stuff here as well?
-			if  self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
-				self.target_x = player.x
-				self.target_y = player.y
-
-			elif self.target_room  == None or self.target_room == current_room:	#pick a new target room if you need to...
-				self.target_room  =   AI_choose_adjacent_room(self)
-				self.previous_room = current_room
-
-		
+			self.decideTarget(monster)
 
 			# Step 3: Given the above, decide on a plan of action (a move or attack; decision depends a lot on state)
 			
 			# Do the things that you do when going towards a target room rather than a specific grid reference
 			if self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
 
-				# Choose an option that gets you closest to where you want to go
-				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
+ 				self.moveTowardsRoom(monster, decider)
 
-				# Move if possible
-				block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
-				if block == False: 
-					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-
-				# If the door is closed, maybe try to open it (do we need to give up after a while?)
-				elif block == 'closed-door':
-					self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
-					#try to open the door, maybe
-					num  = libtcod.random_get_int(0, 0, 1)
-					if num == 0:
-						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-					# or, if not, maybe you want to give up and try something else?
-					if self.blocked_by_door_o_meter > self.impatience_threshold_for_doors_being_in_the_way:
-						self.state = 'wander-aimlessly'
-						self.target_room = AI_choose_adjacent_room(self)
-
-				#if there's actually nothing to do, give up and try going somewhere new?
-				if return_message == "No good options": 
-					self.state = 'wander-aimlessly'
-					self.target_room = AI_choose_adjacent_room(self)
-				
-				# if other fighters are blocking the way, eventually get impatient and go elsewhere
-				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
-					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
-					# Why 3? To avoid cycling back and forth when there's someone in the way
-					# Try going somewhere else if you've been blocked like this for a while
-					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
-						self.state = 'wander-aimlessly'
-						self.target_room = AI_choose_adjacent_room(self)
-
-							
+#				# Choose an option that gets you closest to where you want to go
+#				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
+#
+#				# Move if possible
+#				block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
+#				if block == False: 
+#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+#
+#				# If the door is closed, maybe try to open it (do we need to give up after a while?)
+#				elif block == 'closed-door':
+#					self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
+#					#try to open the door, maybe
+#					num  = libtcod.random_get_int(0, 0, 1)
+#					if num == 0:
+#						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+#					# or, if not, maybe you want to give up and try something else?
+#					if self.blocked_by_door_o_meter > self.impatience_threshold_for_doors_being_in_the_way:
+#						self.state = 'wander-aimlessly'
+#						self.target_room = AI_choose_adjacent_room(self)
+#
+#				#if there's actually nothing to do, give up and try going somewhere new?
+#				if return_message == "No good options": 
+#					self.state = 'wander-aimlessly'
+#					self.target_room = AI_choose_adjacent_room(self)
+#				
+#				# if other fighters are blocking the way, eventually get impatient and go elsewhere
+#				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
+#					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
+#					# Why 3? To avoid cycling back and forth when there's someone in the way
+#					# Try going somewhere else if you've been blocked like this for a while
+#					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
+#						self.state = 'wander-aimlessly'
+#						self.target_room = AI_choose_adjacent_room(self)
+#
+#							
 
 			# Now do things for the other cases!
 			elif self.state == 'pursue-visible-target':
 
-				# First off, see if you can attack the player from where you are
-				attackList = []
-				# Is the player alive and do you have enough 'weapon charge'?
-				if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
-					# figure out the vector that the player is from you
-					dist_x = self.target_x  - monster.x
-					dist_y = self.target_y  - monster.y
+				self.engagePlayer(monster, decider)
 
-					# ok, now see if any of your attacks could hit the player
-					# TODO: optimising the weapon code to avoid all these loops might be nice some time
-					for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
-						for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
-							if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:		#then this attack command could work
-								if temp_command != ATTCKDOWNALT:  #here's a bad hack to get round a bad hack
-									attackList.append(temp_command)
-									break
-
-
-				# Now we know if attacking is possible, and have built up a list of attacks:
-				# if there are some attacks we could do, pick one
-				if len(attackList) > 0:
-					command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
-					abstract_attack_data = self.weapon.do_attack(command_choice)
-					# now do the attack! or, you know, decide to
-					chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
-
-				# otherwise, walk towards the player if possible.
-				elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
-					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
-					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-
-
-
-#				#move towards player if far away
-#				if monster.distance_to(player) >= self.attack_dist + 1:
-#					(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
-#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-#
-#				
-#				#close enough, attack! (if the player is still alive.)
-#				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
-#					attackList = []
-#
-#					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
-#					
-#					# and now we manually code what keys the monster would press based on where they want to attack.
-#					# yes, this isn't great code design. It's a 7drl, deal with it.
-#					if dx == 0 and dy == -1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKUP)
-#					elif dx == 1 and dy == -1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKUPRIGHT)
-#					elif dx == 1 and dy == 0:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
-#					elif dx == 1 and dy == 1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNRIGHT)
-#					elif dx == 0 and dy == 1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWN)
-#					elif dx == -1 and dy == 1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKDOWNLEFT)
-#					elif dx == -1 and dy == 0:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKLEFT)
-#					elif dx == -1 and dy == -1:
-#						abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
-#					else: 
-#						abstract_attack_data = None
-#					
-#					if abstract_attack_data is not None:
-#						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-#						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
 
 
 			# Update various cooldowns and counters and such
@@ -900,6 +807,106 @@ class BasicMonster:
 
 	def stun(self):
 		self.stunned_time = 2
+
+	# Step 1 of AI process: Decide your current state, and maybe a few other bits.
+	def decideState(self, monster):
+		# Currently planned possible states:
+		# 'guard-duty'			Stay where you are till something comes along
+		# 'head-towards-room'		Try and walk towards a target room (generally the one you think player is in)
+		# 'wander-aimlessly'		Pick adjacent rooms at random to walk into, preferably avoiding the previous room
+		# 'pursue-visible-target'	When the player is near you, go towards them! Includes attacking?	
+		# 'flee-visible-danger'		Run away from a thing you can see (the player, when you're scared of them?)
+	
+		#keeping it pretty simple for now... pursue the player if you see them
+		if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			self.state = 'pursue-visible-target'
+		elif self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
+			self.state = 'wander-aimlessly'		# since player no longer visible, wander aimlessly!
+			
+		#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in);
+		# if heading towards room and you reach that room, switch to wandering aimlessly
+
+
+	# Step 2 of AI process: Now you know your state, decide your target (either a room or a specific space).
+	# Maybe generally update navigation stuff here as well?
+	def decideTarget(self, monster):
+		current_room = nearest_points_array[monster.x][monster.y]
+		if  self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
+			self.target_x = player.x
+			self.target_y = player.y
+		elif self.target_room  == None or self.target_room == current_room:	#pick a new target room if you need to...
+			self.target_room  =   AI_choose_adjacent_room(self)
+			self.previous_room = current_room
+
+
+	# Part of Step 3: Do the things that you do when going towards a target room rather than a specific grid reference
+	def moveTowardsRoom(self, monster, decider):
+		# Choose an option that gets you closest to where you want to go
+		((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
+
+		# Move if possible
+		block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
+		if block == False: 
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+		# If the door is closed, maybe try to open it (do we need to give up after a while?)
+		elif block == 'closed-door':
+			self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
+			#try to open the door, maybe
+			num  = libtcod.random_get_int(0, 0, 1)
+			if num == 0:
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			# or, if not, maybe you want to give up and try something else?
+			if self.blocked_by_door_o_meter > self.impatience_threshold_for_doors_being_in_the_way:
+				self.state = 'wander-aimlessly'
+				self.target_room = AI_choose_adjacent_room(self)
+
+		#if there's actually nothing to do, give up and try going somewhere new?
+		if return_message == "No good options": 
+			self.state = 'wander-aimlessly'
+			self.target_room = AI_choose_adjacent_room(self)
+				
+		# if other fighters are blocking the way, eventually get impatient and go elsewhere
+		elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
+			self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
+			# Why 3? To avoid cycling back and forth when there's someone in the way
+			# Try going somewhere else if you've been blocked like this for a while
+			if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
+				self.state = 'wander-aimlessly'
+				self.target_room = AI_choose_adjacent_room(self)
+
+	# Part of Step 3: do the things you can do when you see the player!
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = []
+		# Is the player alive and do you have enough 'weapon charge'?
+		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
+			# figure out the vector that the player is from you
+			dist_x = self.target_x  - monster.x
+			dist_y = self.target_y  - monster.y
+
+			# ok, now see if any of your attacks could hit the player
+			# TODO: optimising the weapon code to avoid all these loops might be nice some time
+			for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
+				for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
+					if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:		#then this attack command could work
+						if temp_command != ATTCKDOWNALT:  #here's a bad hack to get round a bad hack
+							attackList.append(temp_command)
+							break
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+
+		# otherwise, walk towards the player if possible.
+		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 
 class Wizard_AI:
@@ -3684,8 +3691,8 @@ def render_all():
 			#if False:
 			if not visible:
 				#if it's not visible right now, the player can only see it if it's explored	
-				#if map[x][y].explored:
-				if True: 	#temp making walls and such visible to check enemy behaviour
+				if map[x][y].explored:
+				#if True: 	#temp making walls and such visible to check enemy behaviour
 					#it's out of the player's FOV
 					if wall:
 						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod.BKGND_SET)
