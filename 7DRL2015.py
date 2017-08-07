@@ -113,6 +113,8 @@ default_weapon_color = libtcod.grey
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
 default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
+water_background_color =libtcod.Color(100,100,250)
+water_foreground_color =libtcod.Color(25,25,250)
 
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
@@ -536,11 +538,21 @@ class Energy_Fighter:
 	# This basically gives you the same risk /reward (being super wounded = more efficient attacking) 
 	# and still gets round the problem of being stuck when on low health,
 	# without the confusion of adrenaline mode
-	def can_attack(self, energy_cost):
-		if self.hp >= min(energy_cost, self.max_hp- self.wounds):
+	def can_attack(self, energy_cost, return_message = False):
+		error_message = ''
+		if self.hp < min(energy_cost, self.max_hp- self.wounds):
+			error_message = 'energy too low'
+		elif self.in_water:
+			error_message = 'in water'
+			print 'PSLASH'
+		
+		if error_message == '':
 			return True
-		else:
-			return False
+		elif return_message:
+			if return_message == True:
+				return error_message
+			else:
+				return False
 
 
 		#if self.adrenaline_mode == False:
@@ -2765,6 +2777,9 @@ def make_map():
 		elif od.name == 'key':
 			new_key = Object(od.x, od.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
 			objects.append(new_key)
+		elif od.name == 'water':
+			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
+			objects.append(new_water)
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
 			objects.append(floor_message)
@@ -3172,16 +3187,23 @@ def process_player_attack(key_char):
 		return 'didnt-take-turn'
 	else:
 		energy_cost = player_weapon.get_usage_cost(key_char) + 1   #let's try and make weapons a bit harder to use...
-		if player.fighter.can_attack(energy_cost):
+		can_attack =  player.fighter.can_attack(energy_cost, return_message = True)
+		if can_attack == True:
 			abstract_attack_data = player_weapon.do_energy_attack(key_char)
 			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
 			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
 			player.fighter.lose_energy(energy_cost)
 		
 		#Note: this code might need to change in future if we decide to have other reasons for not being able to attack
-		else:
+		elif can_attack == 'energy too low':
 			#message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
 			message('You are too tired to attack', libtcod.orange)
+			return 'didnt-take-turn'
+		elif can_attack == 'in water':
+			message('You are too busy treading water to attack', libtcod.orange)
+			return 'didnt-take-turn'
+		else:
+			message('Error: cannot attack', libtcod.orange)
 			return 'didnt-take-turn'
 
 def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
@@ -3728,8 +3750,8 @@ def render_all():
 				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
 					if object.attack is not None and other_object.fighter is not None:
 						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
-					
-
+			if object.name == 'water':
+				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
 
 	for object in objects:
 		#if object != player:
@@ -4062,6 +4084,14 @@ def reorder_objects():
 		#print str(objects[index].name)
 		ob = objects[index]
 		if ob.attack:
+			ob.send_to_back()
+		index = index + 1 
+
+	#step 3.75: move all water to back? I need to start finding a better way to do this maybe.
+	index = 0
+	while index < total: 				# >= 0:	
+		ob = objects[index]
+		if ob.name == 'water':
 			ob.send_to_back()
 		index = index + 1 
 
@@ -4640,6 +4670,17 @@ while not libtcod.console_is_window_closed():
 			if object.decider:	
 				object.decider.refresh()
 
+
+		# Temporary hack: update a thing saying whether the player is in water.
+		
+		player_in_water = False
+		for ob in objects:
+			if ob.x == player.x and ob.y == player.y and ob.name == 'water':
+				print 'sploosh'
+				player_in_water = True
+				break
+		player.fighter.in_water = player_in_water
+		
 
 
 		# Now do alarm soundings! and other alarmer-based stuff

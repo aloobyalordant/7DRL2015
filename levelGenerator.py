@@ -790,7 +790,30 @@ class Level_Generator:
 						yval= libtcod.random_get_int(0,room.y1,room.y2) 
 						object_data.append(Object_Datum(xval,yval,'key'))
 						#TODO Make the code actually drop the key in a random place in the room.
-					
+
+					#else:
+					#	(sec_x,sec_y) = room.center()
+					#	xval= libtcod.random_get_int(0,room.x1,room.x2) 
+					#	yval= libtcod.random_get_int(0,room.y1,room.y2) 
+					#	object_data.append(Object_Datum(xval,yval,'water'))
+
+
+			# Maybe let's put some water in the room? 
+			num = libtcod.random_get_int(0,0,6)
+			if num == 0:
+				# flood the whole room! 
+				for x in range(room.x1, room.x2+1):
+					for y in range(room.y1, room.y2+1):
+						object_data.append(Object_Datum(x,y, 'water'))
+						object_data.append(Object_Datum(x,y, 'water'))
+			elif num == 1:
+				#flood half the room?
+				for x in range(room.x1, room.x2+1):
+					for y in range(room.y1, room.y2+1):
+						cointoss = libtcod.random_get_int(0, 0, 1)
+						if cointoss == 0:
+							object_data.append(Object_Datum(x,y, 'water'))
+							object_data.append(Object_Datum(x,y, 'water'))
 
 				
 		#			(sec_x,sec_y) = room.center()
