@@ -458,9 +458,9 @@ class Energy_Fighter:
 		self.jump_array = jump_array
 		self.jump_recharge_time = jump_recharge_time
 		self.wounds = 0
-		self.adrenaline_mode = False
-		self.adrenaline_threshold = 2
-		self.adrenaline_level = self.max_hp
+	#	self.adrenaline_mode = False
+	#	self.adrenaline_threshold = 2
+	#	self.adrenaline_level = self.max_hp
 
 	def take_damage(self, damage):
 		#apply damage if possible
@@ -476,10 +476,10 @@ class Energy_Fighter:
 			if self.wounds > self.max_hp:
 				self.wounds = self.max_hp
 
-			#check to see if we should announce the start of ADRENALINE MODE
-			if self.adrenaline_mode == False and self.max_hp - self.wounds < self.adrenaline_threshold:
-				message('You feel a surge of adrenaline.', libtcod.green)
-			self.adjust_adrenaline()
+	#		#check to see if we should announce the start of ADRENALINE MODE #commented out
+	#		if self.adrenaline_mode == False and self.max_hp - self.wounds < self.adrenaline_threshold:
+	#			message('You feel a surge of adrenaline.', libtcod.green)
+	#		self.adjust_adrenaline()
 				
 
 	def attack(self, target):
@@ -506,7 +506,7 @@ class Energy_Fighter:
 		self.wounds = self.wounds - amount
 		if self.wounds < 0:
 			self.wounds = 0
-		self.adjust_adrenaline()
+	#	self.adjust_adrenaline()
 
 	def increase_strength(self, amount):
 		self.extra_strength += amount
@@ -523,26 +523,36 @@ class Energy_Fighter:
 			temp_array.append(max(0, self.jump_array[i]-1))		#reduce charge times on all jumps
 		self.jump_array = temp_array
 
-	# decide if we should be in ADRENALINE MODE, with the rush of energy and whatnot.
-	def adjust_adrenaline(self):
-		if self.max_hp - self.wounds < self.adrenaline_threshold:
-			self.adrenaline_mode = True
-		else:
-			self.adrenaline_mode = False
+	## decide if we should be in ADRENALINE MODE, with the rush of energy and whatnot.
+	# def adjust_adrenaline(self):
+	#	if self.max_hp - self.wounds < self.adrenaline_threshold:
+	#		self.adrenaline_mode = True
+	#	else:
+	#		self.adrenaline_mode = False
 
 
-	#check if the energy fighter has enough energy to make an attack
+	# check if the energy fighter has enough energy to make an attack
+	# rewritten a bit: ignore 'adrenaline', but always be able to attack if you are at max hp.
+	# This basically gives you the same risk /reward (being super wounded = more efficient attacking) 
+	# and still gets round the problem of being stuck when on low health,
+	# without the confusion of adrenaline mode
 	def can_attack(self, energy_cost):
-		if self.adrenaline_mode == False:
-			if self.hp >= energy_cost:
-				return True
-			else:
-				return False
+		if self.hp >= min(energy_cost, self.max_hp- self.wounds):
+			return True
 		else:
-			if self.adrenaline_level >= energy_cost:
-				return True
-			else:
-				return False
+			return False
+
+
+		#if self.adrenaline_mode == False:
+		#	if self.hp >= energy_cost:
+		#		return True
+		#	else:
+		#		return False
+		#else:
+		#	if self.adrenaline_level >= energy_cost:
+		#		return True
+		#	else:
+		#		return False
 
 	#lose the required amount of energy, down to a minimum of 0
 	def lose_energy(self, energy_cost):
@@ -550,9 +560,9 @@ class Energy_Fighter:
 			self.hp -= energy_cost
 			if self.hp <= 0:
 				self.hp = 0
-			self.adrenaline_level -= energy_cost
-			if self.adrenaline_level <= 0:
-				self.adrenaline_level = 0
+	#		self.adrenaline_level -= energy_cost
+	#		if self.adrenaline_level <= 0:
+	#			self.adrenaline_level = 0
 
 	#lose the required amount of energy, down to a minimum of 0
 	def gain_energy(self, energy_amount):
@@ -560,24 +570,24 @@ class Energy_Fighter:
 			self.hp += energy_amount
 			if self.hp > self.max_hp - self.wounds:
 				self.hp = self.max_hp - self.wounds
-			self.adrenaline_level += energy_amount
-			# adrenaline doesn't care about wounds!
-			if self.adrenaline_level > self.max_hp:
-				self.adrenaline_level  = self.max_hp
+	#		self.adrenaline_level += energy_amount
+	#		# adrenaline doesn't care about wounds!
+	#		if self.adrenaline_level > self.max_hp:
+	#			self.adrenaline_level  = self.max_hp
 
 	
 	# check if any of the jumps in the array are at 0. If so, they are available.
 	def jump_available(self):
-		if self.adrenaline_mode == False:
-			if self.hp >= self.jump_recharge_time:
-				return True
-			else:
-				return False
+	#	if self.adrenaline_mode == False:
+		if self.hp >= self.jump_recharge_time:
+			return True
 		else:
-			if self.adrenaline_level >= self.jump_recharge_time:
-				return True
-			else:
-				return False
+			return False
+	#	else:
+	#		if self.adrenaline_level >= self.jump_recharge_time:
+	#			return True
+	#		else:
+	#			return False
 		#available = False
 		#for i in range(len(self.jump_array)):
 		#	if self.jump_array[i] == 0:
@@ -3871,33 +3881,33 @@ def create_GUI_panel():
 	energy_color = libtcod.cyan
 	non_energy_color = libtcod.blue
 	wound_color = libtcod.red	
-	adrenaline_color = libtcod.green
-	non_adrenaline_color = libtcod.darker_green
-	if player.fighter.adrenaline_mode == False:
-		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "Energy:")
-		for i in range(player.fighter.max_hp):
-			if i < player.fighter.wounds:
-				libtcod.console_set_default_foreground(panel, wound_color)
-				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-			elif i < player.fighter.wounds + player.fighter.hp:			
-				libtcod.console_set_default_foreground(panel, energy_color)
-				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-			else: 
-				libtcod.console_set_default_foreground(panel, non_energy_color)
-				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
-	else:
-		libtcod.console_set_default_foreground(panel, adrenaline_color)
-		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "ENERGY:")
-		for i in range(player.fighter.max_hp):
-			if i < player.fighter.adrenaline_level:
-				libtcod.console_set_default_foreground(panel, adrenaline_color)
-				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-			#elif i < player.fighter.wounds + player.fighter.hp:			
-			#	libtcod.console_set_default_foreground(panel, adrenaline_color)
-			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-			else: 
-				libtcod.console_set_default_foreground(panel, non_adrenaline_color)
-				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+#	adrenaline_color = libtcod.green
+#	non_adrenaline_color = libtcod.darker_green
+#	if player.fighter.adrenaline_mode == False:
+	libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "Energy:")
+	for i in range(player.fighter.max_hp):
+		if i < player.fighter.wounds:
+			libtcod.console_set_default_foreground(panel, wound_color)
+			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		elif i < player.fighter.wounds + player.fighter.hp:			
+			libtcod.console_set_default_foreground(panel, energy_color)
+			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		else: 
+			libtcod.console_set_default_foreground(panel, non_energy_color)
+			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+#	else:
+#		libtcod.console_set_default_foreground(panel, adrenaline_color)
+#		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "ENERGY:")
+#		for i in range(player.fighter.max_hp):
+#			if i < player.fighter.adrenaline_level:
+#				libtcod.console_set_default_foreground(panel, adrenaline_color)
+#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#			#elif i < player.fighter.wounds + player.fighter.hp:			
+#			#	libtcod.console_set_default_foreground(panel, adrenaline_color)
+#			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#			else: 
+#				libtcod.console_set_default_foreground(panel, non_adrenaline_color)
+#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
 
 
 			
@@ -4590,8 +4600,9 @@ while not libtcod.console_is_window_closed():
 
 		# refresh the player's energy
 		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
-		# disregard if the player isin ADRENALINE MODE
-		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False) or player.fighter.adrenaline_mode == True:
+		# disregard if the player isin ADRENALINE MODE # commented out
+		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False):
+		#or player.fighter.adrenaline_mode == True:
 			player.fighter.gain_energy(1)
 
 		# bonus recharge for combos
