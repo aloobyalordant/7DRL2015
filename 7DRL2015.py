@@ -115,6 +115,8 @@ default_message_color = color_light_wall
 default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
 water_background_color =libtcod.Color(100,100,250)
 water_foreground_color =libtcod.Color(25,25,250)
+blood_background_color =libtcod.Color(150,0,0)
+blood_foreground_color =libtcod.Color(150,0,0)
 
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
@@ -1888,7 +1890,11 @@ class BasicAttack:
 								player_hit_something = True	
 							else:
 								message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
+						#add blood! maybe
+						new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
+						objects.append(new_blood)
 				
+
 						libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 						target.fighter.take_damage(self.damage)
 #					if target.name == 'security system':
@@ -3529,6 +3535,8 @@ def render_all():
 						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
 			if object.name == 'water':
 				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
+			if object.name == 'blood':
+				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
 
 	for object in objects:
 		#if object != player:
@@ -3864,11 +3872,11 @@ def reorder_objects():
 			ob.send_to_back()
 		index = index + 1 
 
-	#step 3.75: move all water to back? I need to start finding a better way to do this maybe.
+	#step 3.75: move all water and blood to back? I need to start finding a better way to do this maybe.
 	index = 0
 	while index < total: 				# >= 0:	
 		ob = objects[index]
-		if ob.name == 'water':
+		if ob.name == 'water' or ob.name == 'blood':
 			ob.send_to_back()
 		index = index + 1 
 
