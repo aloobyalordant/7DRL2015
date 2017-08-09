@@ -902,21 +902,7 @@ class BasicMonster:
 	# Part of Step 3: do the things you can do when you see the player!
 	def engagePlayer(self, monster, decider):
 		# First off, see if you can attack the player from where you are
-		attackList = []
-		# Is the player alive and do you have enough 'weapon charge'?
-		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
-			# figure out the vector that the player is from you
-			dist_x = self.target_x  - monster.x
-			dist_y = self.target_y  - monster.y
-
-			# ok, now see if any of your attacks could hit the player
-			# TODO: optimising the weapon code to avoid all these loops might be nice some time
-			for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
-				for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
-					if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:		#then this attack command could work
-						if temp_command != ATTCKDOWNALT:  #here's a bad hack to get round a bad hack
-							attackList.append(temp_command)
-							break
+		attackList = self.possibleAttackList(monster, decider)
 
 		# Now we know if attacking is possible, and have built up a list of attacks:
 		# if there are some attacks we could do, pick one
@@ -931,6 +917,77 @@ class BasicMonster:
 		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
 			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+	
+
+
+
+
+
+	# returns what possible attacks you can make that would hit the player
+	def possibleAttackList(self, monster, decider):
+		attackList = []
+		# Is the player alive and do you have enough 'weapon charge'?
+		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
+			# figure out the vector that the player is from you
+			dist_x = self.target_x  - monster.x
+			dist_y = self.target_y  - monster.y
+
+			# ok, now see if any of your attacks could hit the player
+			# TODO: optimising the weapon code to avoid all these loops might be nice some time
+			for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
+				for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
+					if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:	#then this attack command could work
+						# here's a bad hack to get round a bad hack
+						# (avoid giving extra weight to down attacks just because there's two buttons for it)
+						if temp_command != ATTCKDOWNALT:  
+							attackList.append(temp_command)
+							break
+
+		return attackList
+
+
+
+
+
+#As part of an initial experiment in sorting my AI code the heck out, let's make the Boman basically have default behaviours except they like to move diagonally.
+
+class Boman_AI(BasicMonster):
+	
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+
+		# otherwise, walk towards the player if possible.
+		elif monster.distance_to(player) > 1: 	
+			
+			#take list of possible good moves, then prioritise diagonal ones
+			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True)
+			shorterlist = []
+			for (dx,dy) in  move_shortlist:
+				if dx != 0 and dy != 0:
+					shorterlist.append((dx,dy))
+			# are there diagonal moves? then let's say will do one of those.
+			if len(shorterlist) > 0 :
+				move_shortlist = shorterlist
+
+			(dx,dy) = random.choice(tuple(move_shortlist))
+
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+
+
+
+
 
 
 class Wizard_AI:
@@ -2030,7 +2087,7 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 
 
 
-def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False):
+def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False, request_shortlist = False):
 	# Make a list of possible moves (in future this might be set as a parameter)
 	possible_moves = [(+1,0), (0,-1), (0,+1), (-1,0)]
 	if rook_moves == False:
@@ -2081,7 +2138,10 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 
 	# Choose from remaining available options at random (should create 'wiggling' when the obvious route is blocked)
 	if len(shortlist) > 0:
-		chosen_move = random.choice(tuple(shortlist))
+		if request_shortlist == False:
+			chosen_move = random.choice(tuple(shortlist))
+		else:
+			chosen_move = shortlist		#ugh, this hack feels ugly. But yeah, sometimes you might want a shortlist of moves
 	else:	# If there are no  good options, say this in return message
 		chosen_move = (0,0)
 		return_message = "No good options"
@@ -2611,7 +2671,7 @@ def create_monster(x,y, name, guard_duty = False):
 	elif name == 'boman':
 		#create a troll
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
-		ai_component = BasicMonster(weapon = Weapon_Staff(), guard_duty= guard_duty)
+		ai_component = Boman_AI(weapon = Weapon_Staff(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'B', 'boman', libtcod.darker_green, blocks=True, fighter=fighter_component, decider=decider_component)
 
