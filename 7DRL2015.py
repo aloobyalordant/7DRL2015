@@ -339,7 +339,8 @@ class Door:
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
 		
 		if libtcod.random_get_int(0, 0, self.looseness-1) < 2:		#opening unsuccesful
-			message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
+			message('The door rattles.', libtcod.white)
+			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
 			self.looseness = self.looseness + 1		#increase chance of opening in future though
 			self.recently_rattled = True
 
@@ -4238,7 +4239,7 @@ while not libtcod.console_is_window_closed():
 		#	if obj.x == player.x and obj.y == player.y and obj is not player]
 		objects_here = [obj for obj in objects
 			if obj.x == player.x and obj.y == player.y and obj is not player]
-		names = [obj.name for obj in objects_here if obj.floor_message is None]
+		names = [obj.name for obj in objects_here if obj.floor_message is None and obj.name is not 'water' and obj.name is not 'decoration'  and obj.name is not 'blood']  #todo: get a better way of not including certain objects in this list
 		possible_commands = []
 
 		weapon_found = False
@@ -4669,6 +4670,7 @@ while not libtcod.console_is_window_closed():
 			ready_for_next_level = False
 			next_level()
 	
+		# reorder_objects()	#TODO probably put this somewhere else?
 		#print '4.5'
 		render_all()
 		libtcod.console_flush()
