@@ -149,30 +149,30 @@ class Level_Settings:
 
 
 
-
-		# Level arena has swordsmen,  bomen, and (occasionally) axe maniacs. And a scary samurai as the boss! In a big arena level because why not
-		enemy_probs = []
-		enemy_probs.append(('swordsman', 50))
-		enemy_probs.append(('rook', 30))
-		enemy_probs.append(('boman', 30))
-		enemy_probs.append(('axe maniac', 1))
-		enemy_probs.append(('ninja', 4))
-	#	enemy_probs.append(('samurai', 1))
-		levarena = Level_Setting(
-			level_type = 'arena',
-			max_map_width = 60,
-			max_map_height = 30,
-			max_room_monsters = 1,
+#		# CURRENTLY COMMENTED OUT BECAUSE WIERD LEVEL NAVIGATION BUG
+#		# Level arena has swordsmen,  bomen, and (occasionally) axe maniacs. And a scary samurai as the boss! In a big arena level because why not
+#		enemy_probs = []
+#		enemy_probs.append(('swordsman', 50))
+#		enemy_probs.append(('rook', 30))
+#		enemy_probs.append(('boman', 30))
+#		enemy_probs.append(('axe maniac', 1))
+#		enemy_probs.append(('ninja', 4))
+#	#	enemy_probs.append(('samurai', 1))
+#		levarena = Level_Setting(
+#			level_type = 'arena',
+#			max_map_width = 60,
+#			max_map_height = 30,
+#			max_room_monsters = 1,
 #			boss = 'hammer sister',
-			boss = 'samurai',
-			enemy_probabilities = enemy_probs,
-			#enemy_spawn_rate = 20
-			number_sec_systems = len(self.bigArray),
-			keys_required = len(self.bigArray),
-			initial_alarm_level = len(self.bigArray)
-			)
-		
-		self.bigArray.append(levarena)
+#			boss = 'samurai',
+#			enemy_probabilities = enemy_probs,
+#			#enemy_spawn_rate = 20
+#			number_sec_systems = len(self.bigArray),
+#			keys_required = len(self.bigArray),
+#			initial_alarm_level = len(self.bigArray)
+#			)
+#		
+#		self.bigArray.append(levarena)
 
 
 		# Level 4 seems to have  it all.

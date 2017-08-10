@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import time
 import math
 import textwrap
 import random
@@ -2219,34 +2220,41 @@ def get_names_under_mouse():
 # MAIN CONTROL HANDLING METHOD WOO
 
 def handle_keys():
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center, something_changed
 
 	# key = libtcod.console_wait_for_keypress(True)
 	if key.vk == libtcod.KEY_ENTER and key.lalt:
 	#Alt+Enter: toggle fullscreen
+		something_changed = True
 		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
 	elif key.vk == libtcod.KEY_ESCAPE:
+		something_changed = True
 		return 'pause' #exit game
 
 	if game_state == 'big message':
 		if key.vk != 0:
+			something_changed = True
 			game_state = 'playing'
 
 	elif game_state == 'end message':
 		if key.vk != 0:
+			something_changed = True
 			game_state = 'end data'
 
 
 	elif game_state == 'end data':
 		if key.vk != 0:
+			something_changed = True
 			game_state = 'restartynscreen'
 
 	elif game_state == 'restartynscreen':
 		key_char = chr(key.c) 
 		if key_char == 'n':
+			something_changed = True
 			game_state='exit'
 		elif key_char == 'y':
+			something_changed = True
 			restart_game()
 
 		
@@ -2254,13 +2262,16 @@ def handle_keys():
 	elif game_state == 'paused':
 		key_char = chr(key.c) 
 		if key_char == 'q':
+			something_changed = True
 			game_state='exit'
 
 	elif game_state == 'dead':
 		key_char = chr(key.c)
 		if key_char == 'r':
+			something_changed = True
 			restart_game()
 		elif key_char == 'q':
+			something_changed = True
 			game_state='exit'
 
 	
@@ -2461,11 +2472,11 @@ def handle_keys():
 							destroyer_test_count = lev_set.max_monsters
 						elif current_god.god_type.type == 'deliverer':
 							# do a test: did we get to the shrine quickly enough?
-							if (time - time_level_started) > 190:
+							if (game_time - time_level_started) > 190:
 								message('\"Hang on a sec, actually you already took too long to get here. Sorry!\"', libtcod.orange)
 							else:
 								tested_by_deliverer = True
-								deliverer_test_count = 200 - (time-time_level_started)		#TODO put these kind of values in gods.py
+								deliverer_test_count = 200 - (game_time-time_level_started)		#TODO put these kind of values in gods.py
 					else:
 						message('There is no shrine here.')
 						return 'didnt-take-turn'
@@ -3158,7 +3169,7 @@ def next_level():
 	dungeon_level += 1
 	alarm_level = dungeon_level + 1
 	key_count = 0
-	time_level_started = time
+	time_level_started = game_time
 	message('You ascend to the next level!', libtcod.red)
 	if favoured_by_healer == True:
 		message('You hear the voice of ' + god_healer.name)
@@ -3428,6 +3439,7 @@ def pause_screen():
 	libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod.BKGND_NONE, libtcod.CENTER,
 	'The game is paused (press Esc to unpause or Q to quit)')
 
+	print 'p?p'
 	#blit the contents of "pause_menu" to the root console
 	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
@@ -3475,10 +3487,10 @@ def end_message():
 	
 
 def end_data_message():
-	global current_big_message, player_weapon, time
+	global current_big_message, player_weapon, game_time
 
 	string = current_big_message
-	data_string = "You ascended the tower with the " + player_weapon.name + " in " + str(time) + " seconds."
+	data_string = "You ascended the tower with the " + player_weapon.name + " in " + str(game_time) + " seconds."
 
 #split the message if necessary, among multiple lines
 	new_msg_lines = textwrap.wrap(string, MSG_WIDTH)
@@ -3502,10 +3514,10 @@ def end_data_message():
 	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
 def restartynscreen():
-	global current_big_message, player_weapon, time
+	global current_big_message, player_weapon, game_time
 
 	string = current_big_message
-	data_string = "You ascended the tower with the " + player_weapon.name + " in " + str(time) + " seconds."
+	data_string = "You ascended the tower with the " + player_weapon.name + " in " + str(game_time) + " seconds."
 	query_string = "Would you like to play again? (y/n)"	
 
 #split the message if necessary, among multiple lines
@@ -3827,7 +3839,7 @@ def create_GUI_panel():
 	libtcod.console_print_ex(panel, level_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Level:  ' + str(dungeon_level))
 	libtcod.console_print_ex(panel, level_panel_x, 2, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Time:   ' + str(time))
+	'Time:   ' + str(game_time))
 	libtcod.console_print_ex(panel, level_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT,
 	'Alarm:  ' + str(alarm_level))
 	libtcod.console_print_ex(panel, level_panel_x, 4, libtcod.BKGND_NONE, libtcod.LEFT,
@@ -3964,7 +3976,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -3972,6 +3984,7 @@ def initialise_game():
 
 	#create the list of game messages and their colors, starts empty
 	game_msgs = []
+	something_changed = True
 	
 	game_level_settings = Level_Settings()
 	dungeon_level = 0	#SO HEY currently there is a game-crashing flaw on the first level because room_adjacencies is not properly initialised, that's great
@@ -3985,7 +3998,7 @@ def initialise_game():
 	tested_by_deliverer = False
 	favoured_by_deliverer = False
 	already_healed_this_level = False
-	time = 1
+	game_time = 1
 	
 	#create object representing the player
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
@@ -4017,6 +4030,7 @@ def initialise_game():
 
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+	#print '6'
 	render_all()
 	libtcod.console_flush()
 
@@ -4070,6 +4084,7 @@ while not libtcod.console_is_window_closed():
 	#get player decisions and handle keys and exit game if needed
 	player_action = handle_keys()
 	if player_action == 'pause':
+		something_changed = True
 		if game_state == 'playing':
 			game_state = 'paused'
 		elif game_state == 'paused' or game_state == 'big message':
@@ -4080,7 +4095,7 @@ while not libtcod.console_is_window_closed():
 	elif game_state == 'playing' and player_action != 'didnt-take-turn' and player_action != 'pickup_dialog' and player_action != 'jump_dialog' :
 		
 		
-		time += 1
+		game_time += 1
 		spawn_timer -= 1
 		update_nav_data()
 
@@ -4275,8 +4290,12 @@ while not libtcod.console_is_window_closed():
 			object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+		#print '1'
 		render_all()
 		libtcod.console_flush()
+
+		#put in a pause before drawing the other stuff?
+		time.sleep(0.05)
 
 		
 		#update elevator so they know whether to shut their doors
@@ -4420,8 +4439,11 @@ while not libtcod.console_is_window_closed():
 			object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+		#print '2'
 		render_all()
 		libtcod.console_flush()
+		#put in a pause before drawing the other stuff?
+		time.sleep(0.05)
 
 		# process attacks!
 
@@ -4647,18 +4669,23 @@ while not libtcod.console_is_window_closed():
 			ready_for_next_level = False
 			next_level()
 	
-
+		#print '4.5'
+		render_all()
+		libtcod.console_flush()
 	#num_monsters = libtcod.random_get_int(0, 0, max_room_monsters)
 #
 
 
 	elif game_state == 'playing' and player_action == 'pickup_dialog':
+		#print '3'
 		render_all()
+		libtcod.console_flush()
 
 
 	elif game_state == 'playing' and player_action == 'jump_dialog':
+		#print '4'
 		render_all()
-
+		libtcod.console_flush()
 
 
 	# I guess let's draw things once more?	
@@ -4670,22 +4697,28 @@ while not libtcod.console_is_window_closed():
 
 	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 
-	if game_state == 'paused':
-		pause_screen()
-	elif game_state == 'big message':
-		big_message(current_big_message)
-	elif game_state == 'end message':
-		end_message()
-	elif game_state == 'end data':
-		end_data_message()
-	elif game_state == 'restartynscreen':
-		restartynscreen()
-	elif game_state == 'exit':
-		break
-	else:
-		render_all()
 
-	libtcod.console_flush()
+	if something_changed:
+		if game_state == 'paused':
+			pause_screen()
+		elif game_state == 'big message':
+			big_message(current_big_message)
+		elif game_state == 'end message':
+			end_message()
+		elif game_state == 'end data':
+			end_data_message()
+		elif game_state == 'restartynscreen':
+			restartynscreen()
+		elif game_state == 'exit':
+			break
+		else:
+			print '8' + game_state
+			render_all()
+		libtcod.console_flush()
+	
+	something_changed = False
+
+
 
 	# how it will go:
 
