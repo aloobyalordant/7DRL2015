@@ -3753,15 +3753,27 @@ def create_GUI_panel():
 #	if player.fighter.adrenaline_mode == False:
 	libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "Energy:")
 	for i in range(player.fighter.max_hp):
-		if i < player.fighter.wounds:
-			libtcod.console_set_default_foreground(panel, wound_color)
-			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-		elif i < player.fighter.wounds + player.fighter.hp:			
+		#if i < player.fighter.wounds:
+		#	libtcod.console_set_default_foreground(panel, wound_color)
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		#elif i < player.fighter.wounds + player.fighter.hp:			
+		#	libtcod.console_set_default_foreground(panel, energy_color)
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		#else: 
+		#	libtcod.console_set_default_foreground(panel, non_energy_color)
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+
+		if i <  player.fighter.hp:			
 			libtcod.console_set_default_foreground(panel, energy_color)
 			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
-		else: 
+		elif i < player.fighter.max_hp - player.fighter.wounds:
 			libtcod.console_set_default_foreground(panel, non_energy_color)
 			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+		else:
+			libtcod.console_set_default_foreground(panel, wound_color)
+			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '\\')
+
+
 #	else:
 #		libtcod.console_set_default_foreground(panel, adrenaline_color)
 #		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "ENERGY:")
