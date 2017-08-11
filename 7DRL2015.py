@@ -2795,7 +2795,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
 
 	lev_gen = Level_Generator()
 
@@ -2832,6 +2832,20 @@ def make_map():
 	process_nearest_center_points()
 	initialize_nav_data()
 	#calculate_nav_data()
+
+	bgColorArray = []
+	for x in range(MAP_WIDTH):
+		bgColorRowArray = []
+		bgColorArray.append(bgColorRowArray)
+		for y in range(MAP_HEIGHT):
+			if map[x][y].blocked:
+				bgColorColumnColor = color_light_wall
+			else:
+				bgColorColumnColor = color_light_ground
+				
+			bgColorArray[x].append(bgColorColumnColor)
+	#TODO create an populate an array of background colors? for ease of color adjusting later		
+
 
 	TEMP_player_previous_center = None
 
@@ -3588,7 +3602,7 @@ def render_all():
 
 	global fov_map, color_dark_wall, color_light_wall
 	global color_dark_ground, color_light_ground
-	global fov_recompute
+	global fov_recompute, bgColorArray
 
 	if fov_recompute:
 		#recompute FOV if needed (the player moved or something)
@@ -3626,12 +3640,13 @@ def render_all():
 				else: 
 					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod.BKGND_SET)
 			else:
-				if wall:
-					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod.BKGND_SET  )
-				#	libtcod.console_put_char_ex(con, x, y, '#', libtcod.white, libtcod.dark_blue)
-				else:
-					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod.BKGND_SET )
-				#	libtcod.console_put_char_ex(con, x, y, '.', libtcod.white,  color_dark_ground)
+				#todo update based on some desired background colors
+				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod.BKGND_SET  )
+	#			if wall:
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod.BKGND_SET  )
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod.BKGND_SET  )
+	#			else:
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod.BKGND_SET )
 				
 				map[x][y].explored = True
 
@@ -3688,7 +3703,7 @@ def render_all():
 def create_GUI_panel():
 	global fov_map, color_dark_wall, color_light_wall
 	global color_dark_ground, color_light_ground
-	global fov_recompute
+	global fov_recompute, bgColorArray
 	global game_level_settings, dungeon_level
 
 
