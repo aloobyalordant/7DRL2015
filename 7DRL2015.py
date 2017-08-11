@@ -382,7 +382,7 @@ class Door:
 
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
-	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME):
+	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
 		self.hp = hp
 		self.defense = defense
@@ -395,6 +395,7 @@ class Fighter:
 		self.bonus_max_charge = bonus_max_charge
 		self.jump_array = jump_array
 		self.jump_recharge_time = jump_recharge_time
+		self.bleeds = bleeds
 
 	def take_damage(self, damage):
 		#apply damage if possible
@@ -462,7 +463,7 @@ class Fighter:
 class Energy_Fighter:
 	# combat-related properties and methods (player).
 	# trying out an exciting new 'energy system'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
-	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME):
+	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
 		self.hp = hp
 		self.defense = defense
@@ -476,6 +477,7 @@ class Energy_Fighter:
 		self.jump_array = jump_array
 		self.jump_recharge_time = jump_recharge_time
 		self.wounds = 0
+		self.bleeds = bleeds
 	#	self.adrenaline_mode = False
 	#	self.adrenaline_threshold = 2
 	#	self.adrenaline_level = self.max_hp
@@ -1965,16 +1967,17 @@ class BasicAttack:
 					#add blood! maybe
 					#new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
 					#objectsArray[target.x][target.y].append(new_blood)
-					bgColorArray[target.x][target.y] = mergeColors(bgColorArray[target.x][target.y], blood_background_color, 0.2)
-					#blood splashing around, yaay
-					if (target.x > 0):
-						bgColorArray[target.x-1][target.y] = mergeColors(bgColorArray[target.x-1][target.y], blood_background_color, 0.1)	
-					if (target.x < MAP_WIDTH-1):
-						bgColorArray[target.x+1][target.y] = mergeColors(bgColorArray[target.x+1][target.y], blood_background_color, 0.1)
-					if (target.y > 0):
-						bgColorArray[target.x][target.y-1] = mergeColors(bgColorArray[target.x][target.y-1], blood_background_color, 0.1)
-					if (target.y < MAP_HEIGHT-1):
-						bgColorArray[target.x][target.y+1] = mergeColors(bgColorArray[target.x][target.y+1], blood_background_color, 0.1)
+					if target.fighter.bleeds:
+						bgColorArray[target.x][target.y] = mergeColors(bgColorArray[target.x][target.y], blood_background_color, 0.2)
+						#blood splashing around, yaay
+						if (target.x > 0):
+							bgColorArray[target.x-1][target.y] = mergeColors(bgColorArray[target.x-1][target.y], blood_background_color, 0.1)	
+						if (target.x < MAP_WIDTH-1):
+							bgColorArray[target.x+1][target.y] = mergeColors(bgColorArray[target.x+1][target.y], blood_background_color, 0.1)
+						if (target.y > 0):
+							bgColorArray[target.x][target.y-1] = mergeColors(bgColorArray[target.x][target.y-1], blood_background_color, 0.1)
+						if (target.y < MAP_HEIGHT-1):
+							bgColorArray[target.x][target.y+1] = mergeColors(bgColorArray[target.x][target.y+1], blood_background_color, 0.1)
 
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.fighter.take_damage(self.damage)
@@ -2684,21 +2687,21 @@ def create_monster(x,y, name, guard_duty = False):
 	global number_alarmers
 	if name == 'strawman':
 		# let's make a strawman!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'A', 'strawman', libtcod.dark_blue, blocks=True, fighter=strawman_component, decider=decider_component)
 
 	elif name == 'flailing strawman':
 		# let's create a strawman that can theoretically do damage!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red, bleeds = False)
 		ai_component = Strawman_AI(weapon = Weapon_Sai())
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'A', 'strawman', libtcod.dark_red, blocks=True, fighter=strawman_component, decider=decider_component)	
 
 	elif name == 'strawman on wheels':
 		# let's create a strawman that can move around!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green, bleeds = False)
 		ai_component = Strawman_on_wheels_AI(weapon = None)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'A', 'strawman on wheels', libtcod.darker_green, blocks=True, fighter=strawman_component, decider=decider_component)
@@ -2775,7 +2778,7 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'security system':
 		# let's make a security system! It stays where it is and doesn't attack! In fact it's basically a strawman with more health.
-		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
 		alarmer_component = Alarmer()
@@ -2795,7 +2798,7 @@ def create_monster(x,y, name, guard_duty = False):
 
 def create_strawman(x,y, weapon, command):
 	# let's create a strawman that can theoretically do damage!
-	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red)
+	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red, bleeds = False)
 	ai_component = Strawman_AI(get_weapon_from_name(weapon), command)		
 	decider_component = Decider(ai_component)
 	monster = Object(x, y, 'A', 'strawman', libtcod.dark_red, blocks=True, fighter=strawman_component, decider=decider_component)
