@@ -220,17 +220,18 @@ class Object:
 
 
 	def move_towards(self, target_x, target_y):
-		#vector from this object to the target, and distance
-		dx = target_x - self.x
-		dy = target_y - self.y
-		distance = math.sqrt(dx ** 2 + dy ** 2)
-
-		#normalize it to length 1 (preserving direction), then round it and
-		#convert to integer so the movement is restricted to the map grid
-		if distance != 0:
-			dx = int(round(dx / distance))
-			dy = int(round(dy / distance))
-		self.move(dx, dy)
+		print 'Error! argument Object.move_towards called. Mark was pretty sure this method wasn\'t being used, and it would have  caused wierd bugs as currently written anyway, so he commented it out. Maybe let him know that that happened?'
+	#	#vector from this object to the target, and distance
+	#	dx = target_x - self.x
+	#	dy = target_y - self.y
+	#	distance = math.sqrt(dx ** 2 + dy ** 2)
+#
+#		#normalize it to length 1 (preserving direction), then round it and
+#		#convert to integer so the movement is restricted to the map grid
+#		if distance != 0:
+#			dx = int(round(dx / distance))
+#			dy = int(round(dy / distance))
+#		self.move(dx, dy)
 
 
 	def distance_to(self, other):
@@ -2227,9 +2228,13 @@ def get_names_under_mouse():
 #		if obj.x == x and obj.y == y 
 #		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			#temporarily forgetting this bit for bugfixing
 		#]
-	names = [obj.name for obj in objectsArray[x][y]
-		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			
-	names = ', '.join(names)  #join the names, separated by commas
+
+	#TODO: this hasn't worked properly in forever, and for now I am just commenting it out because now it's crashing the game.
+	# BUt I should maybe fix it some time! probably involving the x_offset type values?
+#	names = [obj.name for obj in objectsArray[x][y]
+#		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			
+#	names = ', '.join(names)  #join the names, separated by commas
+	names = ''
 	return names.capitalize()
 
 
@@ -3130,12 +3135,12 @@ def monster_death(monster):
 					# 30% chance of dropping?? If it's not a special item
 					if item.name == 'ring of power':
 						drop_weapon(item)
-						reorder_objects()
+						reorder_objects(item.x, item.y)
 					else:
 						num = libtcod.random_get_int(0,0, 100)
 						if num <= CHANCE_OF_ENEMY_DROP:
 							drop_weapon(item)
-							reorder_objects()
+							reorder_objects(item.x,item.y)
 	
 
 	#transform it into a nasty corpse! it doesn't block, can't be
@@ -3170,7 +3175,7 @@ def monster_death(monster):
 		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
 		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
-		reorder_objects()
+		reorder_objects(monster.x, monster.y)
 
 	#killing a monster affects some test stuff for the god of destruction
 	if tested_by_destroyer:
@@ -4301,6 +4306,11 @@ while not libtcod.console_is_window_closed():
 						player_just_jumped = True
 
 
+
+	 	# move other objects.
+		# first, make a list of objects to move (because naively going through objectsArray and moving everything at each grid reference can lead to objects getting moved multiple times
+		
+		mover_list = []
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
 				for object in objectsArray[x][y]:
@@ -4308,8 +4318,12 @@ while not libtcod.console_is_window_closed():
 					if object.decider and object is not player:
 						if object.decider.decision is not None:
 							if object.decider.decision.move_decision is not None:
-								md = object.decider.decision.move_decision
-								object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
+								mover_list.append(object)
+
+
+		for object in mover_list:
+			md = object.decider.decision.move_decision
+			object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
 
 		
 
@@ -4489,7 +4503,8 @@ while not libtcod.console_is_window_closed():
 		#for object in objects:
 	#	for ob in objects:
 					if ob.alarmer is not None:
-						if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):
+						if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
+							# print 'a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status) 
 							ob.alarmer.update(True)
 							spotted = True
 						else: 
@@ -4685,7 +4700,7 @@ while not libtcod.console_is_window_closed():
 
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
+				for ob in objectsArray[x][y]:
 					if ob.alarmer is not None:
 						#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
 
@@ -4779,7 +4794,7 @@ while not libtcod.console_is_window_closed():
 								enemy_name = name
 #								print 'tick' + str(x) + ',' + str(y) + ' ' + name
 								monster = create_monster(x,y, name)
-								objects[x][y].append(monster)
+								objectsArray[x][y].append(monster)
 								break
 							else:
 								num -= prob
