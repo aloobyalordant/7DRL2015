@@ -790,43 +790,7 @@ class BasicMonster:
 			# Do the things that you do when going towards a target room rather than a specific grid reference
 			if self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
 
- 				self.moveTowardsRoom(monster, decider)
-
-#				# Choose an option that gets you closest to where you want to go
-#				((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
-#
-#				# Move if possible
-#				block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
-#				if block == False: 
-#					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-#
-#				# If the door is closed, maybe try to open it (do we need to give up after a while?)
-#				elif block == 'closed-door':
-#					self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
-#					#try to open the door, maybe
-#					num  = libtcod.random_get_int(0, 0, 1)
-#					if num == 0:
-#						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-#					# or, if not, maybe you want to give up and try something else?
-#					if self.blocked_by_door_o_meter > self.impatience_threshold_for_doors_being_in_the_way:
-#						self.state = 'wander-aimlessly'
-#						self.target_room = AI_choose_adjacent_room(self)
-#
-#				#if there's actually nothing to do, give up and try going somewhere new?
-#				if return_message == "No good options": 
-#					self.state = 'wander-aimlessly'
-#					self.target_room = AI_choose_adjacent_room(self)
-#				
-#				# if other fighters are blocking the way, eventually get impatient and go elsewhere
-#				elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
-#					self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
-#					# Why 3? To avoid cycling back and forth when there's someone in the way
-#					# Try going somewhere else if you've been blocked like this for a while
-#					if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
-#						self.state = 'wander-aimlessly'
-#						self.target_room = AI_choose_adjacent_room(self)
-#
-#							
+ 				self.moveTowardsRoom(monster, decider)							
 
 			# Now do things for the other cases!
 			elif self.state == 'pursue-visible-target':
@@ -962,7 +926,33 @@ class BasicMonster:
 		return attackList
 
 
+# A version of BasicMonster that has no access to level navigation data!
+# For use in the tutorial, where currently no such navigation data exists
+class StupidBasicMonster(BasicMonster):
 
+	def decide(self):
+		#a basic monster takes its turn. If you can see it, it can see you
+		decider = self.owner
+		monster = decider.owner #yaaay
+		# only do thing (including weapon recharge? maybe not) if not stunned
+		if self.stunned_time <= 0:
+
+			#basically, attack the player if you can see them, and that's about it.
+			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+				self.state == 'pursue-visible-target'
+				self.engagePlayer(monster, decider)
+
+
+
+			# Update various cooldowns and counters and such
+			if self.weapon:
+				self.weapon.recharge()
+			if self.ally_in_the_way_o_meter > 0:
+				self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter - 1
+			if self.blocked_by_door_o_meter > 0:
+				self.blocked_by_door_o_meter = self.blocked_by_door_o_meter - 1
+		if self.stunned_time > 0:
+			self.stunned_time = self.stunned_time - 1
 
 
 #As part of an initial experiment in sorting my AI code the heck out, let's make the Boman basically have default behaviours except they like to move diagonally.
@@ -2713,6 +2703,14 @@ def create_monster(x,y, name, guard_duty = False):
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'S', 'swordsman', libtcod.dark_blue, blocks=True, fighter=fighter_component, decider=decider_component)
 
+	elif name == 'stupid swordsman':
+		#create an orc
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		ai_component = StupidBasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'S', 'swordsman', libtcod.dark_blue, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
 	elif name == 'boman':
 		#create a troll
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
@@ -2881,7 +2879,7 @@ def make_map():
 			objectsArray[od.x][od.y].append(monster)	
 			# Hackiest of all hacks - make the tutorial rook drop a key
 			if dungeon_level == 0:
-				if od.info == 'rook':
+				if od.info == 'security system':
 					monster.drops_key = True
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)

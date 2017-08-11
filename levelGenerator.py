@@ -290,7 +290,7 @@ class Level_Generator:
 			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 			#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
 
-			object_data.append(Object_Datum(26,22,'message', 'In this next room lies a foe. If you can defeat them, your training will be complete.'))
+			object_data.append(Object_Datum(28,22,'message', 'The sentry in this next room holds a key. You must defeat it to move forward! But beware, it will summon aid.'))
 			old_room = new_room
 			new_room = Rect(15,18,12,5)
 			self.create_room(new_room, map, center_points, nearest_points_array)
@@ -1162,21 +1162,23 @@ class Level_Generator:
 			seg_map =      [[1,A,1,A,1,A,1],
 					[1,0,1,0,1,0,1],
 					[0,0,0,0,0,0,0],
+					[0,0,0,0,0,0,0],
 					[1,0,1,0,1,0,1],
 					[1,B,1,B,1,B,1]]
 
 
 		elif code == 'Tut-Test':
 			R = Object_Name('monster','rook')
+			S = Object_Name('monster','security system')
 			D = Object_Name('door', 'vertical')
 			seg_map =      [[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
 					[0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1],
-					[0,0,1,1,0,0,1,1,0,0,1,0,0,0,0,0],
-					[0,0,1,0,0,0,0,1,1,0,1,0,0,0,0,0],
-					[0,R,0,0,0,0,0,0,0,0,D,0,0,0,0,0],
-					[0,1,1,0,0,0,0,1,0,0,1,0,0,0,0,0],
-					[0,0,1,1,0,0,1,1,0,0,1,0,0,0,0,0],
-					[0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,1],
+					[0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],
+					[0,0,0,0,0,S,0,0,0,0,D,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+					[0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0],
+					[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
 					[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]]
 
 
