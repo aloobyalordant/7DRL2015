@@ -3642,14 +3642,15 @@ def render_all():
 		for x in range(MAP_WIDTH):
 			for object in objectsArray[x][y]:
 				if libtcod.map_is_in_fov(fov_map, x, y) == True:
-					for other_object in objectsArray[x][y]:
-						if object is not other_object:
-							if object.attack is not None and other_object.fighter is not None:
-								libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
 					if object.name == 'water':
 						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
 					if object.name == 'blood':
 						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
+					# ok but if there's attacks draw those instead
+					for other_object in objectsArray[x][y]:
+						if object is not other_object:
+							if object.attack is not None and other_object.fighter is not None:
+								libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
 
 				# DRAW ALL THE THINGS
 				object.draw()
@@ -4559,6 +4560,19 @@ while not libtcod.console_is_window_closed():
 		time.sleep(0.05)
 
 		# process attacks!
+		
+		#first, for reasons, deal with attacks that no longer exist
+
+		deletionList = []
+#		for object in objects:
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					if object.attack:
+						if object.attack.existing == False:
+							deletionList.append(object)
+		
+
 
 		# check how many enemies the player has hit, and 
 		# check if the player is getting 'hit' (whether or not the attack gets deflected)
@@ -4577,7 +4591,7 @@ while not libtcod.console_is_window_closed():
 
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
 		clashing_pairs_list = []
-		deletionList = []
+		#deletionList = []
 #		for object in objects:
 
 		for y in range(MAP_HEIGHT):
@@ -4611,7 +4625,7 @@ while not libtcod.console_is_window_closed():
 			objectsArray[object.x][object.y].remove(object)
 
 		## regular old attacks just happening
-		deletionList = []
+		#deletionList = []
 #		for object in objects:
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
@@ -4619,8 +4633,12 @@ while not libtcod.console_is_window_closed():
 					if object.attack:
 						object.attack.inflict_damage()
 						object.attack.fade()
-						if object.attack.existing == False:
-							deletionList.append(object)
+						# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
+		#				if object.attack.existing == False:
+		#					deletionList.append(object)
+						reorder_objects(x,y) 
+				
+
 		# deleting attacks that have happened
 #		for object in objects:
 		for y in range(MAP_HEIGHT):
