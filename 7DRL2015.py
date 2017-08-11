@@ -116,7 +116,7 @@ default_message_color = color_light_wall
 default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
 water_background_color =libtcod.Color(100,100,250)
 water_foreground_color =libtcod.Color(25,25,250)
-blood_background_color =libtcod.Color(150,0,0)
+blood_background_color =libtcod.Color(200,0,0)
 blood_foreground_color =libtcod.Color(150,0,0)
 
 #sizes and coordinates relevant for the GUI
@@ -1965,7 +1965,16 @@ class BasicAttack:
 					#add blood! maybe
 					#new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
 					#objectsArray[target.x][target.y].append(new_blood)
-					bgColorArray[target.x][target.y] = mergeColors(bgColorArray[target.x][target.y], blood_background_color, 0.7)
+					bgColorArray[target.x][target.y] = mergeColors(bgColorArray[target.x][target.y], blood_background_color, 0.2)
+					#blood splashing around, yaay
+					if (target.x > 0):
+						bgColorArray[target.x-1][target.y] = mergeColors(bgColorArray[target.x-1][target.y], blood_background_color, 0.1)	
+					if (target.x < MAP_WIDTH-1):
+						bgColorArray[target.x+1][target.y] = mergeColors(bgColorArray[target.x+1][target.y], blood_background_color, 0.1)
+					if (target.y > 0):
+						bgColorArray[target.x][target.y-1] = mergeColors(bgColorArray[target.x][target.y-1], blood_background_color, 0.1)
+					if (target.y < MAP_HEIGHT-1):
+						bgColorArray[target.x][target.y+1] = mergeColors(bgColorArray[target.x][target.y+1], blood_background_color, 0.1)
 
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.fighter.take_damage(self.damage)
@@ -4671,8 +4680,11 @@ while not libtcod.console_is_window_closed():
 				for object in objectsArray[x][y]:
 					object.clear()
 		for object in deletionList:
-			objectsArray[object.x][object.y].remove(object)
-	
+			#here's a lazy hack for some things being in list twice i guess
+			try:
+				objectsArray[object.x][object.y].remove(object)
+			except ValueError:
+				print 'object already removed from list'
 
 		#recharge player attack charge. this probably shouldn't go here ultimately
 		#if player_recharge_time > 0:
