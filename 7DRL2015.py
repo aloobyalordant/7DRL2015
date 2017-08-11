@@ -1963,9 +1963,9 @@ class BasicAttack:
 						else:
 							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
 					#add blood! maybe
-					new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
-					objectsArray[target.x][target.y].append(new_blood)
-			
+					#new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
+					#objectsArray[target.x][target.y].append(new_blood)
+					bgColorArray[target.x][target.y] = mergeColors(bgColorArray[target.x][target.y], blood_background_color, 0.7)
 
 					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
 					target.fighter.take_damage(self.damage)
@@ -2844,7 +2844,8 @@ def make_map():
 				bgColorColumnColor = color_light_ground
 				
 			bgColorArray[x].append(bgColorColumnColor)
-	#TODO create an populate an array of background colors? for ease of color adjusting later		
+
+	# print 'color maybe is' + str(color_light_wall.r)		
 
 
 	TEMP_player_previous_center = None
@@ -4046,6 +4047,15 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 			ob.send_to_back()
 		index = index + 1 
 	# Well; let's see if this works..
+
+
+
+def mergeColors(initial_color, new_color, mix_level = 0.5):
+	rval = initial_color.r * (1- mix_level) + new_color.r * mix_level
+	gval = initial_color.g * (1- mix_level) + new_color.g * mix_level
+	bval = initial_color.b * (1- mix_level) + new_color.b * mix_level
+	return libtcod.Color(int(round(rval)), int(round(gval)), int(round(bval)))
+
 
 
 def initialise_game():
