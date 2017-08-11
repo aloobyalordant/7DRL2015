@@ -171,11 +171,22 @@ class Object:
 		self.alarmer = alarmer
 		self.drops_key = drops_key
 
-	def move(self, dx, dy):
+	def move(self, dx, dy):	
+		global objectsArray
+									#TODO will need to update objectarry
 		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = False):
 			#move by the given amount
-		        self.x += dx
-		        self.y += dy
+			old_x = self.x
+			old_y = self.y
+		        new_x = self.x + dx
+		        new_y = self.y + dy
+			self.x = new_x
+			self.y = new_y
+			# print 'HI! iM AT (' + str(old_x) + ',' + str(old_y) + ') and want to go to (' + str(new_x) + ',' + str(new_y) + ')'
+			# Update objectsArray so that self is in the right list
+			objectsArray[new_x][new_y].append(self)
+			objectsArray[old_x][old_y].remove(self)
+			
 
 
 	def draw(self):
@@ -230,21 +241,21 @@ class Object:
 
 	def send_to_back(self):
 		#make this object be drawn first, so all others appear above it if they're in the same tile.
-		global objects
-		objects.remove(self)
-		objects.insert(0, self)
+		global objectsArray
+		objectsArray[self.x][self.y].remove(self)
+		objectsArray[self.x][self.y].insert(0, self)
 
 	def send_to_almost_back(self):
 		#make this object be drawn just above the decorations but below all other objects.
-		global objects, decoration_count
-		objects.remove(self)
-		objects.insert(decoration_count, self)
+		global objectsArray, decoration_count
+		objectsArray[self.x][self.y].remove(self)
+		objectsArray[self.x][self.y].insert(decoration_count, self)
 
 	def send_to_front(self):
 		#make this object be drawn last, so all others appear below it if they're in the same tile.
-		global objects
-		objects.remove(self)
-		objects.append(self)
+		global objectsArray
+		objectsArray[self.x][self.y].remove(self)
+		objectsArray[self.x][self.y].append(self)
 
 
 
@@ -1938,24 +1949,25 @@ class BasicAttack:
 		global player_hit_something, alarm_level, spawn_timer
 		# only attack if the attack is still active
 		if self.lifespan > 0:
-			for target in objects:
-				if target.x == self.owner.x and target.y == self.owner.y:
-					if target.fighter is not None:
-						if self.attacker is not None:
-							if target is player:
-								message('The ' + self.attacker.name.capitalize() + ' hits!', libtcod.red)	
-							elif self.attacker is player:
-								message('You hit the ' + target.name.capitalize() + '!')
-								player_hit_something = True	
-							else:
-								message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
-						#add blood! maybe
-						new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
-						objects.append(new_blood)
-				
+			for target in objectsArray[self.owner.x][self.owner.y]:
+#			for target in objects:
+#				if target.x == self.owner.x and target.y == self.owner.y:
+				if target.fighter is not None:
+					if self.attacker is not None:
+						if target is player:
+							message('The ' + self.attacker.name.capitalize() + ' hits!', libtcod.red)	
+						elif self.attacker is player:
+							message('You hit the ' + target.name.capitalize() + '!')
+							player_hit_something = True	
+						else:
+							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
+					#add blood! maybe
+					new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
+					objectsArray[target.x][target.y].append(new_blood)
+			
 
-						libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
-						target.fighter.take_damage(self.damage)
+					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+					target.fighter.take_damage(self.damage)
 #					if target.name == 'security system':
 #						if target.raising_alarm is False:
 #							target.raising_alarm = True
@@ -1963,12 +1975,12 @@ class BasicAttack:
 #							message('The security system sounds a loud alarm!')
 #							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
 #							spawn_timer = 1	#This is not always working as I'd like???
-					elif target.door is not None and target.name != 'elevator door':
-						libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
-						target.door.take_damage(self.damage)
+				elif target.door is not None and target.name != 'elevator door':
+					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+					target.door.take_damage(self.damage)
 
-					if target.alarmer is not None:
-						target.alarmer.get_hit()
+				if target.alarmer is not None:
+					target.alarmer.get_hit()
 
 
 	def fade(self): 
@@ -1988,8 +2000,10 @@ class BasicAttack:
 	def find_attackee(self):
 		# find the object being attacked, if any
 		if self.lifespan > 0:
-			for target in objects:
-				if target.fighter and target.x == self.owner.x and target.y == self.owner.y:
+			for target in objectsArray[self.owner.x][self.owner.y]:
+				if target.fighter:
+#			for target in objects:
+#				if target.fighter and target.x == self.owner.x and target.y == self.owner.y:
 					return target
 
 
@@ -2209,10 +2223,12 @@ def get_names_under_mouse():
 	(x, y) = (mouse.cx, mouse.cy)
 
 	#create a list with the names of all objects at the mouse's coordinates and in FOV
-	names = [obj.name for obj in objects
-		if obj.x == x and obj.y == y 
-		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			#temporarily forgetting this bit for bugfixing
+#	names = [obj.name for obj in objects
+#		if obj.x == x and obj.y == y 
+#		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			#temporarily forgetting this bit for bugfixing
 		#]
+	names = [obj.name for obj in objectsArray[x][y]
+		and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]			
 	names = ', '.join(names)  #join the names, separated by commas
 	return names.capitalize()
 
@@ -2281,14 +2297,14 @@ def handle_keys():
 		#print str(key.vk)
 		keynum = key.vk - 34	#yay magic number:
 		weapons_found = []
-		for object in objects:
-			if object.x == player.x and object.y == player.y and object.weapon == True: 
+		for object in objectsArray[player.x][player.y]:
+			if object.weapon == True: 
 				weapons_found.append(object)		
 		if keynum >= 1 and keynum <= len(weapons_found):
 			new_weapon = get_weapon_from_item(weapons_found[keynum-1], player.fighter.bonus_max_charge)
 			old_weapon = get_item_from_weapon(player_weapon)
 			player_weapon = new_weapon
-			objects.remove(weapons_found[keynum-1])
+			objectsArray[player.x][player.y].remove(weapons_found[keynum-1])
 			# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 			#drop_weapon(old_weapon)
 			weapon_found = True
@@ -2365,23 +2381,23 @@ def handle_keys():
 				weapons_found = []
 				weapon_found = False
 				keys_found = []
-				for object in objects:
-					if object.x == player.x and object.y == player.y and object.weapon == True: 
+				for object in objectsArray[player.x][player.y]:
+					if  object.weapon == True: 
 						weapons_found.append(object)
-					if object.x == player.x and object.y == player.y and object.name == 'key': 
+					if object.name == 'key': 
 						keys_found.append(object)
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0:
 					message('You snatch up the key.')
 					key_count = key_count + len(keys_found)
 					for ki in keys_found:
-						objects.remove(ki)	
+						objectsArray[player.x][player.y].remove(ki)	
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
 				elif len(weapons_found) == 1:
 					new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
 					old_weapon = get_item_from_weapon(player_weapon)
 					player_weapon = new_weapon
-					objects.remove(weapons_found[0])
+					objectsArray[player.x][player.y].remove(weapons_found[0])
 					# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 					#drop_weapon(old_weapon)
 					weapon_found = True
@@ -2438,8 +2454,8 @@ def handle_keys():
 				elif key_char == 'o':
 					# is there a shrine here?
 					shrine_here = False
-					for obj in objects:
-						if obj.x == player.x and obj.y == player.y and obj is not player and obj.shrine is not None:
+					for obj in objectsArray[player.x][player.y]:
+						if obj is not player and obj.shrine is not None:
 							shrine_here = True
 							current_shrine = obj.shrine
 							break
@@ -2607,7 +2623,7 @@ def place_objects(room):
 					
 
 			monster = create_monster(x,y,name)
-			objects.append(monster)
+			objectsArray[x][y].append(monster)
 
 	# on first level, in in 2 chance of a weapon appearing in a room I guess
 	if dungeon_level == 0:
@@ -2633,17 +2649,17 @@ def place_objects(room):
 		if num == 0:
 			(shrine_x, shrine_y) = room.center()
 			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
-			objects.append(new_shrine)
+			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			new_shrine.send_to_back()
 		elif num == 1:
 			(shrine_x, shrine_y) = room.center()
 			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
-			objects.append(new_shrine)
+			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			new_shrine.send_to_back()
 		elif num == 2:
 			(shrine_x, shrine_y) = room.center()
 			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
-			objects.append(new_shrine)
+			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			new_shrine.send_to_back()
 
 
@@ -2771,8 +2787,10 @@ def create_strawman(x,y, weapon, command):
 	monster = Object(x, y, 'A', 'strawman', libtcod.dark_red, blocks=True, fighter=strawman_component, decider=decider_component)
 	return monster
 
+
+#todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray
 
 	lev_gen = Level_Generator()
 
@@ -2795,6 +2813,16 @@ def make_map():
 	MAP_WIDTH = len(map)
 	MAP_HEIGHT = len(map[0])
 
+	#TODO NOTE: think we can initalise objectsarray here.
+	objectsArray = []
+	for x in range(MAP_WIDTH):
+		objectsRowArray = []
+		objectsArray.append(objectsRowArray)
+#		objectsArray[x] = []
+		for y in range(MAP_HEIGHT):
+			objectsColumnArray = []
+			objectsArray[x].append(objectsColumnArray)
+#			objectsArray[x][y] = []
 
 	process_nearest_center_points()
 	initialize_nav_data()
@@ -2810,22 +2838,22 @@ def make_map():
 	for od in object_data:
 		if od.name == 'stairs':
 			stairs = Object(od.x, od.y, '<', 'stairs', libtcod.white, always_visible=True)
-			objects.append(stairs)
+			objectsArray[od.x][od.y].append(stairs)
 			stairs.send_to_back()  #so it's drawn below the monsters
 		elif od.name == 'weapon':
 			weapon = get_item_from_name(od.x,od.y, od.info)
-			objects.append(weapon)
+			objectsArray[od.x][od.y].append(weapon)
 			weapon.send_to_back()
 		elif od.name == 'monster' or od.name == 'boss':		# maybe these cases will be treated differently in future
 			monster = create_monster(od.x,od.y, od.info, guard_duty = True)
-			objects.append(monster)	
+			objectsArray[od.x][od.y].append(monster)	
 			# Hackiest of all hacks - make the tutorial rook drop a key
 			if dungeon_level == 0:
 				if od.info == 'rook':
 					monster.drops_key = True
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
-			objects.append(strawman)
+			objectsArray[od.x][od.y].append(strawman)
 		elif od.name == 'shrine':
 			num = libtcod.random_get_int(0, 0, 2) 
 			if num == 0:
@@ -2834,37 +2862,37 @@ def make_map():
 				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 			else: 
 				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
-			objects.append(shrine)
+			objectsArray[od.x][od.y].append(shrine)
 			shrine.send_to_back()
 		elif  od.name == 'security system':
 			monster = create_monster(od.x,od.y, 'security system', guard_duty = True)
 			if od.info == 'drops-key':
 				monster.drops_key = True
-			objects.append(monster)	
+			objectsArray[od.x][od.y].append(monster)	
 			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door':
 			if od.info == 'horizontal':
 				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
 				map[od.x][od.y].block_sight = True
-				objects.append(door)
+				objectsArray[od.x][od.y].append(door)
 			elif od.info == 'vertical':
 				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
 				map[od.x][od.y].block_sight = True
-				objects.append(door)
+				objectsArray[od.x][od.y].append(door)
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'key':
 			new_key = Object(od.x, od.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
-			objects.append(new_key)
+			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
-			objects.append(new_water)
+			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
-			objects.append(floor_message)
+			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 		elif od.name == 'decoration':
 			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True)
-			objects.append(floor_message)
+			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 			decoration_count += 1
 			
@@ -2875,13 +2903,16 @@ def make_map():
 		for ele_door in ele.doors:
 			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', libtcod.red, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True) 
 			map[ele_door.x][ele_door.y].block_sight = True			
-			objects.append(door)
+			objectsArray[ele_door.x][ele_door.y].append(door)
 			ele.special_door_list.append(door)
 
 
 
 	#at the end, put objects in the right display order?
-	reorder_objects()
+
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			reorder_objects(x,y)
 
 			
 
@@ -2988,8 +3019,8 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, ca
 
 
 	#now check for any blocking objects
-	for object in objects:
-		if object.blocks and object.x == x and object.y == y:
+	for object in objectsArray[x][y]:
+		if object.blocks:
 			if object.door is not None:
 				if care_about_doors == True:
 					return 'closed-door'
@@ -3020,8 +3051,8 @@ def player_move_or_attack(dx, dy):
  
 	#try to find an attackable object there
 	target = None
-	for object in objects:
-		if object.fighter and object.x == x and object.y == y:
+	for object in objectsArray[x][y]:
+		if object.fighter:
 			target = object
 			break
  
@@ -3137,7 +3168,7 @@ def monster_death(monster):
 	#monster may drop a key?
 	if monster.drops_key == True:
 		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
-		objects.append(new_key)
+		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
 		reorder_objects()
 
@@ -3156,7 +3187,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objects, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer,  already_healed_this_level
+	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer,  already_healed_this_level
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -3203,17 +3234,18 @@ def next_level():
 
 	already_healed_this_level = False
 
-	objects = [player]
 
-#color_fog_of_war
-	#delete all the old stuff. Hope this works...
-#	for y in range(SCREEN_HEIGHT):
-#		for x in range(SCREEN_WIDTH):
-#			libtcod.console_set_char_background(con, x, y, libtcod.red, libtcod.red)
-#			print "blah (" + str(x) + "," + str(y) + ")" 
-   	make_map()  #create a fresh new level!
-#	for y in range(MAP_HEIGHT):
-#		for x in range(MAP_WIDTH):
+
+	#objects = []
+	make_map()
+	objectsArray[player.x][player.y].append(player)
+	print 'heyo (' + str(player.x) + ',' + str(player.y)	
+
+   	#make_map()  #create a fresh new level!
+	#objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
+							# Think it's enough to move this to after make_map(), and then use player's x and y
+							# well... there might be an issue of initialising arrays as well...
+
 	for y in range(SCREEN_HEIGHT):
 		for x in range(SCREEN_WIDTH):
 			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
@@ -3240,7 +3272,7 @@ def next_level():
 	#game_state  = 'big message'
 
 def beat_game():
-	global dungeon_level, objects, game_state, current_big_message
+	global dungeon_level, objectsArray, game_state, current_big_message
 	#current_big_message = "As you ascend the stairs, the air around you crackles with electricity. Reaching the rooftop of the building, you stare into the sunrise of a beautiful new day. With the wizard defeated and the ring of power in your hands, there is no one to stand in your way. This city will be yours!"
 	game_state  = 'end message'
 
@@ -3354,13 +3386,13 @@ def drop_weapon(weapon_item):
 	weapon_y = weapon_item.y
 	# check to see if there's already an item with the same name in this location
 	copy_found = False
-	for object in objects:
-		if object.x == weapon_x and object.y == weapon_y and object.name == weapon_name:
+	for object in objectsArray[weapon_x][weapon_y]:
+		if object.name == weapon_name:
 			copy_found = True
 
 	# only drop the item if there isn't an item with the same name in this location.
 	if copy_found == False:
-		objects.append(weapon_item)
+		objectsArray[weapon_x][weapon_y].append(weapon_item)
 		weapon_item.send_to_back()
 
 
@@ -3374,7 +3406,7 @@ def create_shrine(x,y,god_type):
 		if god_type == 'deliverer':
 			god = god_deliverer
 		new_shrine = Object(x, y, '&', 'shrine to ' + god.name, default_altar_color, blocks=False, shrine= Shrine(god), always_visible=True)
-		objects.append(new_shrine)
+		objectsArray[x][y].append(new_shrine)
 		new_shrine.send_to_back()
 
 
@@ -3600,23 +3632,42 @@ def render_all():
 
 
 	# do some background type stuff based, on whether someone has just been attacked.
-	for object in objects:
-		if libtcod.map_is_in_fov(fov_map, object.x, object.y) == True:
-			for other_object in objects:
-				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
-					if object.attack is not None and other_object.fighter is not None:
-						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
-			if object.name == 'water':
-				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
-			if object.name == 'blood':
-				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
 
-	for object in objects:
-		#if object != player:
-		object.draw()
-	#player.draw()
-	
-	player.send_to_front()
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			for object in objectsArray[x][y]:
+				if libtcod.map_is_in_fov(fov_map, x, y) == True:
+					for other_object in objectsArray[x][y]:
+						if object is not other_object:
+							if object.attack is not None and other_object.fighter is not None:
+								libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
+					if object.name == 'water':
+						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
+					if object.name == 'blood':
+						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
+
+				# DRAW ALL THE THINGS
+				object.draw()
+
+#	for object in objects:
+#		if libtcod.map_is_in_fov(fov_map, object.x, object.y) == True:
+#			for other_object in objects:
+#				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
+#					if object.attack is not None and other_object.fighter is not None:
+#						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
+#			if object.name == 'water':
+#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
+#			if object.name == 'blood':
+#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
+#
+#	for object in objects:
+#		#if object != player:
+#		object.draw()
+#	#player.draw()
+#	
+
+
+	player.send_to_front()			
 	
 
 #	libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
@@ -3914,19 +3965,19 @@ def update_camera():
 #	camera.y = player.y
 
 
-def reorder_objects():
+def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD AS ARGUMENT AND REORDERS FOR THAT CO-ORD
 	#rearrange the world objects so they appear in the correct order.
 	#for now that order is: moving objects like the player and enemies drawn last, then 'keys', then weapons, then static objects like shrines and messages. Ummmm how do I do this
-	global objects		
+	global objectsArray		
 	# Rough plan: move all the keys to the back. then, move all the weapons to the back. then, move all the non-movey things to do the back.
 	# Identifying elements to move is currently done in a very janky object-specific way, and is likely to break when I add new objects.
-	total = len(objects)
+	total = len(objectsArray[x][y])
 	#index = total -1
 	#step 1: move all keys to back
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.name == 'key':
 			ob.send_to_back()
 		index = index + 1 
@@ -3934,7 +3985,7 @@ def reorder_objects():
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.weapon == True:
 			ob.send_to_back()
 		index = index + 1 
@@ -3943,7 +3994,7 @@ def reorder_objects():
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.blocks == False and ob.weapon == False and ob.name != 'key' and ob.name != 'decoration' and not ob.attack:
 			ob.send_to_back()
 		index = index + 1 	
@@ -3952,7 +4003,7 @@ def reorder_objects():
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.attack:
 			ob.send_to_back()
 		index = index + 1 
@@ -3960,7 +4011,7 @@ def reorder_objects():
 	#step 3.75: move all water and blood to back? I need to start finding a better way to do this maybe.
 	index = 0
 	while index < total: 				# >= 0:	
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.name == 'water' or ob.name == 'blood':
 			ob.send_to_back()
 		index = index + 1 
@@ -3969,7 +4020,7 @@ def reorder_objects():
 	index = 0
 	while index < total: 				# >= 0:	
 		#print str(objects[index].name)
-		ob = objects[index]
+		ob = objectsArray[x][y][index]
 		if ob.name == 'decoration':
 			ob.send_to_back()
 		index = index + 1 
@@ -3977,7 +4028,7 @@ def reorder_objects():
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objects, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -4015,10 +4066,16 @@ def initialise_game():
 	#player_weapon = Weapon_Katana()
 	#player_weapon = Weapon_Dagger()
 	
-	#the list of objects starting with the player
-	objects = [player]
-	
+	#objects = []
 	make_map()
+	objectsArray[player.x][player.y].append(player)	
+	print 'howdy (' + str(player.x) + ',' + str(player.y)
+	for object in objectsArray[player.x][player.y]:
+		print object.name
+
+	#the list of objects starting with the player
+#	objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
+							# Think it's enough to move this to after make_map(), and then use player's x and y
 	
 	initialize_fov()
 	
@@ -4079,8 +4136,13 @@ while not libtcod.console_is_window_closed():
 	garbage_list = []	#list of things (e.g. dead bodies) to delete from objects list at the end of the loop
 
 #	libtcod.console_put_char(con, playerx, playery, ' ', libtcod.BKGND_NONE)
-	for object in objects:
-		object.clear()
+	#for object in objects:
+	#	object.clear()
+
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			for object in objectsArray[x][y]:
+				object.clear()
 
 	#get player decisions and handle keys and exit game if needed
 	player_action = handle_keys()
@@ -4111,22 +4173,30 @@ while not libtcod.console_is_window_closed():
 
 
 		# delete attacks from the past?! This is a fix because attacks seem to be hanging around longer than I'd like, may cause problems further down the line...
-		deletionList = []
-		for object in objects:
-			if object.attack:
-				object.attack.fade()
-				if object.attack.existing == False:
-					deletionList.append(object)
-		# deleting attacks that have happened
-		for object in objects:
-			object.clear()
-		for object in deletionList:
-			objects.remove(object)
+		#deletionList = []
 
-		#let monsters take their decisions
-		for object in objects:
-			if object.decider:
-				object.decider.decide()
+		
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				
+				deletionList = []
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					if object.attack:
+						object.attack.fade()
+						if object.attack.existing == False:
+							deletionList.append(object)
+				# deleting attacks that have happened
+				for object in objectsArray[x][y]:
+					object.clear()
+				for object in deletionList:
+					objectsArray[object.x][object.y].remove(object)
+
+			#let monsters take their decisions
+	#	for object in objects:
+				for object in objectsArray[x][y]:
+					if object.decider:
+						object.decider.decide()
 
 
 		#now everyone has decided things, things can happen
@@ -4146,30 +4216,36 @@ while not libtcod.console_is_window_closed():
 		# also decide if anyone is trying to open a door! (By walking into it)
 		potential_punch_list = []
 		potential_open_list = []
-		for object in objects:
-			if object.decider:
-				if object.decider.decision is not None:
-					if object.decider.decision.move_decision is not None:
-						md = object.decider.decision.move_decision
-						if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
-							target_x = object.x + md.dx
-							target_y = object.y + md.dy	
-							for victim in objects:
-								# try to punch if there's a fighter in this square
-								if victim.fighter and victim.x == target_x and victim.y == target_y:
-									# the following code checks that the victim isn't actually Attacking the puncher	
-									valid_target = True
-									if victim.decider.decision and victim.decider.decision.attack_decision:
-										victim_attacks = victim.decider.decision.attack_decision.attack_list
-										for vic_attack in victim_attacks:
-											if vic_attack.x == object.x and vic_attack.y == object.y:
-												valid_target = False
-									if valid_target == True:
-										potential_punch_list.append((object, victim))
-								#try to open if there's a (non-elevator) door in this square
-								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
-									potential_open_list.append((object, victim))
-									#print str(victim.name)
+
+
+
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					if object.decider:
+						if object.decider.decision is not None:
+							if object.decider.decision.move_decision is not None:
+								md = object.decider.decision.move_decision
+								if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
+									target_x = object.x + md.dx
+									target_y = object.y + md.dy	
+									for victim in objectsArray[target_x][target_y]:
+										# try to punch if there's a fighter in this square
+										if victim.fighter:
+											# the following code checks that the victim isn't actually Attacking the puncher	
+											valid_target = True
+											if victim.decider.decision and victim.decider.decision.attack_decision:
+												victim_attacks = victim.decider.decision.attack_decision.attack_list
+												for vic_attack in victim_attacks:
+													if vic_attack.x == object.x and vic_attack.y == object.y:
+														valid_target = False
+											if valid_target == True:
+												potential_punch_list.append((object, victim))
+										#try to open if there's a (non-elevator) door in this square
+										if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
+											potential_open_list.append((object, victim))
+											#print str(victim.name)
 								
 
 		# firstly movement happens
@@ -4206,10 +4282,10 @@ while not libtcod.console_is_window_closed():
 						message("There's a wall in the way!")
 					else: 
 						#check for doors, and/or find the thing the player is jumping over.
-						for ob in objects:
-							if ob.door and ob.x == player.x + tempx and ob.y == player.y + tempy:
+						for ob in objectsArray[player.x + tempx][player.y + tempy]:
+							if ob.door:
 								somethingInWay = True
-							if ob.fighter and ob.x == player.x + tempx and ob.y == player.y + tempy:
+							if ob.fighter:
 								jumpee = ob	
 						if somethingInWay == True:
 							message("There's a door in the way!")
@@ -4224,12 +4300,16 @@ while not libtcod.console_is_window_closed():
 						player.move(jd.dx, jd.dy)
 						player_just_jumped = True
 
-		for object in objects:
-			if object.decider and object is not player:
-				if object.decider.decision is not None:
-					if object.decider.decision.move_decision is not None:
-						md = object.decider.decision.move_decision
-						object.move(md.dx, md.dy)	
+
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+#		for object in objects:
+					if object.decider and object is not player:
+						if object.decider.decision is not None:
+							if object.decider.decision.move_decision is not None:
+								md = object.decider.decision.move_decision
+								object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
 
 		
 
@@ -4237,8 +4317,8 @@ while not libtcod.console_is_window_closed():
 		# do some messages saying what you see here!
 		#names = [obj.name for obj in objects
 		#	if obj.x == player.x and obj.y == player.y and obj is not player]
-		objects_here = [obj for obj in objects
-			if obj.x == player.x and obj.y == player.y and obj is not player]
+		objects_here = [obj for obj in objectsArray[player.x][player.y]
+			if obj is not player]
 		names = [obj.name for obj in objects_here if obj.floor_message is None and obj.name is not 'water' and obj.name is not 'decoration'  and obj.name is not 'blood']  #todo: get a better way of not including certain objects in this list
 		possible_commands = []
 
@@ -4287,8 +4367,12 @@ while not libtcod.console_is_window_closed():
 			if player.decider.decision.move_decision or player.decider.decision.jump_decision:			
 				fov_recompute = True
 
-		for object in objects:
-			object.clear()
+
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 		#print '1'
@@ -4361,9 +4445,12 @@ while not libtcod.console_is_window_closed():
 		if lev_set.boss is not None:
 			level_complete = True
 			#check for bosses?
-			for object in objects:
-				if object.name == lev_set.boss:
-					level_complete = False
+			for y in range(MAP_HEIGHT):
+				for x in range(MAP_WIDTH):
+					for object in objectsArray[x][y]:
+		#for object in objects:
+						if object.name == lev_set.boss:
+							level_complete = False
 		#elif number_security_systems <= 0:
 		#	level_complete = True
 		elif lev_set.keys_required <= key_count:
@@ -4396,17 +4483,21 @@ while not libtcod.console_is_window_closed():
 		spotted = False
 
 		#UPDATE THE ALARMERS
-		for ob in objects:
-			if ob.alarmer is not None:
-				if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):
-					ob.alarmer.update(True)
-					spotted = True
-				else: 
-					ob.alarmer.update(False)
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for ob in objectsArray[x][y]:
+		#for object in objects:
+	#	for ob in objects:
+					if ob.alarmer is not None:
+						if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):
+							ob.alarmer.update(True)
+							spotted = True
+						else: 
+							ob.alarmer.update(False)
 
 		#UPDATE THE DOORS
-			if ob.door is not None:
-				ob.door.update()
+					if ob.door is not None:
+						ob.door.update()
 
 
 		#if spotted == True:
@@ -4416,14 +4507,17 @@ while not libtcod.console_is_window_closed():
 
 		# now create attacks!
 		deletionList = []
-		for object in objects:
-			if object.decider:
-				if object.decider.decision is not None:
-					if object.decider.decision.attack_decision is not None:
-						attack_list = object.decider.decision.attack_decision.attack_list
-						for attack in attack_list:
-							objects.append(attack)	
-							attack.send_to_front()
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					if object.decider:
+						if object.decider.decision is not None:
+							if object.decider.decision.attack_decision is not None:
+								attack_list = object.decider.decision.attack_decision.attack_list
+								for attack in attack_list:
+									objectsArray[attack.x][attack.y].append(attack)	
+									attack.send_to_front()
 
 		player_just_attacked = False
 		if player.decider.decision is not None:
@@ -4436,8 +4530,11 @@ while not libtcod.console_is_window_closed():
 		#	print 'the player just attacked!'
 
 		# draw things with the attacks!
-		for object in objects:
-			object.clear()
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 		#print '2'
@@ -4450,53 +4547,73 @@ while not libtcod.console_is_window_closed():
 
 		# check how many enemies the player has hit, and 
 		# check if the player is getting 'hit' (whether or not the attack gets deflected)
-		for object in objects:
-			if object.attack:
-				attackee = object.attack.find_attackee()
-				if attackee == player:
-					player_got_hit = True
-				elif object.attack.attacker == player and attackee is not None:
-					number_hit_by_player += 1
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+		#for object in objects:
+					if object.attack:
+						attackee = object.attack.find_attackee()
+						if attackee == player:
+							player_got_hit = True
+						elif object.attack.attacker == player and attackee is not None:
+							number_hit_by_player += 1
+
 
 
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
 		clashing_pairs_list = []
 		deletionList = []
-		for object in objects:
-			if object.attack:
-				attackee = object.attack.find_attackee()
-				for other_object in objects:
-					# perform a check to ensure each unordered pair only gets processed once
-					if object.x < other_object.x or (object.x == other_object.x and object.y <= other_object.y):
-						if other_object.attack and other_object.attack.attacker == attackee:
-							other_attackee = other_object.attack.find_attackee()
-							if other_attackee == object.attack.attacker:
-								# so now we have two fighters attacking each other
-								clashing_pairs_list.append((object, other_object))
-								# deletion happens, because the attacks "cancel each other out"
-								deletionList.append(object)
-								deletionList.append(other_object)
-								message('Clash! The ' + attackee.name + ' and ' + other_attackee.name + '\'s attacks bounce off each other!')
-								if attackee is player or other_attackee is player:
-									player_clashed_something = True
-		for object in objects:
-			object.clear()
+#		for object in objects:
+
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					if object.attack:
+						attackee = object.attack.find_attackee()	
+						for yy in range(MAP_HEIGHT):
+							for xx in range(MAP_WIDTH):
+								for other_object in objectsArray[xx][yy]:
+						#for other_object in objects:
+									# perform a check to ensure each unordered pair only gets processed once
+									if object.x < other_object.x or (object.x == other_object.x and object.y <= other_object.y):
+										if other_object.attack and other_object.attack.attacker == attackee:
+											other_attackee = other_object.attack.find_attackee()
+											if other_attackee == object.attack.attacker:
+												# so now we have two fighters attacking each other
+												clashing_pairs_list.append((object, other_object))
+												# deletion happens, because the attacks "cancel each other out"
+												deletionList.append(object)
+												deletionList.append(other_object)
+												message('Clash! The ' + attackee.name + ' and ' + other_attackee.name + '\'s attacks bounce off each other!')
+												if attackee is player or other_attackee is player:
+													player_clashed_something = True
+		#for object in objects:
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					object.clear()
 		for object in deletionList:
-			objects.remove(object)
+			objectsArray[object.x][object.y].remove(object)
 
 		## regular old attacks just happening
 		deletionList = []
-		for object in objects:
-			if object.attack:
-				object.attack.inflict_damage()
-				object.attack.fade()
-				if object.attack.existing == False:
-					deletionList.append(object)
+#		for object in objects:
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					if object.attack:
+						object.attack.inflict_damage()
+						object.attack.fade()
+						if object.attack.existing == False:
+							deletionList.append(object)
 		# deleting attacks that have happened
-		for object in objects:
-			object.clear()
+#		for object in objects:
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					object.clear()
 		for object in deletionList:
-			objects.remove(object)
+			objectsArray[object.x][object.y].remove(object)
 	
 
 		#recharge player attack charge. this probably shouldn't go here ultimately
@@ -4523,9 +4640,6 @@ while not libtcod.console_is_window_closed():
 			
 
 
-		##recharge player jump? TODO well, how should jumping work...
-		#player.fighter.recharge_jumps()
-
 		
 		#weapon degradation time!
 		if( player_hit_something == True or player_clashed_something == True) and player_weapon.durability > 0:
@@ -4543,19 +4657,22 @@ while not libtcod.console_is_window_closed():
 
 		# clean up stuff
 		for object in garbage_list:
-			objects.remove(object)
+			objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
 		
 		#refresh decisions!
-		for object in objects:
-			if object.decider:	
-				object.decider.refresh()
+		#for object in objects:
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					if object.decider:	
+						object.decider.refresh()
 
 
 		# Temporary hack: update a thing saying whether the player is in water.
 		
 		player_in_water = False
-		for ob in objects:
-			if ob.x == player.x and ob.y == player.y and ob.name == 'water':
+		for ob in objectsArray[player.x][player.y]:
+			if ob.name == 'water':
 				print 'sploosh'
 				player_in_water = True
 				break
@@ -4564,29 +4681,33 @@ while not libtcod.console_is_window_closed():
 
 
 		# Now do alarm soundings! and other alarmer-based stuff
-		for ob in objects:
-			if ob.alarmer is not None:
-				#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+#		for ob in objects:
 
-				# first, update the alarmer
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				for object in objectsArray[x][y]:
+					if ob.alarmer is not None:
+						#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+
+						# first, update the alarmer
 				
-				#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+						#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
 
-				# next, do things depending on the alarmer's state
-				if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
-					ob.color = ob.alarmer.idle_color
-				elif ob.alarmer.status == 'suspicious':
-					if ob.alarmer.prev_suspicious == False:
-						message('The ' + ob.name + ' is suspicious!', libtcod.orange)		
-						ob.color = ob.alarmer.suspicious_color
+						# next, do things depending on the alarmer's state
+						if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
+							ob.color = ob.alarmer.idle_color
+						elif ob.alarmer.status == 'suspicious':
+							if ob.alarmer.prev_suspicious == False:
+								message('The ' + ob.name + ' is suspicious!', libtcod.orange)		
+								ob.color = ob.alarmer.suspicious_color
 
-				elif ob.alarmer.status == 'raising-alarm':
-					alarm_level += ob.alarmer.alarm_value
-					spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-					message('The ' + ob.name + ' sounds a loud alarm!', libtcod.red)
-					ob.color = ob.alarmer.alarmed_color
-				elif ob.alarmer.status == 'alarm-raised':
-					ob.color = ob.alarmer.alarmed_color	
+						elif ob.alarmer.status == 'raising-alarm':
+							alarm_level += ob.alarmer.alarm_value
+							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
+							message('The ' + ob.name + ' sounds a loud alarm!', libtcod.red)
+							ob.color = ob.alarmer.alarmed_color
+						elif ob.alarmer.status == 'alarm-raised':
+							ob.color = ob.alarmer.alarmed_color	
 
 
 		# oh let's start creating enemies at random intervals? 
@@ -4607,9 +4728,13 @@ while not libtcod.console_is_window_closed():
 			if lev_set.boss is not None:
 				level_complete = True
 				#check for bosses?
-				for object in objects:
-					if object.name == lev_set.boss:
-						level_complete = False
+#				for object in objects:
+
+				for y in range(MAP_HEIGHT):
+					for x in range(MAP_WIDTH):
+						for object in objectsArray[x][y]:
+							if object.name == lev_set.boss:
+								level_complete = False
 			#elif number_security_systems <= 0:
 			#	level_complete = True
 			elif lev_set.keys_required <= key_count:
@@ -4617,9 +4742,13 @@ while not libtcod.console_is_window_closed():
 
 			# are there too many monsters?
 			total_monsters = 0
-			for object in objects:
-				if object.fighter is not None:
-					total_monsters = total_monsters + 1
+#			for object in objects:
+
+			for y in range(MAP_HEIGHT):
+				for x in range(MAP_WIDTH):
+					for object in objectsArray[x][y]:
+						if object.fighter is not None:
+							total_monsters = total_monsters + 1
 
 			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
 			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
@@ -4650,7 +4779,7 @@ while not libtcod.console_is_window_closed():
 								enemy_name = name
 #								print 'tick' + str(x) + ',' + str(y) + ' ' + name
 								monster = create_monster(x,y, name)
-								objects.append(monster)
+								objects[x][y].append(monster)
 								break
 							else:
 								num -= prob
@@ -4691,8 +4820,12 @@ while not libtcod.console_is_window_closed():
 
 
 	# I guess let's draw things once more?	
-	for object in objects:
-		object.clear()
+#	for object in objects:
+
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			for object in objectsArray[x][y]:
+				object.clear()
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	
 	
