@@ -956,7 +956,6 @@ class StupidBasicMonster(BasicMonster):
 
 
 #As part of an initial experiment in sorting my AI code the heck out, let's make the Boman basically have default behaviours except they like to move diagonally.
-
 class Boman_AI(BasicMonster):
 	
 	def engagePlayer(self, monster, decider):
@@ -982,6 +981,22 @@ class Boman_AI(BasicMonster):
 				if dx != 0 and dy != 0:
 					shorterlist.append((dx,dy))
 			# are there diagonal moves? then let's say will do one of those.
+			if len(shorterlist) > 0 :
+				move_shortlist = shorterlist
+
+			#Furthermore, try to restrict to moves that will let you approach the player from a diagonal direction.
+			#TODO NOTE: This isn't working quite as intended yet
+			opt_diagonality =  max(math.fabs(monster.x - player.x),math.fabs(monster.y - player.y))
+			shorterlist = []
+			for (dx,dy) in  move_shortlist:
+				#how far away from being 'on the diagonal' is this move?
+				temp_diagonality = math.fabs(math.fabs(monster.x + dx - player.x) - math.fabs(monster.y + dy - player.y))
+				# restrict to moves that are closest to being 'on the diagonal'
+				if temp_diagonality < opt_diagonality:
+					shorter_list = []
+					shorterlist.append((dx,dy))
+				elif temp_diagonality == opt_diagonality:
+					shorterlist.append((dx,dy))
 			if len(shorterlist) > 0 :
 				move_shortlist = shorterlist
 
