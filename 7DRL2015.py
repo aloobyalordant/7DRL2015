@@ -110,7 +110,8 @@ color_light_wall = libtcod.Color(130, 110, 50)
 color_dark_ground = libtcod.Color(150,150,150)		#(50, 50, 150)
 color_light_ground = libtcod.Color(200, 180, 50)
 color_fog_of_war = libtcod.black
-default_weapon_color = libtcod.grey
+default_weapon_color = libtcod.Color(50,50,50) 
+#libtcod.grey
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
 default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
@@ -2653,14 +2654,14 @@ def place_objects(room):
 		if num == 0:
 			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
 			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
-			new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True)
+			new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True, always_visible = True)
 			drop_weapon(new_weapon)
 			#objects.append(new_weapon)
 			#new_weapon.send_to_back()
 		elif num == 1:
 			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
 			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
-			new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True)
+			new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True, always_visible = True)
 			drop_weapon(new_weapon)
 			#objects.append(new_weapon)
 			#new_weapon.send_to_back()
@@ -3420,7 +3421,7 @@ def get_item_from_name(x,y, name):
 		char = 'h'
 	elif name == 'ring of power':
 		char = 'o'
-	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True)
+	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True)
 	return object
 
 
