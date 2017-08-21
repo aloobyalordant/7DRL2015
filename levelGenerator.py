@@ -1,6 +1,9 @@
 import libtcodpy as libtcod
 from objectClass import Object
 
+import math
+
+
 #Controls
 ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
 if ControlMode == 'Glados':
@@ -801,18 +804,27 @@ class Level_Generator:
 			# Maybe let's put some water in the room? 
 			num = libtcod.random_get_int(0,0,6)
 			if num == 0:
-				# flood the whole room! 
+				#Put a big puddle in the  room!
+				rad = libtcod.random_get_int(0,1,3)
+				(cent_x, cent_y) = room.center()
+				
 				for x in range(room.x1, room.x2+1):
 					for y in range(room.y1, room.y2+1):
-						object_data.append(Object_Datum(x,y, 'water'))
-						object_data.append(Object_Datum(x,y, 'water'))
+						if math.fabs(x - cent_x) +math.fabs(y-cent_y) <= rad:
+						#if math.sqrt((x-cent_x) ** 2 + (y - cent_y) ** 2) <= rad:
+							object_data.append(Object_Datum(x,y, 'water'))
+
+				## flood the whole room! 
+				#for x in range(room.x1, room.x2+1):
+				#	for y in range(room.y1, room.y2+1):
+				#		object_data.append(Object_Datum(x,y, 'water'))
+				#		object_data.append(Object_Datum(x,y, 'water'))
 			elif num == 1:
 				#flood half the room?
 				for x in range(room.x1, room.x2+1):
 					for y in range(room.y1, room.y2+1):
 						cointoss = libtcod.random_get_int(0, 0, 1)
 						if cointoss == 0:
-							object_data.append(Object_Datum(x,y, 'water'))
 							object_data.append(Object_Datum(x,y, 'water'))
 
 				
