@@ -90,6 +90,7 @@ CHANCE_OF_ENEMY_DROP = 30
 STARTING_ENERGY  = 10
 
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
+DEFAULT_BLOOM_TIME = 37
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -114,6 +115,7 @@ default_weapon_color = libtcod.Color(50,50,50)
 #libtcod.grey
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
+default_flower_color = 	libtcod.Color(50,150,0)
 default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
 water_background_color =libtcod.Color(100,100,250)
 water_foreground_color =libtcod.Color(25,25,250)
@@ -138,7 +140,7 @@ MSG_HEIGHT = MESSAGE_PANEL_HEIGHT-1
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, drops_key = False):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -165,6 +167,9 @@ class Object:
 		self.door = door
 		if self.door:
 			self.door.owner = self
+		self.plant = plant
+		if self.plant:
+			self.plant.owner = self
 		self.currently_invisible = currently_invisible	# I am introducing this as a hack 
 								#to make elevator doors go away. Instead of actually going away, 									#they'll be made invisible, not blocking and not blocking light
 								# (different from being invisible). Video games!
@@ -381,6 +386,57 @@ class Door:
 		self.recently_rattled = False
 
 
+
+#Let's make a bunch of flowers that grow and then replenish your health or whatever, sure.
+class Flower:
+	def __init__(self, flower_type = 'tulip', state = 'seed', bloom_timer = DEFAULT_BLOOM_TIME, name = 'seed', symbol = 'o'):
+		self.flower_type = flower_type
+		self.state = state			# possible states: seed, growing, blooming, trampled. Maybe burnt, later?
+		self.bloom_timer = bloom_timer
+		self.name = name
+		self.symbol = symbol
+
+	#Player can 'activate' a dormant flower to start it growing
+	def activate(self):
+		if self.state == 'seed':
+			self.state = 'growing'
+			self.name = 'growing ' + self.flower_type
+			self.symbol = 'u'
+
+	# If someone walks on the flower while it's growing, it gets trampled :(
+	def tread(self):
+		if self.state == 'growing':
+			self.state  = 'trampled'  # :(
+			self.name = 'trampled ' + self.flower_type
+			self.symbol = 'x'
+
+	# Once activated, plant starts growing until the bloom timer counts down to 0, at which point it bears fruit
+	def update(self):
+		if self.state == 'growing':
+			self.bloom_timer -= 1
+			if self.bloom_timer <= 0:
+				self.state = 'blooming'
+				self.name = self.flower_type
+				self.symbol = 'U'
+
+	# Someone can harvest this delicious fruit and get health?
+	def harvest(self, monster):
+		if self.state == 'blooming' and monster.fighter is not None:
+			monster.fighter.heal(1)
+			monster.fighter.cure_wounds(1)
+			self.state = 'trampled'
+			message(monster.name + ' healed by ' + self.name)
+			self.symbol = 'x'
+			
+
+
+
+
+
+
+
+
+
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
 	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
@@ -458,6 +514,11 @@ class Fighter:
 			if self.jump_array[i] == 0 and jump_used == False:
 				self.jump_array[i] = self.jump_recharge_time
 				jump_used = True
+	
+	# this doe nothing, and exists purely so i can call this method on tings without knowing if they are fighters or energy_fighters.
+	# probably a sign that I should overhaul some of this stuff
+	def cure_wounds(self, amount):
+		return True
 		
 
 
@@ -479,6 +540,7 @@ class Energy_Fighter:
 		self.jump_recharge_time = jump_recharge_time
 		self.wounds = 0
 		self.bleeds = bleeds
+		self.in_water = False
 	#	self.adrenaline_mode = False
 	#	self.adrenaline_threshold = 2
 	#	self.adrenaline_level = self.max_hp
@@ -2399,9 +2461,10 @@ def handle_keys():
 			#test for other keys
 			key_char = chr(key.c)
 
-			# picking up a new weapon
+			# picking up a new weapon.   Or maybe doing a thing with a plant?
 			if key_char == 'p':
 				weapons_found = []
+				plants_found = []
 				weapon_found = False
 				keys_found = []
 				for object in objectsArray[player.x][player.y]:
@@ -2409,6 +2472,8 @@ def handle_keys():
 						weapons_found.append(object)
 					if object.name == 'key': 
 						keys_found.append(object)
+					if object.plant is not None:
+						plants_found.append(object)
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0:
 					message('You snatch up the key.')
@@ -2425,11 +2490,7 @@ def handle_keys():
 					#drop_weapon(old_weapon)
 					weapon_found = True
 					message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name) 
-				elif len(weapons_found) == 0:
-				#if weapon_found == False:
-					message('Nothing to pick up')
-					return 'didnt-take-turn'	
-				else:	
+				elif  len(weapons_found) > 1:
 					message_string = ('Pick up what? (')
 					count = 1
 					for weapon_item in weapons_found:
@@ -2439,6 +2500,15 @@ def handle_keys():
 					message(message_string, libtcod.orange)
 					return 'pickup_dialog'
 					#handle_keys()	# why do I get the feeling I am going to regret this
+				elif len(plants_found) >= 1:
+					for plant_object in plants_found:
+						if plant_object.plant.state == 'seed':
+								plant_object.plant.activate()
+								message('A sapling emerges as you poke the seed.')
+				else:
+				#if weapon_found == False:
+					message('Nothing to pick up')
+					return 'didnt-take-turn'	
 
 
 			#elif key_char == JUMP:
@@ -2932,6 +3002,10 @@ def make_map():
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
 			objectsArray[od.x][od.y].append(new_water)
+		elif od.name == 'plant':
+			flower_part = Flower(flower_type = od.info)
+			new_plant = Object(od.x, od.y, 'o', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
+			objectsArray[od.x][od.y].append(new_plant)
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
 			objectsArray[od.x][od.y].append(floor_message)
@@ -3150,6 +3224,14 @@ def process_player_attack(key_char):
 			if against_wall:
 				print "+1 strength from being against wall"
 				bonus_strength += 1
+
+
+			#let's do another bonus! standing on a shrine
+			on_shrine = False
+			for ob in objectsArray[player.x][player.y]:
+				if ob.shrine is not None:
+					print "+1 strength for being on an altar"
+					bonus_strength += 1
 
 			abstract_attack_data = player_weapon.do_energy_attack(key_char)
 			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
@@ -4086,6 +4168,16 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 			ob.send_to_back()
 		index = index + 1 
 
+
+	#step 3.625: move all plants to back
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objectsArray[x][y][index]
+		if ob.plant:
+			ob.send_to_back()
+		index = index + 1 
+
 	#step 3.75: move all water and blood to back? I need to start finding a better way to do this maybe.
 	index = 0
 	while index < total: 				# >= 0:	
@@ -4386,6 +4478,13 @@ while not libtcod.console_is_window_closed():
 						player.fighter.make_jump()
 						player.move(jd.dx, jd.dy)
 						player_just_jumped = True
+	
+				# check for player trampling plants. This is not where it should go...
+				for other_object in objectsArray[player.x][player.y]:	
+					if other_object.plant is not None:
+						other_object.plant.tread()
+						# also I guess get health maybe???
+						other_object.plant.harvest(player)
 
 
 
@@ -4406,6 +4505,13 @@ while not libtcod.console_is_window_closed():
 		for object in mover_list:
 			md = object.decider.decision.move_decision
 			object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
+			# also maybe trample some plants while you're here
+			for other_object in objectsArray[object.x][object.y]:	
+				if other_object.plant is not None:
+					other_object.plant.tread()
+					# also I guess get health maybe???
+					if object.fighter:
+						other_object.plant.harvest(object)
 
 		
 
@@ -4595,6 +4701,12 @@ while not libtcod.console_is_window_closed():
 		#UPDATE THE DOORS
 					if ob.door is not None:
 						ob.door.update()
+
+		#UPDATE THE PLANTS
+					if ob.plant is not None:
+						ob.plant.update()
+						ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
+						ob.char = ob.plant.symbol
 
 
 		#if spotted == True:
@@ -4794,6 +4906,9 @@ while not libtcod.console_is_window_closed():
 				player_in_water = True
 				break
 		player.fighter.in_water = player_in_water
+
+		
+		#   .  .  .  . .  u   U
 		
 
 

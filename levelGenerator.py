@@ -827,18 +827,10 @@ class Level_Generator:
 						if cointoss == 0:
 							object_data.append(Object_Datum(x,y, 'water'))
 
-				
-		#			(sec_x,sec_y) = room.center()
-		#			object_data.append(Object_Datum(sec_x,sec_y,'security system'))
-		#			self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '.')
-
-		# Orrr maybe just drop a key??
-		#	elif num == 2:
-		#		keyval = libtcod.random_get_int(0,0,1)
-		#		if lev_set.final_level is not True:	#don't have sec systems on final levels?
-		#			if keyval == 0:
-		#				(sec_x,sec_y) = room.center()
-		#				object_data.append(Object_Datum(sec_x,sec_y,'key'))
+			# Let's also plant plants! In every room, for now.
+			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
+			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+			object_data.append(Object_Datum(x,y,'plant', 'tulip'))
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.
 	def decorate_room(self, room, lev_set, map, object_data, dungeon_level,symbol = '~'):
