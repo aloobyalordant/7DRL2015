@@ -3121,8 +3121,38 @@ def process_player_attack(key_char):
 		energy_cost = player_weapon.get_usage_cost(key_char) + 1   #let's try and make weapons a bit harder to use...
 		can_attack =  player.fighter.can_attack(energy_cost, return_message = True)
 		if can_attack == True:
+
+			# Add extra bonus strength maybe! TODO: Probably put in own method later
+			# For now, we are going to try: extra strength when next to a wall
+			bonus_strength = 0
+			against_wall = False
+			try:
+				if map[player.x-1][player.y-1].blocked and map[player.x-1][player.y].blocked and map[player.x-1][player.y+1].blocked:
+					against_wall = True
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print ''
+			try:
+				if map[player.x+1][player.y-1].blocked and map[player.x+1][player.y].blocked and map[player.x+1][player.y+1].blocked:
+					against_wall = True
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print ''
+			try:
+				if map[player.x-1][player.y-1].blocked and map[player.x][player.y-1].blocked and map[player.x+1][player.y-1].blocked:
+					against_wall = True
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print ''
+			try:
+				if map[player.x-1][player.y+1].blocked and map[player.x][player.y+1].blocked and map[player.x+1][player.y+1].blocked:
+					against_wall = True
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print ''
+
+			if against_wall:
+				print "+1 strength from being against wall"
+				bonus_strength += 1
+
 			abstract_attack_data = player_weapon.do_energy_attack(key_char)
-			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player)	
+			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
 			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
 			player.fighter.lose_energy(energy_cost)
 		
@@ -3138,7 +3168,7 @@ def process_player_attack(key_char):
 			message('Error: cannot attack', libtcod.orange)
 			return 'didnt-take-turn'
 
-def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
+def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
 	temp_attack_list = []
@@ -3148,7 +3178,7 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None):
 			temp_color = attacker.fighter.attack_color
 	for (i,j,val) in abstract_attack_data:
 		# adjust attack for position, and also extra strength from the fighter.
-		temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength, attacker=attacker))
+		temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker))
 		temp_attack_list.append(temp_attack)
 	return temp_attack_list
 
