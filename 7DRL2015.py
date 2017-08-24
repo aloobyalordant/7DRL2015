@@ -4725,8 +4725,11 @@ while not libtcod.console_is_window_closed():
 							if object.decider.decision.attack_decision is not None:
 								attack_list = object.decider.decision.attack_decision.attack_list
 								for attack in attack_list:
-									objectsArray[attack.x][attack.y].append(attack)	
-									attack.send_to_front()
+									try:
+										objectsArray[attack.x][attack.y].append(attack)	
+										attack.send_to_front()
+									except IndexError:		#todo: check that this is the right thing to catch...
+										print ''
 
 		player_just_attacked = False
 		if player.decider.decision is not None:
