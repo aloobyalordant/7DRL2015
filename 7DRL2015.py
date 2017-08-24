@@ -1068,8 +1068,10 @@ class Boman_AI(BasicMonster):
 					shorterlist.append((dx,dy))
 			if len(shorterlist) > 0 :
 				move_shortlist = shorterlist
-
-			(dx,dy) = random.choice(tuple(move_shortlist))
+			try:
+				(dx,dy) = random.choice(tuple(move_shortlist))
+			except IndexError:
+				print 'oh no index error!!' + str(len(move_shortlist)) + ', ' + str(move_shortlist)
 
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
@@ -2239,23 +2241,38 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 		if len(shorterlist) > 0:
 			shortlist = shorterlist
 
-	# Choose from remaining available options at random (should create 'wiggling' when the obvious route is blocked)
-	if len(shortlist) > 0:
-		if request_shortlist == False:
+#	# Choose from remaining available options at random (should create 'wiggling' when the obvious route is blocked)
+#	if len(shortlist) > 0:
+#		if request_shortlist == False:
+#			chosen_move = random.choice(tuple(shortlist))
+#		else:
+#			chosen_move = shortlist		#ugh, this hack feels ugly. But yeah, sometimes you might want a shortlist of moves
+#	else:	# If there are no  good options, say this in return message
+#		chosen_move = (0,0)
+#		return_message = "No good options"
+
+	# return either a random move from the shortlist or the shortlist itself, depending on whether request_shortlist is true.
+	# (choosing a random thing from the list is a way to create "wiggling" when the obvious route is blocked)
+	if request_shortlist == False:
+		if len(shortlist) > 0:
 			chosen_move = random.choice(tuple(shortlist))
 		else:
-			chosen_move = shortlist		#ugh, this hack feels ugly. But yeah, sometimes you might want a shortlist of moves
-	else:	# If there are no  good options, say this in return message
-		chosen_move = (0,0)
-		return_message = "No good options"
-
+			#stay still if there's no move
+			chosen_move = (0,0)
+	else:
+		if len(shortlist) > 0:
+			chosen_move = shortlist
+		else:
+			chosen_move = []
+			chosen_move.append((0,0))		# TODO / POTENTIAL PROBLEM: Return a list with just (0,0) rather than an empty set.
+							# May wish to change this later?
 
 	if shortest_fighter_dist < shortest_dist:		#let people know that someone was standing in the way of best route
 		return_message = "Fighter blocking best option"
 		# print "yep"
 	if request_message == True:
 		return (chosen_move, return_message)
-	else :
+	else:
 		return chosen_move
 
 	
