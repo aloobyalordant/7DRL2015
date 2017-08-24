@@ -887,11 +887,17 @@ class BasicMonster:
 		#keeping it pretty simple for now... pursue the player if you see them
 		if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
 			self.state = 'pursue-visible-target'
-		elif self.state == 'pursue-visible-target' or self.state == 'flee-visible-danger': 
-			self.state = 'wander-aimlessly'		# since player no longer visible, wander aimlessly!
+		elif self.state == 'pursue-visible-target':	#go to room-based targeting
+			self.state = 'wander-aimlessly'		
+			# because we could see the player a second ago, we assule the player has just run 'round the corner' 
+			# and so we think we know what roomthe player is in
+			self.target_room = nearest_points_array[player.x][player.y] 	
+ 		elif self.state == 'flee-visible-danger':
+			self.state = 'wander-aimlessly'	
+			# as we just ran out of sight of player, prioritise not being in the room they're in	
+			self.previous_room = nearest_points_array[player.x][player.y] 	
 			
-		#todo: make it so that if player runs out of sight, you switch to'head towards room' (that they just went in);
-		# if heading towards room and you reach that room, switch to wandering aimlessly
+
 
 
 	# Step 2 of AI process: Now you know your state, decide your target (either a room or a specific space).
@@ -4786,39 +4792,69 @@ while not libtcod.console_is_window_closed():
 
 
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
-		clashing_pairs_list = []
+		#clashing_pairs_list = []
 		#deletionList = []
 #		for object in objects:
+
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#					if object.attack:
+#						attackee = object.attack.find_attackee()	
+#						for yy in range(MAP_HEIGHT):
+#							for xx in range(MAP_WIDTH):
+#								for other_object in objectsArray[xx][yy]:
+#						#for other_object in objects:
+#									# perform a check to ensure each unordered pair only gets processed once
+#									if object.x < other_object.x or (object.x == other_object.x and object.y <= other_object.y):
+#										if other_object.attack and other_object.attack.attacker == attackee:
+#											other_attackee = other_object.attack.find_attackee()
+#											if other_attackee == object.attack.attacker:
+#												# so now we have two fighters attacking each other
+#												clashing_pairs_list.append((object, other_object))
+#												# deletion happens, because the attacks "cancel each other out"
+#												deletionList.append(object)
+#												deletionList.append(other_object)
+#												message('Clash! The ' + attackee.name + ' and ' + other_attackee.name + '\'s attacks bounce off each other!')
+#												if attackee is player or other_attackee is player:
+#													player_clashed_something = True
+
 
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
 				for object in objectsArray[x][y]:
 					if object.attack:
-						attackee = object.attack.find_attackee()	
-						for yy in range(MAP_HEIGHT):
-							for xx in range(MAP_WIDTH):
-								for other_object in objectsArray[xx][yy]:
-						#for other_object in objects:
-									# perform a check to ensure each unordered pair only gets processed once
-									if object.x < other_object.x or (object.x == other_object.x and object.y <= other_object.y):
-										if other_object.attack and other_object.attack.attacker == attackee:
-											other_attackee = other_object.attack.find_attackee()
-											if other_attackee == object.attack.attacker:
-												# so now we have two fighters attacking each other
-												clashing_pairs_list.append((object, other_object))
-												# deletion happens, because the attacks "cancel each other out"
-												deletionList.append(object)
-												deletionList.append(other_object)
-												message('Clash! The ' + attackee.name + ' and ' + other_attackee.name + '\'s attacks bounce off each other!')
-												if attackee is player or other_attackee is player:
-													player_clashed_something = True
+						#determine the attacker and attackee in this scenario
+						attacker = object.attack.attacker
+						attackee = object.attack.find_attackee()
+						#now, is the attackee also attacking the attacker?	
+						for other_object in objectsArray[attacker.x][attacker.y]:
+							if other_object.attack:	#so attacker is  definitely being attacked by something...
+								other_attacker = other_object.attack.attacker
+								if other_attacker == attackee:	# then attacker IS being attacked by attackee!
+									# so now we have two fighters attacking each other
+									#check to make sure same pair of attacks don't get noted twice:
+									if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
+										#clashing_pairs_list.append((object, other_object))
+										# deletion happens, because the attacks "cancel each other out"
+										deletionList.append(object)
+										deletionList.append(other_object)
+										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!')
+										if attacker is player or attackee is player:
+											player_clashed_something = True
+
+
 		#for object in objects:
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
 				for object in objectsArray[x][y]:
 					object.clear()
 		for object in deletionList:
-			objectsArray[object.x][object.y].remove(object)
+			try:
+				objectsArray[object.x][object.y].remove(object)
+			except ValueError:
+				print 'object already removed from lissssssst'
+		deletionList = []
 
 		## regular old attacks just happening
 		#deletionList = []
