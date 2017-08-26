@@ -7,7 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger
+from powerUps import PowerUp, WallHugger, Mindfulness
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -2479,6 +2479,11 @@ def handle_keys():
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,0)))
 		elif key.vk == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
 			message('You stand perfectly still.')
+			
+			# update the relevant upgrades, to do with standing still
+			for power_up in upgrade_array:
+				if getattr(power_up, "update_on_standing_still", None) is not None:
+					power_up.update_on_standing_still(player, objectsArray, map)
 			pass
 
 		else:
@@ -3228,40 +3233,12 @@ def process_player_attack(key_char):
 			# update the relevant upgrades
 			# todo: this probably doesn't go here ultimately
 			for power_up in upgrade_array:
-				if power_up.update_on_player_attack_choice:
+				if getattr(power_up, "update_on_player_attack_choice", None) is not None:
 					power_up.update_on_player_attack_choice(player, objectsArray, map)
-
-
-
-#			against_wall = False
-#			try:
-#				if map[player.x-1][player.y-1].blocked and map[player.x-1][player.y].blocked and map[player.x-1][player.y+1].blocked:
-#					against_wall = True
-#			except IndexError:		#todo: check that this is the right thing to catch...
-#				print ''
-#			try:
-#				if map[player.x+1][player.y-1].blocked and map[player.x+1][player.y].blocked and map[player.x+1][player.y+1].blocked:
-#					against_wall = True
-#			except IndexError:		#todo: check that this is the right thing to catch...
-#				print ''
-#			try:
-#				if map[player.x-1][player.y-1].blocked and map[player.x][player.y-1].blocked and map[player.x+1][player.y-1].blocked:
-#					against_wall = True
-#			except IndexError:		#todo: check that this is the right thing to catch...
-#				print ''
-#			try:
-#				if map[player.x-1][player.y+1].blocked and map[player.x][player.y+1].blocked and map[player.x+1][player.y+1].blocked:
-#					against_wall = True
-#			except IndexError:		#todo: check that this is the right thing to catch...
-#				print ''
-#
-#			if against_wall:
-#				print "+1 strength from being against wall"
-#				bonus_strength += 1
 
 			# get extra strength from the relevant upgrades
 			for power_up in upgrade_array:
-				if power_up.affect_strength_at_attack_choice:
+				if getattr(power_up, "affect_strength_at_attack_choice", None) is not None:
 					bonus_strength += power_up.affect_strength_at_attack_choice()
 
 
@@ -4280,6 +4257,8 @@ def initialise_game():
 	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
 	starting_upgrade = WallHugger()
 	upgrade_array = [starting_upgrade]
+	another_upgrade = Mindfulness()
+	upgrade_array.append(another_upgrade)
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
@@ -4932,16 +4911,20 @@ while not libtcod.console_is_window_closed():
 
 		# refresh the player's energy
 		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
-		# disregard if the player isin ADRENALINE MODE # commented out
 		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False):
-		#or player.fighter.adrenaline_mode == True:
-			player.fighter.gain_energy(1)
+			recharge_rate = 1  			#by default
+			# bonus recharge from upgrades:
+			for power_up in upgrade_array:
+				if  getattr(power_up, "affect_rate_of_energy_recharge", None) is not None:
+					recharge_rate += power_up.affect_rate_of_energy_recharge()
+			player.fighter.gain_energy(recharge_rate)
 
 		# bonus recharge for combos
 		if number_hit_by_player > 1:
 			bonus = number_hit_by_player - 1
 			player.fighter.gain_energy(bonus)
 			message("Combo! +" + str(bonus) + " energy", libtcod.cyan)
+	
 			
 
 
