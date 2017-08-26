@@ -7,6 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
+from powerUps import PowerUp, WallHugger
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -3210,6 +3211,7 @@ def player_move_or_attack(dx, dy):
 
 #Processing player attack, woop woo! we want the decision for whether an attack is possible to belong to the player's Fighter class rather than the weapon itself; we're putting the wrapper for all that stuff around here.
 def process_player_attack(key_char):
+	global upgrade_array
 
 	if player_weapon.durability <= 0:
 		message('Your ' +  str(player_weapon.name) + ' is broken!')
@@ -3222,39 +3224,52 @@ def process_player_attack(key_char):
 			# Add extra bonus strength maybe! TODO: Probably put in own method later
 			# For now, we are going to try: extra strength when next to a wall
 			bonus_strength = 0
-			against_wall = False
-			try:
-				if map[player.x-1][player.y-1].blocked and map[player.x-1][player.y].blocked and map[player.x-1][player.y+1].blocked:
-					against_wall = True
-			except IndexError:		#todo: check that this is the right thing to catch...
-				print ''
-			try:
-				if map[player.x+1][player.y-1].blocked and map[player.x+1][player.y].blocked and map[player.x+1][player.y+1].blocked:
-					against_wall = True
-			except IndexError:		#todo: check that this is the right thing to catch...
-				print ''
-			try:
-				if map[player.x-1][player.y-1].blocked and map[player.x][player.y-1].blocked and map[player.x+1][player.y-1].blocked:
-					against_wall = True
-			except IndexError:		#todo: check that this is the right thing to catch...
-				print ''
-			try:
-				if map[player.x-1][player.y+1].blocked and map[player.x][player.y+1].blocked and map[player.x+1][player.y+1].blocked:
-					against_wall = True
-			except IndexError:		#todo: check that this is the right thing to catch...
-				print ''
 
-			if against_wall:
-				print "+1 strength from being against wall"
-				bonus_strength += 1
+			# update the relevant upgrades
+			# todo: this probably doesn't go here ultimately
+			for power_up in upgrade_array:
+				if power_up.updates_on_player_attack_choice:
+					power_up.update_on_player_attack_choice(player, objectsArray, map)
 
 
-			#let's do another bonus! standing on a shrine
-			on_shrine = False
-			for ob in objectsArray[player.x][player.y]:
-				if ob.shrine is not None:
-					print "+1 strength for being on an altar"
-					bonus_strength += 1
+
+#			against_wall = False
+#			try:
+#				if map[player.x-1][player.y-1].blocked and map[player.x-1][player.y].blocked and map[player.x-1][player.y+1].blocked:
+#					against_wall = True
+#			except IndexError:		#todo: check that this is the right thing to catch...
+#				print ''
+#			try:
+#				if map[player.x+1][player.y-1].blocked and map[player.x+1][player.y].blocked and map[player.x+1][player.y+1].blocked:
+#					against_wall = True
+#			except IndexError:		#todo: check that this is the right thing to catch...
+#				print ''
+#			try:
+#				if map[player.x-1][player.y-1].blocked and map[player.x][player.y-1].blocked and map[player.x+1][player.y-1].blocked:
+#					against_wall = True
+#			except IndexError:		#todo: check that this is the right thing to catch...
+#				print ''
+#			try:
+#				if map[player.x-1][player.y+1].blocked and map[player.x][player.y+1].blocked and map[player.x+1][player.y+1].blocked:
+#					against_wall = True
+#			except IndexError:		#todo: check that this is the right thing to catch...
+#				print ''
+#
+#			if against_wall:
+#				print "+1 strength from being against wall"
+#				bonus_strength += 1
+
+			# get extra strength from the relevant upgrades
+			for power_up in upgrade_array:
+				bonus_strength += power_up.affect_strength_at_attack_choice()
+
+
+		#	#let's do another bonus! standing on a shrine
+		#	on_shrine = False
+		#	for ob in objectsArray[player.x][player.y]:
+		#		if ob.shrine is not None:
+		#			print "+1 strength for being on an altar"
+		#			bonus_strength += 1
 
 			abstract_attack_data = player_weapon.do_energy_attack(key_char)
 			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
@@ -4230,7 +4245,7 @@ def mergeColors(initial_color, new_color, mix_level = 0.5):
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -4260,6 +4275,10 @@ def initialise_game():
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
 	camera = Location(player.x, player.y)
+
+	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
+	starting_upgrade = WallHugger()
+	upgrade_array = [starting_upgrade]
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
