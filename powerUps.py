@@ -2,18 +2,20 @@ import libtcodpy as libtcod
 
 class PowerUp:
 
-	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", updates_on_player_attack_choice = False, affects_strength_at_attack_choice = False):
+	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims."):
+#, updates_on_player_attack_choice = False, affects_strength_at_attack_choice = False):
 		self.name = name
 		self.tech_description = tech_description  		# short description of what item does
 		self.verbose_description= verbose_description  		# a wordier description that someone in the game world might give
-		self.updates_on_player_attack_choice = updates_on_player_attack_choice
-		self.affects_strength_at_attack_choice = affects_strength_at_attack_choice
+		# self.updates_on_player_attack_choice = updates_on_player_attack_choice
+		# self.affects_strength_at_attack_choice = affects_strength_at_attack_choice
 
 
 class WallHugger(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength", updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
+		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength")
+#, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 		self.activated = False
 
 	def update_on_player_attack_choice(self, player, objectsArray, map):

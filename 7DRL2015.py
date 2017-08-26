@@ -3228,7 +3228,7 @@ def process_player_attack(key_char):
 			# update the relevant upgrades
 			# todo: this probably doesn't go here ultimately
 			for power_up in upgrade_array:
-				if power_up.updates_on_player_attack_choice:
+				if power_up.update_on_player_attack_choice:
 					power_up.update_on_player_attack_choice(player, objectsArray, map)
 
 
@@ -3261,7 +3261,8 @@ def process_player_attack(key_char):
 
 			# get extra strength from the relevant upgrades
 			for power_up in upgrade_array:
-				bonus_strength += power_up.affect_strength_at_attack_choice()
+				if power_up.affect_strength_at_attack_choice:
+					bonus_strength += power_up.affect_strength_at_attack_choice()
 
 
 		#	#let's do another bonus! standing on a shrine
