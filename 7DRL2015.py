@@ -3679,6 +3679,17 @@ def pause_screen():
 	libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod.BKGND_NONE, libtcod.CENTER,
 	'The game is paused (press Esc to unpause or Q to quit)')
 
+	libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
+	'----------------------')
+	current_line = 6
+	for upgrade in upgrade_array:
+		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, current_line, libtcod.BKGND_NONE, libtcod.CENTER, 
+		upgrade.name + ': ' + upgrade.tech_description)
+		current_line += 2
+
+
+	# Add a list of what upgrades the player has
+
 	print 'p?p'
 	#blit the contents of "pause_menu" to the root console
 	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
