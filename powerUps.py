@@ -154,3 +154,16 @@ class Amphibious(PowerUp):
 		else:
 			return False
 		
+
+
+def Get_Random_Upgrade():
+	# create list of possible upgrades
+	upgrade_list = []
+	upgrade_list.append(WallHugger())
+	upgrade_list.append(Mindfulness())
+	upgrade_list.append(NeptunesBlessing())
+	upgrade_list.append(Amphibious())
+
+	# return a random upgrade from list
+	choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
+	return upgrade_list[choice]

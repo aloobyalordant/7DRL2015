@@ -7,7 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Get_Random_Upgrade
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -3397,6 +3397,14 @@ def next_level():
 		favoured_by_deliverer = True
 
 
+
+	# give player ane wrandom upgrade?
+	new_upgrade = Get_Random_Upgrade()
+	upgrade_array.append(new_upgrade)
+
+	message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, libtcod.cyan)
+
+
 	dungeon_level += 1
 	alarm_level = dungeon_level + 1
 	key_count = 0
@@ -4280,12 +4288,16 @@ def initialise_game():
 	camera = Location(player.x, player.y)
 
 	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
-	upgrade_choice = libtcod.random_get_int(0, 0, 1)
-	if upgrade_choice == 0:
-		starting_upgrade = WallHugger()
-	else:	
-		starting_upgrade =  Mindfulness()
-	upgrade_array = [starting_upgrade]
+	#upgrade_choice = libtcod.random_get_int(0, 0, 1)
+	#if upgrade_choice == 0:
+	#	starting_upgrade = WallHugger()
+	#else:	
+	#	starting_upgrade =  Mindfulness()
+	#upgrade_array = [starting_upgrade]
+
+	upgrade_array = []
+	# starting_upgrade = YOUR_UPGRAD_HERE()		#for when you want to test a new uprade
+	# upgrade_array.append(starting_upgrade)
 
 	#upgrade_array.append(Amphibious())
 	#upgrade_array.append(NeptunesBlessing())
