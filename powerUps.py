@@ -17,6 +17,7 @@ class WallHugger(PowerUp):
 		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength.")
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
+	# Activates if player has 3 wall segments on one side
 	def update_on_player_attack_choice(self, player, objectsArray, map):
 		# global player, objectsArray, map    #I feel I should be able to do this instead of passing them to method, but... no?
 		against_wall = False
@@ -70,6 +71,65 @@ class Mindfulness(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print "+1 energy from " + str(self.name)
+			return 1
+		else:
+			return 0
+
+
+class NeptunesBlessing(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Neptune's Blessing", tech_description = "+1 strength when next to or in water", verbose_description = "A coral amulet that grants increased strength when near water.")
+
+	#TODO: 
+	# Activates if there is water on the player's square or hoirzontally/vertically adjacent
+	def update_on_player_attack_choice(self, player, objectsArray, map):
+
+		# global player, objectsArray, map    #I feel I should be able to do this instead of passing them to method, but... no?
+		near_water = False
+
+		# test for water at player's location
+		for ob in objectsArray[player.x][player.y]:
+			if ob.name == 'water':
+				near_water = True
+
+		# test for water left of player
+		if player.x > 0:
+			for ob in objectsArray[player.x-1][player.y]:
+				if ob.name == 'water':
+					near_water = True
+
+
+		# test for water right of player
+		if player.x < len(objectsArray)-1:
+			for ob in objectsArray[player.x+1][player.y]:
+				if ob.name == 'water':
+					near_water = True
+
+
+		# test for water immediately north of player
+		if player.y > 0:
+			for ob in objectsArray[player.x][player.y-1]:
+				if ob.name == 'water':
+					near_water = True
+
+
+		# test for water immediately south of player
+		if player.y < len(objectsArray[player.x])-1:
+			for ob in objectsArray[player.x][player.y+1]:
+				if ob.name == 'water':
+					near_water = True
+
+		if near_water:
+			self.activated = True
+		else:
+			self.activated = False
+
+
+	def affect_strength_at_attack_choice(self):
+		if self.activated:
+			self.activated = False			# probably a good safety tip is to always reset activated status
+			print "+1 strength from " + str(self.name)
 			return 1
 		else:
 			return 0

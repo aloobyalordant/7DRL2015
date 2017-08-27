@@ -7,7 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -4255,10 +4255,16 @@ def initialise_game():
 	camera = Location(player.x, player.y)
 
 	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
-	starting_upgrade = WallHugger()
+	upgrade_choice = libtcod.random_get_int(0, 0, 1)
+	if upgrade_choice == 0:
+		starting_upgrade = WallHugger()
+	else:	
+		starting_upgrade =  Mindfulness()
 	upgrade_array = [starting_upgrade]
-	another_upgrade = Mindfulness()
-	upgrade_array.append(another_upgrade)
+
+	upgrade_array.append(NeptunesBlessing())
+	#another_upgrade = Mindfulness()
+	#upgrade_array.append(another_upgrade)
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
