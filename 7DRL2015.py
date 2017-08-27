@@ -7,7 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Get_Random_Upgrade
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -2120,6 +2120,7 @@ class BasicAttack:
 #			for target in objects:
 #				if target.fighter and target.x == self.owner.x and target.y == self.owner.y:
 					return target
+		return None
 
 
 
@@ -4307,8 +4308,9 @@ def initialise_game():
 	#upgrade_array = [starting_upgrade]
 
 	upgrade_array = []
-	# starting_upgrade = YOUR_UPGRAD_HERE()		#for when you want to test a new uprade
-	# upgrade_array.append(starting_upgrade)
+	
+	#starting_upgrade = Perfectionist()		#for when you want to test a new uprade
+	#upgrade_array.append(starting_upgrade)
 
 	#upgrade_array.append(Amphibious())
 	#upgrade_array.append(NeptunesBlessing())
@@ -4317,6 +4319,7 @@ def initialise_game():
 	
 	#WEAPON SELECT
 	player_weapon = Weapon_Sword()
+	# player_weapon = Weapon_Spear()
 	#player_weapon = Weapon_Staff()
 	#player_weapon = Weapon_Wierd_Staff()
 	#player_weapon = Weapon_Katana()
@@ -4786,6 +4789,13 @@ while not libtcod.console_is_window_closed():
 						ob.char = ob.plant.symbol
 
 
+		#UPDATE THE UPGRADES THAT AFFECT PLAYER STATS ONCE AND THEN STOP; I'M NOT SURE WHERE ELSE TO PUT THIS	
+		for power_up in upgrade_array:
+			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
+				power_up.upgrade_player_stats_once(player)
+
+
+
 		#if spotted == True:
 		#	print "Alarmage status: spotted"
 		#else: 
@@ -4849,6 +4859,8 @@ while not libtcod.console_is_window_closed():
 
 		# check how many enemies the player has hit, and 
 		# check if the player is getting 'hit' (whether or not the attack gets deflected)
+
+		all_player_attacks_on_target = True		# thing to test whether all player attacks hit
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
 				for object in objectsArray[x][y]:
@@ -4857,9 +4869,16 @@ while not libtcod.console_is_window_closed():
 						attackee = object.attack.find_attackee()
 						if attackee == player:
 							player_got_hit = True
-						elif object.attack.attacker == player and attackee is not None:
-							number_hit_by_player += 1
-
+						elif object.attack.attacker == player:
+							if attackee is not None:
+								number_hit_by_player += 1
+							else:
+								all_player_attacks_on_target = False
+		# Update relevant upgrades
+		for power_up in upgrade_array:
+			if getattr(power_up, "update_based_on_player_accuracy", None) is not None:
+				power_up.update_based_on_player_accuracy(all_player_attacks_on_target)
+								
 
 
 		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
@@ -4934,6 +4953,10 @@ while not libtcod.console_is_window_closed():
 			for x in range(MAP_WIDTH):
 				for object in objectsArray[x][y]:
 					if object.attack:
+						# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
+						for power_up in upgrade_array:
+							if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
+								power_up.affect_strength_of_individual_attack(player, object)
 						object.attack.inflict_damage()
 						object.attack.fade()
 						# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something

@@ -157,7 +157,7 @@ class Amphibious(PowerUp):
 class PersonalSpace(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when not next to any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength")
+		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when not next to any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.")
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has no walls or doors on any adjacent space (including diagonally)
@@ -257,6 +257,39 @@ class PersonalSpace(PowerUp):
 
 #todo Perfectionist: +1 strength when all your attacks hit
 
+class Perfectionist(PowerUp):
+
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Perfectionist", tech_description = "+1 strength when all attacks hit", verbose_description = "Power is nothing without control. Additional strength for attacks with 100%% accuracy.")
+
+	def update_based_on_player_accuracy(self, all_player_attacks_on_target):
+		if all_player_attacks_on_target:
+			self.activated = True
+		else:
+			self.activated = False
+		
+
+	# give +1 damage to this attack object
+	def affect_strength_of_individual_attack(self, player, attack_object):
+		if self.activated == True:
+			if attack_object.attack.attacker == player:
+				#self.activated = False	 # Not reseting activated, because it has to affect multiple attakcs. Be careful!
+				print "+1 strength from " + str(self.name)
+				attack_object.attack.damage += 1
+
+class Leapfrog(PowerUp):
+	
+	def __init__(self):
+		PowerUp.__init__(self, name = "Leapfrog", tech_description = "-1 energy cost for jumping", verbose_description = "Leap through the air with ease!")
+		self.consumed = False
+
+	def upgrade_player_stats_once(self,player):
+		if self.consumed == False:
+			print 'boh'
+			player.fighter.jump_recharge_time = max(player.fighter.jump_recharge_time - 1, 0) #to a minimum 0? Or should it be 1?
+			self.consumed = True
+
 
 def Get_Random_Upgrade():
 	# create list of possible upgrades
@@ -266,10 +299,12 @@ def Get_Random_Upgrade():
 	upgrade_list.append(NeptunesBlessing())
 	upgrade_list.append(Amphibious())
 	upgrade_list.append(PersonalSpace())
+	upgrade_list.append(Perfectionist())
+	upgrade_list.append(Leapfrog())
 
 	# return a random upgrade from list
 	choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
-	#return upgrade_list[choice]
-	return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
+	return upgrade_list[choice]
+	#return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
 
 
