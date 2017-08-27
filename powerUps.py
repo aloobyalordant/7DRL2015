@@ -133,4 +133,24 @@ class NeptunesBlessing(PowerUp):
 			return 1
 		else:
 			return 0
+
+
+class Amphibious(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Amphibious", tech_description = "able to attack in water", verbose_description = "Fight in water as easily as on land.")
+
+
+	def update_on_testing_can_attack(self, error_message):
+		print 'messg ' + error_message
+		if error_message == 'in water':
+			self.activated = True
+
+	def allows_attack(self):
+		if self.activated:
+			self.activated = False			# probably a good safety tip is to always reset activated status
+			print "attack allowed due to " + str(self.name)
+			return True
+		else:
+			return False
 		

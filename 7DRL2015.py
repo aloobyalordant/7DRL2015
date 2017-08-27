@@ -7,7 +7,7 @@ from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Wea
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -621,16 +621,41 @@ class Energy_Fighter:
 	# and still gets round the problem of being stuck when on low health,
 	# without the confusion of adrenaline mode
 	def can_attack(self, energy_cost, return_message = False):
+		global player, upgrade_array
+
 		error_message = ''
 		if self.hp < min(energy_cost, self.max_hp- self.wounds):
 			error_message = 'energy too low'
 		elif self.in_water:
 			error_message = 'in water'
 			print 'PSLASH'
-		
+
+
+		# do some testing for upgrades to seeif they affect whether you can attack!
+		if self.owner == player:
+			for power_up in upgrade_array:
+				if getattr(power_up, "update_on_testing_can_attack", None) is not None:
+					power_up.update_on_testing_can_attack(error_message)
+
 		if error_message == '':
+			able_to_attack = True
+		else:
+			able_to_attack = False
+
+		# TODO THIS AIN'T WORKING YET
+
+		# update able_to_attack based on upgrades
+		if self.owner == player:
+			for power_up in upgrade_array:
+				if getattr(power_up, "allows_attack", None) is not None:
+					if power_up.allows_attack() == True:
+						able_to_attack = True
+						error_message = ''
+
+		
+		if able_to_attack:
 			return True
-		elif return_message:
+		else:
 			if return_message == True:
 				return error_message
 			else:
@@ -2423,7 +2448,7 @@ def handle_keys():
 			message('Never mind.')
 			#keynum = key
 			#print str(libtcod.KEY_KP7)		# hang on... 41 is 7. So... 35 is 1, right? blah - 34
-			return 'didnt-take-turn'
+			return 'invalid-move'
 
 		else:
 			return 'pickup_dialog'
@@ -2537,7 +2562,7 @@ def handle_keys():
 				else:
 				#if weapon_found == False:
 					message('Nothing to pick up')
-					return 'didnt-take-turn'	
+					return 'invalid-move'	
 
 
 			#elif key_char == JUMP:
@@ -2550,7 +2575,7 @@ def handle_keys():
 				else:
 					message_string = 'Your legs are too tired to jump.'
 					message(message_string, libtcod.orange)
-					return 'didnt-take-turn'
+					return 'invalid-move'
 
 			#attacky keys!
 			else :			
@@ -2618,7 +2643,7 @@ def handle_keys():
 								deliverer_test_count = 200 - (game_time-time_level_started)		#TODO put these kind of values in gods.py
 					else:
 						message('There is no shrine here.')
-						return 'didnt-take-turn'
+						return 'invalid-move'
 
 
 				elif key_char == 'l':
@@ -3220,7 +3245,7 @@ def process_player_attack(key_char):
 
 	if player_weapon.durability <= 0:
 		message('Your ' +  str(player_weapon.name) + ' is broken!')
-		return 'didnt-take-turn'
+		return 'invalid-move'
 	else:
 		energy_cost = player_weapon.get_usage_cost(key_char) + 1   #let's try and make weapons a bit harder to use...
 		can_attack =  player.fighter.can_attack(energy_cost, return_message = True)
@@ -3258,13 +3283,13 @@ def process_player_attack(key_char):
 		elif can_attack == 'energy too low':
 			#message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
 			message('You are too tired to attack', libtcod.orange)
-			return 'didnt-take-turn'
+			return 'invalid-move'
 		elif can_attack == 'in water':
 			message('You are too busy treading water to attack', libtcod.orange)
-			return 'didnt-take-turn'
+			return 'invalid-move'
 		else:
 			message('Error: cannot attack', libtcod.orange)
-			return 'didnt-take-turn'
+			return 'invalid-move'
 
 def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
@@ -4262,7 +4287,8 @@ def initialise_game():
 		starting_upgrade =  Mindfulness()
 	upgrade_array = [starting_upgrade]
 
-	upgrade_array.append(NeptunesBlessing())
+	#upgrade_array.append(Amphibious())
+	#upgrade_array.append(NeptunesBlessing())
 	#another_upgrade = Mindfulness()
 	#upgrade_array.append(another_upgrade)
 	
@@ -4362,7 +4388,7 @@ while not libtcod.console_is_window_closed():
 	#	break
 
 	# Game things happen woo!
-	elif game_state == 'playing' and player_action != 'didnt-take-turn' and player_action != 'pickup_dialog' and player_action != 'jump_dialog' :
+	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'jump_dialog' :
 		
 		
 		game_time += 1
@@ -5112,6 +5138,13 @@ while not libtcod.console_is_window_closed():
 
 	elif game_state == 'playing' and player_action == 'jump_dialog':
 		#print '4'
+		render_all()
+		libtcod.console_flush()
+
+
+	# I think this goes here: want to draw stuff if there's a "you can't do that" message
+	elif game_state == 'playing' and player_action == 'invalid-move':
+		print 'oog'
 		render_all()
 		libtcod.console_flush()
 
