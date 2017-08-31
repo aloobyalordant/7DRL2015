@@ -3,7 +3,7 @@ import time
 import math
 import textwrap
 import random
-from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Ring_Of_Power
+from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
@@ -1104,8 +1104,69 @@ class Boman_AI(BasicMonster):
 
 
 
+class Tridentor_AI(BasicMonster):
 
 
+
+
+
+	# Tridentor AI is bit more predictable than the BasicMonster AI would be (doesn't randomly choose between the 3 options that would fit),
+	# also tries an attack if there's a step between them and the player... and maybe backs away if an attack is not possible?...
+	def engagePlayer(self, monster, decider):
+		
+		#get data for where player is
+#		abstract_attack_data = None
+		xdiff = player.x - monster.x
+		ydiff = player.y - monster.y
+		xdiffabs = xdiff
+		if xdiff < 0:
+			xdiffabs = -xdiff
+		ydiffabs = ydiff
+		if ydiff < 0:
+			ydiffabs = -ydiff 
+
+		
+		# If the player is one or two steps from me, either to a specified attack, or retreat if I have no charge 
+		if xdiffabs <=2 and ydiffabs <= 2:  # or self.weapon.current_charge < self.weapon.default_usage
+			#if near to the player, and I have charge, then attack!
+			if self.weapon.current_charge >= self.weapon.default_usage:
+				attack_command = 0
+				#if the player has charge, try and hit the square where they're standing (because it's likely they'll stay still and attack me)
+				# Do one of these attacks, based on where player is (try and hit them square on if they are next to you,
+				# hit to either side of straight on if they are 1 step away on a cardinal axis, 
+				# hit towards them if the are diagonally one step away
+				attack_array = [[oQo,oXo,oXo,oXo,oEo],
+						[oDo,oQo,oWo,oEo,oQo],
+						[oDo,oQo, 0 ,oDo,oQo],
+						[oDo,oZo,oXo,oCo,oQo],
+						[oZo,oWo,oWo,oWo,oCo]]
+				attack_command = attack_array[ydiff+2][xdiff+2]
+
+				#carry out attack
+				if attack_command != 0:
+					abstract_attack_data = self.weapon.do_attack(attack_command)
+						
+				if abstract_attack_data is not None:
+					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+
+			# can't attack but the player is next to you? then step back
+			# commented out for now - too tricksy / annoying for what is basically meant to be an upgrade to the basic mook
+			elif xdiffabs <=1 and ydiffabs <= 1:
+			
+				(dx,dy) = Run_Away_From_Visible_Player(monster.x, monster.y)
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+			# otherwise, close the distance to player 
+			elif monster.distance_to(player) > 1: 
+				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+		# otherwise, walk towards the player if possible.
+		else:
+
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+	
 
 
 class Wizard_AI:
@@ -2890,6 +2951,15 @@ def create_monster(x,y, name, guard_duty = False):
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'Z', 'samurai', libtcod.darker_red, blocks=True, fighter=fighter_component, decider=decider_component)
 
+	elif name == 'tridentor':
+		#create a guy with an axe!
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = libtcod.blue, faded_attack_color = libtcod.dark_blue)
+		ai_component = Tridentor_AI(weapon = Weapon_Trident(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'T', 'tridentor', libtcod.blue, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
+
 	elif name == 'hammer sister':
 		#create a lady with a hammer!
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
@@ -3524,6 +3594,8 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 		new_weapon =  Weapon_Katana()
 	elif name == 'hammer':
 		new_weapon =  Weapon_Hammer()
+	elif name == 'trident':
+		new_weapon =  Weapon_Trident()
 	elif name == 'ring of power':
 		new_weapon =  Weapon_Ring_Of_Power()
 	else:
@@ -3581,6 +3653,8 @@ def get_item_from_name(x,y, name):
 		char = 'k'
 	elif name == 'hammer':
 		char = 'h'
+	elif name == 'trident':
+		char = 't'
 	elif name == 'ring of power':
 		char = 'o'
 	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True)

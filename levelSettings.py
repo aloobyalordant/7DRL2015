@@ -68,6 +68,7 @@ class Level_Settings:
 		# A level with small rooms and few enemies
 		enemy_probs = []
 		enemy_probs.append(('swordsman', 50))
+	#	enemy_probs.append(('tridentor', 50))
 		enemy_probs.append(('rook', 30))		#TEMP TAKING OUT ROOKS
 	#	enemy_probs.append(('nunchuck fanatic', 50))
 	#	enemy_probs.append(('ninja', 5))
@@ -177,9 +178,10 @@ class Level_Settings:
 #		self.bigArray.append(levarena)
 
 
-		# Level 4 seems to have  it all.
+		# Level 4 seems to have  it all.  # except now we replaced swrodsmen with Tridentors
 		enemy_probs = []
-		enemy_probs.append(('swordsman', 30))
+		# enemy_probs.append(('swordsman', 30))
+		enemy_probs.append(('tridentor', 30))
 		enemy_probs.append(('boman', 10))
 		enemy_probs.append(('axe maniac', 10))
 		enemy_probs.append(('ninja', 10))
