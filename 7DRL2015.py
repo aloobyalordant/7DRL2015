@@ -454,6 +454,7 @@ class Fighter:
 		self.jump_array = jump_array
 		self.jump_recharge_time = jump_recharge_time
 		self.bleeds = bleeds
+		self.in_water = False
 
 	def take_damage(self, damage):
 		#apply damage if possible
@@ -1002,7 +1003,8 @@ class BasicMonster:
 	def possibleAttackList(self, monster, decider):
 		attackList = []
 		# Is the player alive and do you have enough 'weapon charge'?
-		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:
+		# AND are you not in water?
+		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage and not monster.fighter.in_water:
 			# figure out the vector that the player is from you
 			dist_x = self.target_x  - monster.x
 			dist_y = self.target_y  - monster.y
@@ -5103,20 +5105,28 @@ while not libtcod.console_is_window_closed():
 		#for object in objects:
 		for y in range(MAP_HEIGHT):
 			for x in range(MAP_WIDTH):
+				water_here = False
+	
+				for object in objectsArray[x][y]:
+					if object.name == 'water':
+						water_here = True
+
 				for object in objectsArray[x][y]:
 					if object.decider:	
 						object.decider.refresh()
+					if object.fighter:
+						object.fighter.in_water = water_here
 
 
-		# Temporary hack: update a thing saying whether the player is in water.
-		
-		player_in_water = False
-		for ob in objectsArray[player.x][player.y]:
-			if ob.name == 'water':
-				print 'sploosh'
-				player_in_water = True
-				break
-		player.fighter.in_water = player_in_water
+#		# Temporary hack: update a thing saying whether the player is in water.
+#		
+#		player_in_water = False
+#		for ob in objectsArray[player.x][player.y]:
+#			if ob.name == 'water':
+#				print 'sploosh'
+#				player_in_water = True
+#				break
+#		player.fighter.in_water = player_in_water
 
 		
 		#   .  .  .  . .  u   U
