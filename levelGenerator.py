@@ -406,7 +406,7 @@ class Level_Generator:
 
 			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 			
-			print "super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)) 
+			print("super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)))
 
 #			new_room = Rect(20,20,5,5)
 #			self.create_room(new_room, map, center_points, nearest_points_array)
@@ -1742,7 +1742,7 @@ class Level_Generator:
 
 
 
-		print "super length " + str(len(adjacency))
+		print( "super length " + str(len(adjacency)))
 
 		# now, append some elevators? Just slap bang in the middle of everything....
 

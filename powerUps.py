@@ -25,22 +25,22 @@ class WallHugger(PowerUp):
 			if map[player.x-1][player.y-1].blocked and map[player.x-1][player.y].blocked and map[player.x-1][player.y+1].blocked:
 				against_wall = True
 		except IndexError:		#todo: check that this is the right thing to catch...
-			print ''
+			print('')
 		try:
 			if map[player.x+1][player.y-1].blocked and map[player.x+1][player.y].blocked and map[player.x+1][player.y+1].blocked:
 				against_wall = True
 		except IndexError:		#todo: check that this is the right thing to catch...
-			print ''
+			print('')
 		try:
 			if map[player.x-1][player.y-1].blocked and map[player.x][player.y-1].blocked and map[player.x+1][player.y-1].blocked:
 				against_wall = True
 		except IndexError:		#todo: check that this is the right thing to catch...
-			print ''
+			print('')
 		try:
 			if map[player.x-1][player.y+1].blocked and map[player.x][player.y+1].blocked and map[player.x+1][player.y+1].blocked:
 				against_wall = True
 		except IndexError:		#todo: check that this is the right thing to catch...
-			print ''
+			print('')
 		if against_wall:
 			self.activated = True
 		else:
@@ -50,7 +50,7 @@ class WallHugger(PowerUp):
 	def affect_strength_at_attack_choice(self):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
-			print "+1 strength from " + str(self.name)
+			print("+1 strength from " + str(self.name))
 			return 1
 		else:
 			return 0
@@ -70,7 +70,7 @@ class Mindfulness(PowerUp):
 	def affect_rate_of_energy_recharge(self):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
-			print "+1 energy from " + str(self.name)
+			print("+1 energy from " + str(self.name))
 			return 1
 		else:
 			return 0
@@ -129,7 +129,7 @@ class NeptunesBlessing(PowerUp):
 	def affect_strength_at_attack_choice(self):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
-			print "+1 strength from " + str(self.name)
+			print("+1 strength from " + str(self.name))
 			return 1
 		else:
 			return 0
@@ -142,14 +142,14 @@ class Amphibious(PowerUp):
 
 
 	def update_on_testing_can_attack(self, error_message):
-		print 'messg ' + error_message
+		print('messg ' + error_message)
 		if error_message == 'in water':
 			self.activated = True
 
 	def allows_attack(self):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
-			print "attack allowed due to " + str(self.name)
+			print("attack allowed due to " + str(self.name))
 			return True
 		else:
 			return False
@@ -173,7 +173,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x+1][player.y].blocked:
@@ -182,7 +182,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x][player.y-1].blocked:
@@ -191,7 +191,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x][player.y+1].blocked:
@@ -200,7 +200,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 
 		try: 
@@ -210,7 +210,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x+1][player.y-1].blocked:
@@ -219,7 +219,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x+1][player.y+1].blocked:
@@ -228,7 +228,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 		try: 
 			if map[player.x-1][player.y-1].blocked:
@@ -237,7 +237,7 @@ class PersonalSpace(PowerUp):
 				if object.blocks and object.door is not None:
 					lots_of_space = False
 		except IndexError:
-			print ''
+			print('')
 
 
 		if lots_of_space:
@@ -249,7 +249,7 @@ class PersonalSpace(PowerUp):
 	def affect_strength_at_attack_choice(self):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
-			print "+1 strength from " + str(self.name)
+			print("+1 strength from " + str(self.name))
 			return 1
 		else:
 			return 0
@@ -275,7 +275,7 @@ class Perfectionist(PowerUp):
 		if self.activated == True:
 			if attack_object.attack.attacker == player:
 				#self.activated = False	 # Not reseting activated, because it has to affect multiple attakcs. Be careful!
-				print "+1 strength from " + str(self.name)
+				print("+1 strength from " + str(self.name))
 				attack_object.attack.damage += 1
 
 class Leapfrog(PowerUp):
@@ -286,7 +286,7 @@ class Leapfrog(PowerUp):
 
 	def upgrade_player_stats_once(self,player):
 		if self.consumed == False:
-			print 'boh'
+			print('boh')
 			player.fighter.jump_recharge_time = max(player.fighter.jump_recharge_time - 1, 0) #to a minimum 0? Or should it be 1?
 			self.consumed = True
 

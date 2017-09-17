@@ -185,7 +185,7 @@ class Weapon_Staff:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -368,7 +368,7 @@ class Weapon_Wierd_Staff:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -499,7 +499,7 @@ class Weapon_Spear:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -680,7 +680,7 @@ class Weapon_Sword:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -862,7 +862,7 @@ class Weapon_Wierd_Sword:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -1044,7 +1044,7 @@ class Weapon_Dagger:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 
@@ -1246,7 +1246,7 @@ class Weapon_Sai:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -1440,7 +1440,7 @@ class Weapon_Sai_Alt:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -1835,7 +1835,7 @@ class Weapon_Nunchuck:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -2023,7 +2023,7 @@ class Weapon_Axe:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -2209,7 +2209,7 @@ class Weapon_Hammer:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 
@@ -2386,7 +2386,7 @@ class Weapon_Katana:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 
@@ -2565,7 +2565,7 @@ class Weapon_Trident:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 
@@ -2785,7 +2785,7 @@ class Weapon_Ring_Of_Power:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.
@@ -2857,7 +2857,7 @@ class Weapon_Strawhands:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
-		print 'attack not found, returning cost 0'
+		print('attack not found, returning cost 0')
 		return 0
 
 	# return the how much charge / energy a given attack will use.

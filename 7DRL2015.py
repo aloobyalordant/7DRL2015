@@ -185,11 +185,11 @@ class Object:
 			#move by the given amount
 			old_x = self.x
 			old_y = self.y
-		        new_x = self.x + dx
-		        new_y = self.y + dy
+			new_x = self.x + dx
+			new_y = self.y + dy
 			self.x = new_x
 			self.y = new_y
-			# print 'HI! iM AT (' + str(old_x) + ',' + str(old_y) + ') and want to go to (' + str(new_x) + ',' + str(new_y) + ')'
+			# print('HI! iM AT (' + str(old_x) + ',' + str(old_y) + ') and want to go to (' + str(new_x) + ',' + str(new_y) + ')')
 			# Update objectsArray so that self is in the right list
 			objectsArray[new_x][new_y].append(self)
 			objectsArray[old_x][old_y].remove(self)
@@ -227,7 +227,7 @@ class Object:
 
 
 	def move_towards(self, target_x, target_y):
-		print 'Error! argument Object.move_towards called. Mark was pretty sure this method wasn\'t being used, and it would have  caused wierd bugs as currently written anyway, so he commented it out. Maybe let him know that that happened?'
+		print('Error! argument Object.move_towards called. Mark was pretty sure this method wasn\'t being used, and it would have  caused wierd bugs as currently written anyway, so he commented it out. Maybe let him know that that happened?')
 	#	#vector from this object to the target, and distance
 	#	dx = target_x - self.x
 	#	dy = target_y - self.y
@@ -629,7 +629,7 @@ class Energy_Fighter:
 			error_message = 'energy too low'
 		elif self.in_water:
 			error_message = 'in water'
-			print 'PSLASH'
+			print('PSLASH')
 
 
 		# do some testing for upgrades to seeif they affect whether you can attack!
@@ -919,7 +919,7 @@ class BasicMonster:
 			# because we could see the player a second ago, we assule the player has just run 'round the corner' 
 			# and so we think we know what roomthe player is in
 			self.target_room = nearest_points_array[player.x][player.y] 	
- 		elif self.state == 'flee-visible-danger':
+		elif self.state == 'flee-visible-danger':
 			self.state = 'wander-aimlessly'	
 			# as we just ran out of sight of player, prioritise not being in the room they're in	
 			self.previous_room = nearest_points_array[player.x][player.y] 	
@@ -1099,7 +1099,7 @@ class Boman_AI(BasicMonster):
 			try:
 				(dx,dy) = random.choice(tuple(move_shortlist))
 			except IndexError:
-				print 'oh no index error!!' + str(len(move_shortlist)) + ', ' + str(move_shortlist)
+				print('oh no index error!!' + str(len(move_shortlist)) + ', ' + str(move_shortlist))
 
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
@@ -2194,7 +2194,7 @@ def process_nearest_center_points():
 		for x in range(MAP_WIDTH):
 			if  nearest_points_array[x][y] is not None:
 				(temp_x, temp_y) = nearest_points_array[x][y]
- 				nearest_points_array[x][y] = None
+				nearest_points_array[x][y] = None
 				for i in range(len(center_points)):
 					(point_x, point_y) =  center_points[i] 	
 					if temp_x == point_x and temp_y == point_y:
@@ -2825,7 +2825,7 @@ def place_objects(room):
 			enemy_name = 'none'
 			num = libtcod.random_get_int(0,0, total_enemy_prob)
 			for (name, prob) in enemy_probabilities:
-				#print '(' + name + ',' + str(prob) + ')'
+				#print( '(' + name + ',' + str(prob) + ')')
 				if num <= prob:
 					enemy_name = name
 					break
@@ -3068,7 +3068,7 @@ def make_map():
 				
 			bgColorArray[x].append(bgColorColumnColor)
 
-	# print 'color maybe is' + str(color_light_wall.r)		
+	# print( 'color maybe is' + str(color_light_wall.r))	
 
 
 	TEMP_player_previous_center = None
@@ -3253,7 +3253,7 @@ def update_nav_data():
 			else: 
 				# if actually nothing changed, we can mark the nav data as done.
 				nav_data_changed = False		
-				#print 'nav data finished after ' + str(r) + ' iterations'
+				#print( 'nav data finished after ' + str(r) + ' iterations')
 				break
 	
 	# okay, I think that concludes calculating the distance to things? Let's see.
@@ -3519,7 +3519,7 @@ def next_level():
 	#objects = []
 	make_map()
 	objectsArray[player.x][player.y].append(player)
-	print 'heyo (' + str(player.x) + ',' + str(player.y)	
+	print( 'heyo (' + str(player.x) + ',' + str(player.y))	
 
    	#make_map()  #create a fresh new level!
 	#objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
@@ -3536,7 +3536,7 @@ def next_level():
 				map[x][y].explored = False
 				libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
 				#print "bloo (" + str(x) + "," + str(y) + ")" 
-    	initialize_fov()
+	initialize_fov()
 
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
@@ -3701,12 +3701,12 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 	dungeon_level = 0
 	alarm_level = 1
 	key_count = 0
-    	make_map()  #create a fresh new level!
+	make_map()  #create a fresh new level!
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			map[x][y].explored = False
 			libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
-    	initialize_fov()
+	initialize_fov()
 	initialise_game()
 
 
@@ -3767,7 +3767,7 @@ def pause_screen():
 
 	# Add a list of what upgrades the player has
 
-	print 'p?p'
+	print('p?p')
 	#blit the contents of "pause_menu" to the root console
 	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 
@@ -4404,9 +4404,9 @@ def initialise_game():
 	#objects = []
 	make_map()
 	objectsArray[player.x][player.y].append(player)	
-	print 'howdy (' + str(player.x) + ',' + str(player.y)
+	print('howdy (' + str(player.x) + ',' + str(player.y))
 	for object in objectsArray[player.x][player.y]:
-		print object.name
+		print(object.name)
 
 	#the list of objects starting with the player
 #	objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
@@ -4423,7 +4423,7 @@ def initialise_game():
 
 	libtcod.console_set_default_foreground(con, libtcod.white)
 	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
-	#print '6'
+	#print('6')
 	render_all()
 	libtcod.console_flush()
 
@@ -4733,7 +4733,7 @@ while not libtcod.console_is_window_closed():
 					object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
-		#print '1'
+		#print('1')
 		render_all()
 		libtcod.console_flush()
 
@@ -4848,7 +4848,7 @@ while not libtcod.console_is_window_closed():
 	#	for ob in objects:
 					if ob.alarmer is not None:
 						if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
-							# print 'a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status) 
+							# print('a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status))
 							ob.alarmer.update(True)
 							spotted = True
 						else: 
@@ -4892,7 +4892,7 @@ while not libtcod.console_is_window_closed():
 										objectsArray[attack.x][attack.y].append(attack)	
 										attack.send_to_front()
 									except IndexError:		#todo: check that this is the right thing to catch...
-										print ''
+										print('')
 
 		player_just_attacked = False
 		if player.decider.decision is not None:
@@ -4902,7 +4902,7 @@ while not libtcod.console_is_window_closed():
 					player_just_attacked = True
 
 		#if player_just_attacked:
-		#	print 'the player just attacked!'
+		#	print('the player just attacked!')
 
 		# draw things with the attacks!
 		for y in range(MAP_HEIGHT):
@@ -4912,7 +4912,7 @@ while not libtcod.console_is_window_closed():
 					object.clear()
 		libtcod.console_set_default_foreground(con, libtcod.white)
 		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
-		#print '2'
+		#print('2')
 		render_all()
 		libtcod.console_flush()
 		#put in a pause before drawing the other stuff?
@@ -5019,7 +5019,7 @@ while not libtcod.console_is_window_closed():
 			try:
 				objectsArray[object.x][object.y].remove(object)
 			except ValueError:
-				print 'object already removed from lissssssst'
+				print('object already removed from lissssssst')
 		deletionList = []
 
 		## regular old attacks just happening
@@ -5052,7 +5052,7 @@ while not libtcod.console_is_window_closed():
 			try:
 				objectsArray[object.x][object.y].remove(object)
 			except ValueError:
-				print 'object already removed from list'
+				print('object already removed from list')
 
 		#recharge player attack charge. this probably shouldn't go here ultimately
 		#if player_recharge_time > 0:
@@ -5123,7 +5123,7 @@ while not libtcod.console_is_window_closed():
 #		player_in_water = False
 #		for ob in objectsArray[player.x][player.y]:
 #			if ob.name == 'water':
-#				print 'sploosh'
+#				print('sploosh')
 #				player_in_water = True
 #				break
 #		player.fighter.in_water = player_in_water
@@ -5170,10 +5170,10 @@ while not libtcod.console_is_window_closed():
 			spawn_timer = int(enemy_spawn_rate/alarm_level)
 
 		#	reorder_objects() #temp test
-		#	print 'tick'
-		#	print 'enemy spawn rate = ' + str(enemy_spawn_rate)
-		#	print 'total enemy prob = ' + str(lev_set.total_enemy_prob)
-		#	print 'enemy probabilites = ' + str( lev_set.enemy_probabilities)
+		#	print('tick')
+		#	print('enemy spawn rate = ' + str(enemy_spawn_rate))
+		#	print('total enemy prob = ' + str(lev_set.total_enemy_prob))
+		#	print('enemy probabilites = ' + str( lev_set.enemy_probabilities))
 #			for (x,y) in spawn_points:
 
 			# check if level is complete
@@ -5219,18 +5219,18 @@ while not libtcod.console_is_window_closed():
 					(x,y) = ele.spawn_points[num] 
 					#for (x,y) in ele.spawn_points:
 					if not is_blocked(x, y):
-						#print 'ding'
+						#print('ding')
 	#ELEVATOR SPAWNING MONKEY HORSESHOE
 						total_enemy_prob = lev_set.total_enemy_prob
 						enemy_probabilities = lev_set.enemy_probabilities
 						enemy_name = 'none'
 						num = libtcod.random_get_int(0,0, total_enemy_prob)
 						for (name, prob) in enemy_probabilities:
-						#	print 'hi'
-							#print '(' + name + ',' + str(prob) + ')'
+						#	print('hi')
+							#print('(' + name + ',' + str(prob) + ')')
 							if num <= prob:
 								enemy_name = name
-#								print 'tick' + str(x) + ',' + str(y) + ' ' + name
+#								print('tick' + str(x) + ',' + str(y) + ' ' + name)
 								monster = create_monster(x,y, name)
 								objectsArray[x][y].append(monster)
 								break
@@ -5253,7 +5253,7 @@ while not libtcod.console_is_window_closed():
 			next_level()
 	
 		# reorder_objects()	#TODO probably put this somewhere else?
-		#print '4.5'
+		#print('4.5')
 		render_all()
 		libtcod.console_flush()
 	#num_monsters = libtcod.random_get_int(0, 0, max_room_monsters)
@@ -5261,20 +5261,20 @@ while not libtcod.console_is_window_closed():
 
 
 	elif game_state == 'playing' and player_action == 'pickup_dialog':
-		#print '3'
+		#print('3')
 		render_all()
 		libtcod.console_flush()
 
 
 	elif game_state == 'playing' and player_action == 'jump_dialog':
-		#print '4'
+		#print('4')
 		render_all()
 		libtcod.console_flush()
 
 
 	# I think this goes here: want to draw stuff if there's a "you can't do that" message
 	elif game_state == 'playing' and player_action == 'invalid-move':
-		print 'oog'
+		print('oog')
 		render_all()
 		libtcod.console_flush()
 
@@ -5307,7 +5307,7 @@ while not libtcod.console_is_window_closed():
 		elif game_state == 'exit':
 			break
 		else:
-			print '8' + game_state
+			print('8' + game_state)
 			render_all()
 		libtcod.console_flush()
 	
