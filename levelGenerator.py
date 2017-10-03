@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 from objectClass import Object
+from random import randint
 
 import math
 
@@ -81,8 +82,8 @@ class Rect:
 		self.y2 = y + h-1
 
 	def center(self):
-		center_x = (self.x1 + self.x2) / 2
-		center_y = (self.y1 + self.y2) / 2
+		center_x = int((self.x1 + self.x2) / 2)
+		center_y = int((self.y1 + self.y2) / 2)
 		return (center_x, center_y)
  
 	def intersect(self, other):
@@ -374,8 +375,8 @@ class Level_Generator:
 			for i in range((horiz_upper_bound - horiz_lower_bound)*(vert_upper_bound- vert_lower_bound)/30):
 			#for i in range(50):
 				#choose random spot to place a block
-				x = libtcod.random_get_int(0, new_room.x1+1, new_room.x2-1)
-				y = libtcod.random_get_int(0, new_room.y1+1, new_room.y2-1)
+				x = randint(new_room.x1+1, new_room.x2-1)
+				y = randint(new_room.y1+1, new_room.y2-1)
 		
 				#only place it if the tile is not already blocked
 				if not self.is_occupied(x, y, map, object_data):				
@@ -384,7 +385,7 @@ class Level_Generator:
 	
 	
 
-			choice = libtcod.random_get_int(0, 0, len(spawn_points)-1)
+			choice = randint(0, len(spawn_points)-1)
 			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[len(rooms)-1].center()
 			#object_data.append(Object_Datum(new_x,new_y, 'stairs'))
@@ -415,7 +416,7 @@ class Level_Generator:
 #			self.recursively_generate(map, lev_set, dungeon_level, object_data, rooms, room_range, new_room, nearest_points_array, center_points)
 
 			#bit of a hack for now - the player can spawn anywhere enemies can spawn...
-			choice = libtcod.random_get_int(0, 0, len(spawn_points)-1)
+			choice = randint(0, len(spawn_points)-1)
 			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[4].center()
 
@@ -440,11 +441,11 @@ class Level_Generator:
 			# so for now, this is the code for classic mode, with the code for checking room overlaps removed
 			for r in range(room_range):
 				#random width and height
-				w = libtcod.random_get_int(0, room_min_size, room_max_size)
-				h = libtcod.random_get_int(0, room_min_size, room_max_size)
+				w = randint(room_min_size, room_max_size)
+				h = randint(room_min_size, room_max_size)
 				#random position without going out of the boundaries of the map
-				x = libtcod.random_get_int(0, 0, map_width - w - 1)
-				y = libtcod.random_get_int(0, 0, map_height - h - 1)
+				x = randint(0, map_width - w - 1)
+				y = randint(0, map_height - h - 1)
 		
 				#"Rect" class makes rectangles easier to work with
 				new_room = Rect(x, y, w, h)
@@ -473,7 +474,7 @@ class Level_Generator:
 						(prev_x, prev_y) = rooms[num_rooms-1].center()
 		
 						#draw a coin (random number that is either 0 or 1)
-						if libtcod.random_get_int(0, 0, 1) == 1:
+						if randint(0, 1) == 1:
 							#first move horizontally, then vertically
 							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
@@ -516,10 +517,10 @@ class Level_Generator:
 			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
 			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
 			(new_x, new_y) = elev1.center()
-			num = libtcod.random_get_int(0, 0, num_norm_rooms-1)
+			num = randint(0, num_norm_rooms-1)
 			(prev_x, prev_y) = rooms[num].center()
 				#draw a coin (random number that is either 0 or 1)
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				#first move horizontally, then vertically
 				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
@@ -528,10 +529,10 @@ class Level_Generator:
 				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
 				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
 			(new_x, new_y) = elev2.center()
-			num = libtcod.random_get_int(0, 0, num_norm_rooms-1)
+			num = randint(0, num_norm_rooms-1)
 			(prev_x, prev_y) = rooms[num].center()
 				#draw a coin (random number that is either 0 or 1)
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				#first move horizontally, then vertically
 				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
@@ -540,10 +541,10 @@ class Level_Generator:
 				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
 				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
 			(new_x, new_y) = elev3.center()
-			num = libtcod.random_get_int(0, 0, num_norm_rooms-1)
+			num = randint(0, num_norm_rooms-1)
 			(prev_x, prev_y) = rooms[num].center()
 				#draw a coin (random number that is either 0 or 1)
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				#first move horizontally, then vertically
 				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 				self.create_v_tunnel(prev_y, new_y, new_x, map, nearest_points_array, center_points)
@@ -552,10 +553,10 @@ class Level_Generator:
 				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
 				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
 			(new_x, new_y) = elev4.center()
-			num = libtcod.random_get_int(0, 0, num_norm_rooms-1)
+			num = randint(0, num_norm_rooms-1)
 			(prev_x, prev_y) = rooms[num].center()
 				#draw a coin (random number that is either 0 or 1)
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				#first move horizontally, then vertically
 				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
@@ -571,11 +572,11 @@ class Level_Generator:
 	
 			for r in range(room_range):
 				#random width and height
-				w = libtcod.random_get_int(0, room_min_size, room_max_size)
-				h = libtcod.random_get_int(0, room_min_size, room_max_size)
+				w = randint(room_min_size, room_max_size)
+				h = randint(room_min_size, room_max_size)
 				#random position without going out of the boundaries of the map
-				x = libtcod.random_get_int(0, 0, map_width - w - 1)
-				y = libtcod.random_get_int(0, 0, map_height - h - 1)
+				x = randint(0, map_width - w - 1)
+				y = randint(0, map_height - h - 1)
 		
 				#"Rect" class makes rectangles easier to work with
 				new_room = Rect(x, y, w, h)
@@ -609,7 +610,7 @@ class Level_Generator:
 						(prev_x, prev_y) = rooms[num_rooms-1].center()
 		
 						#draw a coin (random number that is either 0 or 1)
-						if libtcod.random_get_int(0, 0, 1) == 1:
+						if randint(0, 1) == 1:
 							#first move horizontally, then vertically
 							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
 							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
@@ -685,7 +686,7 @@ class Level_Generator:
 
 		for i in range(0, number_sec_systems):		
 			# choose a room at random, stick a security system in, strike it off the shortlist
-			num = libtcod.random_get_int(0, 0, len(current_shortlist)-1)
+			num = randint(0, len(current_shortlist)-1)
 			selected_room = current_shortlist[num]
 			# Make it be a thing that drops keys!
 			self.add_security_system(map, lev_set, dungeon_level, object_data, selected_room, True)
@@ -715,14 +716,14 @@ class Level_Generator:
 		max_room_monsters = lev_set.max_room_monsters
 
 		#choose random number of monsters
-		num_monsters = libtcod.random_get_int(0, 0, max_room_monsters)
+		num_monsters = randint(0, max_room_monsters)
 		
 
 		for i in range(num_monsters):
 		#for i in range(50):
 			#choose random spot for this monster
-			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+			x = randint(room.x1+1, room.x2-1)
+			y = randint(room.y1+1, room.y2-1)
 	
 			#only place it if the tile is not blocked
 			if not self.is_occupied(x, y, map, object_data):
@@ -733,7 +734,7 @@ class Level_Generator:
 				
 	
 				enemy_name = 'none'
-				num = libtcod.random_get_int(0,0, total_enemy_prob)
+				num = randint(0, total_enemy_prob)
 				for (name, prob) in enemy_probabilities:
 					#print '(' + name + ',' + str(prob) + ')'
 					if num <= prob:
@@ -748,18 +749,18 @@ class Level_Generator:
 	
 		# on first level, in in 2 chance of a weapon appearing in a room I guess
 		if dungeon_level == 0:
-			num = libtcod.random_get_int(0, 0, 2)
+			num = randint(0, 2)
 			if num == 0:
-				x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-				y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+				x = randint(room.x1+1, room.x2-1)
+				y = randint(room.y1+1, room.y2-1)
 				#new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True)
 				#drop_weapon(new_weapon)
 				#objects.append(new_weapon)
 				#new_weapon.send_to_back()
 				object_data.append(Object_Datum(x,y,'weapon', 'sword'))
 			elif num == 1:
-				x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-				y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+				x = randint(room.x1+1, room.x2-1)
+				y = randint(room.y1+1, room.y2-1)
 				#new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True)
 				#drop_weapon(new_weapon)
 				#objects.append(new_weapon)
@@ -768,7 +769,7 @@ class Level_Generator:
 	
 		# on higher levels, maybe there are shrines? Maybe??
 		else:
-			num = libtcod.random_get_int(0,0,6)
+			num = randint(0,6)
 			if num == 0:
 				(shrine_x, shrine_y) = room.center()
 				#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
@@ -779,33 +780,33 @@ class Level_Generator:
 		# or maybe security systems?
 			elif num == 1:
 				if lev_set.final_level is not True:	#don't have sec systems on final levels?
-					keyval = libtcod.random_get_int(0,0,4)  #maybe drop a key
+					keyval = randint(0,4)  #maybe drop a key
 					if keyval == 0:
 						self.add_security_system(map, lev_set, dungeon_level, object_data, room, True)
 					else:
 						self.add_security_system(map, lev_set, dungeon_level, object_data, room, False)
 				
 					#chance of key dropping nearby?
-					keyval = libtcod.random_get_int(0,0,2)  #maybe drop a key
+					keyval = randint(0,2)  #maybe drop a key
 					if keyval == 0:
 						(sec_x,sec_y) = room.center()
-						xval= libtcod.random_get_int(0,room.x1,room.x2) 
-						yval= libtcod.random_get_int(0,room.y1,room.y2) 
+						xval= randint(room.x1,room.x2) 
+						yval= randint(room.y1,room.y2) 
 						object_data.append(Object_Datum(xval,yval,'key'))
 						#TODO Make the code actually drop the key in a random place in the room.
 
 					#else:
 					#	(sec_x,sec_y) = room.center()
-					#	xval= libtcod.random_get_int(0,room.x1,room.x2) 
-					#	yval= libtcod.random_get_int(0,room.y1,room.y2) 
+					#	xval= randint(room.x1,room.x2) 
+					#	yval= randint(room.y1,room.y2) 
 					#	object_data.append(Object_Datum(xval,yval,'water'))
 
 
 			# Maybe let's put some water in the room? 
-			num = libtcod.random_get_int(0,0,6)
+			num = randint(0,6)
 			if num == 0:
 				#Put a big puddle in the  room!
-				rad = libtcod.random_get_int(0,1,3)
+				rad = randint(1,3)
 				(cent_x, cent_y) = room.center()
 				
 				for x in range(room.x1, room.x2+1):
@@ -823,13 +824,13 @@ class Level_Generator:
 				#flood half the room?
 				for x in range(room.x1, room.x2+1):
 					for y in range(room.y1, room.y2+1):
-						cointoss = libtcod.random_get_int(0, 0, 1)
+						cointoss = randint(0, 1)
 						if cointoss == 0:
 							object_data.append(Object_Datum(x,y, 'water'))
 
 			# Let's also plant plants! In every room, for now.
-			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+			x = randint(room.x1+1, room.x2-1)
+			y = randint(room.y1+1, room.y2-1)
 			object_data.append(Object_Datum(x,y,'plant', 'tulip'))
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.
@@ -869,39 +870,39 @@ class Level_Generator:
 		elif doors_off == True:
 			do_doors = False
 		else:
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				do_doors = True
 			else:
 				do_doors = False
 
 
 
-		half_width = (width-1)/2
+		half_width = int((width-1)/2)
 		# okay let's think about this. First... are they horizontally aligned?
 		if max(room1.x1, room2.x1)+half_width < min(room1.x2, room2.x2 - half_width):
 			#horitontally aligned!
-			jx = libtcod.random_get_int(0, max(room1.x1, room2.x1)+half_width, min(room1.x2, room2.x2)-half_width-1)
-			jy = (max(room1.y1, room2.y1) + min(room1.y2, room2.y2))/2
+			jx = randint(max(room1.x1, room2.x1)+half_width, min(room1.x2, room2.x2)-half_width-1)
+			jy = int((max(room1.y1, room2.y1) + min(room1.y2, room2.y2))/2)
 		#	print 'horiz align (' + str(jx) + ', ' + str(jy) + ')'
 			self.create_half_corridor(room1, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
 			self.create_half_corridor(room2, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
 		elif max(room1.y1, room2.y1)+half_width < min(room1.y2, room2.y2) - half_width:
 			#vertically aligned!
-			jy = libtcod.random_get_int(0, max(room1.y1, room2.y1)+half_width, min(room1.y2, room2.y2)-half_width-1)
-			jx = (max(room1.x1, room2.x1) + min(room1.x2, room2.x2))/2
+			jy = randint(max(room1.y1, room2.y1)+half_width, min(room1.y2, room2.y2)-half_width-1)
+			jx = int((max(room1.x1, room2.x1) + min(room1.x2, room2.x2))/2)
 		#	print 'vert align (' + str(jx) + ', ' + str(jy) + ')'
 			self.create_half_corridor(room1, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
 			self.create_half_corridor(room2, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
 		else:
 			# neither! we're gonna have to go round some corners.	
-			if libtcod.random_get_int(0, 0, 1) == 1:
+			if randint(0, 1) == 1:
 				# go vertical and then horizontal
-				jx = libtcod.random_get_int(0, room1.x1, room1.x2)
-				jy = libtcod.random_get_int(0, room2.y1, room2.y2)
+				jx = randint(room1.x1, room1.x2)
+				jy = randint(room2.y1, room2.y2)
 			else: 
 				# go horizontal and then vertical
-				jx = libtcod.random_get_int(0, room2.x1, room2.x2)
-				jy = libtcod.random_get_int(0, room1.y1, room1.y2)
+				jx = randint(room2.x1, room2.x2)
+				jy = randint(room1.y1, room1.y2)
 		#	print 'neith align (' + str(jx) + ', ' + str(jy) + ')'
 			self.create_half_corridor(room1, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
 			self.create_half_corridor(room2, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors)
@@ -910,7 +911,7 @@ class Level_Generator:
 	def create_half_corridor(self, room1, jx, jy, map, center_points,  nearest_points_array, object_data, do_doors = False,  width = 3,):
 		if nearest_points_array[jx][jy] is None:
 			center_points.append((jx,jy))
-		half_width = (width-1)/2
+		half_width = int((width-1)/2)
 	
 		#door stuff
 		#if doors_on == True:
@@ -918,7 +919,7 @@ class Level_Generator:
 		#elif doors_off == True:
 		#	do_doors = False
 		#else:
-		#	if libtcod.random_get_int(0, 0, 1) == 1:
+		#	if randint(0, 1) == 1:
 		#		do_doors = True
 		#	else:
 		#		do_doors = False
@@ -1250,7 +1251,13 @@ class Level_Generator:
 		for y in range (0, len(seg_map)):
 			for x in range (0, len(seg_map[y])):
 				obname = seg_map[y][x]
-				if not (obname >= 0 and obname <= 9):
+				obname_is_number = False
+				try:
+					z = int(str(obname))
+					obname_is_number = True
+				except ValueError:
+					obname_is_number = False
+				if not obname_is_number:
 					# so it's not a number, it's an object name
 					seg_data.append(Object_Datum(x,y, obname.name, obname.info, obname.more_info))
 					seg_map[y][x] = 0
@@ -1300,8 +1307,8 @@ class Level_Generator:
 			#poss_rooms.append(Rect(x+w+2,y,w,h))
 
 			# trying to do variable room size
-			new_w =  libtcod.random_get_int(0, room_min_size, room_max_size)
-			new_h = libtcod.random_get_int(0, room_min_size, room_max_size)
+			new_w =  randint(room_min_size, room_max_size)
+			new_h = randint(room_min_size, room_max_size)
 
 			poss_rooms.append(Rect(x, y - new_h - 1,w,new_h))
 			poss_rooms.append(Rect(x, y + h + 1,w,new_h))
@@ -1329,11 +1336,11 @@ class Level_Generator:
 				created_rooms = []
 
 				#decide how many rooms to do.
-				number_rooms = libtcod.random_get_int(0, 1, len(room_shortlist))
+				number_rooms = randint(1, len(room_shortlist))
 
 				for i in range(1, number_rooms+1):
 					#print str(number_rooms) + ' - ' + str(i)
-					choice = libtcod.random_get_int(0, 0, len(room_shortlist)-1)
+					choice = randint(0, len(room_shortlist)-1)
 
 					new_room = room_shortlist[choice]
 	
@@ -1435,7 +1442,7 @@ class Level_Generator:
 
 
 			# pick a random room from the maximal potential rooms list
-			choice = libtcod.random_get_int(0, 0, len(maximal_potential_rooms)-1)
+			choice = randint(0, len(maximal_potential_rooms)-1)
 			temp_new_room = maximal_potential_rooms[choice]
 			# for variety, vary the room size a little 
 			# I am cheating and just randomly trimming the edges.
@@ -1444,14 +1451,14 @@ class Level_Generator:
 				trim_left = 0
 				trim_right = 0
 			else:
-				trim_left = libtcod.random_get_int(0, 0, 1)
-				trim_right = libtcod.random_get_int(0, 0, 1)
+				trim_left = randint(0, 1)
+				trim_right = randint(0, 1)
 			if temp_new_room.y2-temp_new_room.y1 < 4:
 				trim_top = 0
 				trim_bottom = 0
 			else :
-				trim_top = libtcod.random_get_int(0, 0, 1)
-				trim_bottom = libtcod.random_get_int(0, 0, 1)
+				trim_top = randint(0, 1)
+				trim_bottom = randint(0, 1)
 			new_room = Rect(temp_new_room.x1+trim_left, temp_new_room.y1+trim_top, temp_new_room.x2-temp_new_room.x1+1-trim_left-trim_right, temp_new_room.y2-temp_new_room.y1+1-trim_top-trim_bottom)
 			#TODO: if room is close to the border, move it along.
 			#Put this new room into the map
@@ -1460,7 +1467,7 @@ class Level_Generator:
 			self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 		
 			# decide whether or not this room has doors. FOR NOW JUST A 1/8 CHANCE OF HAVING DOORS
-			if libtcod.random_get_int(0, 0, 7) == 1:
+			if randint(0, 7) == 1:
 				doorhavers.append(True)
 			else:
 				doorhavers.append(False)
@@ -1583,7 +1590,7 @@ class Level_Generator:
 
 			
 						#create a corridor
-						corridor_y = libtcod.random_get_int(0, max(rooms[i].y1,rooms[j].y1), min(rooms[i].y2, rooms[j].y2))
+						corridor_y = randint(max(rooms[i].y1,rooms[j].y1), min(rooms[i].y2, rooms[j].y2))
 						for x in range(rooms[i].x2, rooms[j].x1):
 							map[x][corridor_y].blocked = False
 							map[x][corridor_y].block_sight = False
@@ -1598,7 +1605,7 @@ class Level_Generator:
 							roomjdoors = False
 						# if both rooms are due to have doors, just pick one of them
 						if roomidoors and roomjdoors:
-							if libtcod.random_get_int(0, 0, 1) == 1:
+							if randint(0, 1) == 1:
 								roomidoors = False
 							else:
 								roomjdoors = False
@@ -1620,7 +1627,7 @@ class Level_Generator:
 			#			print 'right adjacency!'
 
 						#create a corridor
-						corridor_y = libtcod.random_get_int(0, max(rooms[i].y1,rooms[j].y1), min(rooms[i].y2, rooms[j].y2))
+						corridor_y = randint(max(rooms[i].y1,rooms[j].y1), min(rooms[i].y2, rooms[j].y2))
 						for x in range(rooms[j].x2, rooms[i].x1):
 							map[x][corridor_y].blocked = False
 							map[x][corridor_y].block_sight = False
@@ -1635,7 +1642,7 @@ class Level_Generator:
 							roomjdoors = False
 						# if both rooms are due to have doors, just pick one of them
 						if roomidoors and roomjdoors:
-							if libtcod.random_get_int(0, 0, 1) == 1:
+							if randint(0, 1) == 1:
 								roomidoors = False
 							else:
 								roomjdoors = False
@@ -1654,7 +1661,7 @@ class Level_Generator:
 			#			print 'above adjacency!'
 
 						#create a corridor
-						corridor_x = libtcod.random_get_int(0, max(rooms[i].x1,rooms[j].x1), min(rooms[i].x2, rooms[j].x2))
+						corridor_x = randint(max(rooms[i].x1,rooms[j].x1), min(rooms[i].x2, rooms[j].x2))
 						for y in range(rooms[i].y2, rooms[j].y1):
 							map[corridor_x][y].blocked = False
 							map[corridor_x][y].block_sight = False
@@ -1669,7 +1676,7 @@ class Level_Generator:
 							roomjdoors = False
 						# if both rooms are due to have doors, just pick one of them
 						if roomidoors and roomjdoors:
-							if libtcod.random_get_int(0, 0, 1) == 1:
+							if randint(0, 1) == 1:
 								roomidoors = False
 							else:
 								roomjdoors = False
@@ -1687,7 +1694,7 @@ class Level_Generator:
 			#			print 'below adjacency!'
 
 						#create a corridor
-						corridor_x = libtcod.random_get_int(0, max(rooms[i].x1,rooms[j].x1), min(rooms[i].x2, rooms[j].x2))
+						corridor_x = randint(max(rooms[i].x1,rooms[j].x1), min(rooms[i].x2, rooms[j].x2))
 						for y in range(rooms[j].y2, rooms[i].y1):
 							map[corridor_x][y].blocked = False
 							map[corridor_x][y].block_sight = False
@@ -1702,7 +1709,7 @@ class Level_Generator:
 							roomjdoors = False
 						# if both rooms are due to have doors, just pick one of them
 						if roomidoors and roomjdoors:
-							if libtcod.random_get_int(0, 0, 1) == 1:
+							if randint(0, 1) == 1:
 								roomidoors = False
 							else:
 								roomjdoors = False

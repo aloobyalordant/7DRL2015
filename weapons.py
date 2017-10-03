@@ -670,6 +670,7 @@ class Weapon_Sword:
 
 	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
 	def do_energy_attack(self, command):
+		#print('command recieved:' + str(command))
 		for (com, data, usage) in self.command_items:
 			if com == command and self.durability > 0:
 				self.just_attacked = True
@@ -2880,8 +2881,9 @@ class Weapon_Strawhands:
 
 def create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos):
 	return_array = []
-	for j in xrange(len(temp_array)):
-		for i in xrange(len(temp_array[j])):
+	#changed 'xrange' to 'range' for python3
+	for j in range(len(temp_array)):
+		for i in range(len(temp_array[j])):
 			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
 			if (temp_array[j][i] > 0):
 				return_array.append((i-ava_x_pos,j-ava_y_pos,temp_array[j][i]))

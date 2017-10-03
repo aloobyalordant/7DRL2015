@@ -1,8 +1,11 @@
-import libtcodpy as libtcod
+import tdl as libtcod
+#from libtcod.map import Map
+#import libtcodpy as libtcod
 import time
 import math
 import textwrap
 import random
+from random import randint
 from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
@@ -96,32 +99,62 @@ DEFAULT_BLOOM_TIME = 37
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
 #color_dark_ground = libtcod.Color(50, 50, 150)
-color_dark_wall = libtcod.Color(100, 100, 100)
-color_dark_ground = libtcod.Color(150, 150, 150)
+#color_dark_wall = (100, 100, 100)
+#color_dark_ground = (150, 150, 150)
 
 # FOV algorithm stuff
-FOV_ALGO = 0  #default FOV algorithm
+FOV_ALGO = 'BASIC' #0  #default FOV algorithm
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 50 #20
 
 max_nav_data_loops = 1
 
+# COLORS. LET'S TRY AND PUT ALL THE COLORS HERE
 
-color_dark_wall = libtcod.Color(100,100,100)		#(0, 0, 100)
-color_light_wall = libtcod.Color(130, 110, 50)
-color_dark_ground = libtcod.Color(150,150,150)		#(50, 50, 150)
-color_light_ground = libtcod.Color(200, 180, 50)
-color_fog_of_war = libtcod.black
-default_weapon_color = libtcod.Color(50,50,50) 
-#libtcod.grey
+# Environment colors (walls +floors, altars, visible or not)
+color_dark_wall = (100,100,100)		#(0, 0, 100)
+color_light_wall = (130, 110, 50)
+color_dark_ground = (150,150,150)		#(50, 50, 150)
+color_light_ground = (200, 180, 50)
+color_fog_of_war = (0,0,0)			#libtcod.black
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
-default_flower_color = 	libtcod.Color(50,150,0)
-default_decoration_color = libtcod.Color(250,230,50)		#(165,145,50)
-water_background_color =libtcod.Color(100,100,250)
-water_foreground_color =libtcod.Color(25,25,250)
-blood_background_color =libtcod.Color(200,0,0)
-blood_foreground_color =libtcod.Color(150,0,0)
+default_decoration_color = (250,230,50)		#(165,145,50)
+water_background_color = (100,100,250)
+water_foreground_color = (25,25,250)
+blood_background_color = (200,0,0)
+blood_foreground_color = (150,0,0)
+
+# collectiable e.g. weapons and plants and keys
+default_flower_color = 	(50,150,0)
+default_weapon_color = (50,50,50) #libtcod.grey
+
+
+# enemies, including player
+PLAYER_COLOR = (255, 255, 255)
+#color_sneaky_enemy
+#color_shortrange_enemy
+#color_midrange_enemy
+#color_longrange_enemy
+#color_big_boss
+
+color_swordsman = (0,0,191)		#libtcod.dark_blue
+color_boman = 	(0,128,0)		#libtcod.darker_green
+color_rook = 	(0,0,128)		#libtcod.darker_blue
+color_axe_maniac = (128,0,0)		#libtcod.darker_red
+color_tridentor = (0,0, 255)		#libtcod.blue
+color_ninja = 	(0,0,0)		#libtcod.black
+color_wizard = (95, 0, 128)			#libtcod.darker_purple
+
+# text colors
+default_background_color = (0,0,0)
+default_text_color = (255,255,255)
+color_energy = (0,255,255)
+color_faded_energy = (0,0,255)
+color_warning = (255,127,0)
+color_big_alert = (255,0,0)
+
+
 
 #sizes and coordinates relevant for the GUI
 BAR_WIDTH = 20
@@ -137,6 +170,55 @@ MSG_X = BAR_WIDTH + 2
 #MSG_HEIGHT = MESSAGE_PANEL_HEIGHT
 MSG_WIDTH = MESSAGE_PANEL_WIDTH-2
 MSG_HEIGHT = MESSAGE_PANEL_HEIGHT-1
+
+
+
+# Some bullshit  to  do  with translating libtcod console stuff into tdl stuff
+# Console_Translator = libtconsoletranslatrix()
+
+
+libtcod_BKGND_NONE= None #formerly written in the code as libtcod.BKGND_NONE, but we never actually need to use it. Sorry for all the cruft.
+				# too lazy to go through and get rid of it all. Also I want to preserve it just in case
+libtcod_BKGND_SET = None
+
+libtcod_LEFT = 'Left'	#formerly libtcod_LEFT  . Formerly a flag for aligning text stuff I think; can't figure out how to do it in tdl
+libtcod_RIGHT = 'Right'
+libtcod_CENTER = 'Center'
+
+
+
+
+# this is some nonsense to translate old libtcod console commands into tdl-friendly stuff so I won't have to tediously reformat lines
+#class libtconsoletranslatrix:
+#
+#	def __init__(self):
+#		self.default_bg_color = deafult_background_color
+#		self.default_fg_color = default_text_color
+#
+#	def console_set_default_foreground()
+
+def translated_console_set_default_foreground(console, color):
+	console.set_colors(fg = color)
+
+def translated_console_set_default_background(console, color):
+	console.set_colors(bg = color)
+
+def translated_console_clear(console):
+	console.clear()
+
+
+def translated_console_flush():
+	libtcod.flush()
+
+def translated_console_print_ex(console, x, y, libtcod_bkcgnd_type, libtcod_alignment, string):
+	console.draw_str(int(x), int(y), string)		#maybe? ignore the other stuff and hope colors are already set ok?
+
+def translated_console_set_char_background(console, x, y, color, libtcod_bkcgnd_type):
+        console.draw_char(x, y, None,  fg=None, bg=color,)
+
+def translated_console_is_window_closed():
+	return libtcod.event.is_window_closed()  # I THINK??
+
 
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
@@ -200,26 +282,30 @@ class Object:
 		global camera
 
 		#x_offset = camera.x-SCREEN_WIDTH/2
-		x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+		x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
 		#y_offset = camera.y-SCREEN_HEIGHT/2
-		y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
+		y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
 
 		#if True:	# temporary hack to test enemy naviation
-		if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
+		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
+		# if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 			#set the color and then draw the character that represents this object at its position
-			libtcod.console_set_default_foreground(con, self.color)
-			libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod.BKGND_NONE)
+		#	libtcod.console_set_default_foreground(con, self.color)
+		#	libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod_BKGND_NONE)
+		#	libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod_BKGND_NONE)
+			con.draw_char(self.x - x_offset, self.y - y_offset, self.char, bg=None, fg = self.color)
 
 	def clear(self):
 		global camera
 
-		x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+		x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
 		#y_offset = camera.y-SCREEN_HEIGHT/2
-		y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
+		y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
 		#erase the character that represents this object
-		libtcod.console_put_char(con, self.x-x_offset, self.y - y_offset, ' ', libtcod.BKGND_NONE)
+		#libtcod.console_put_char(con, self.x-x_offset, self.y - y_offset, ' ', libtcod_BKGND_NONE)
+		con.draw_char(self.x - x_offset, self.y - y_offset, ' ', bg=None, fg = self.color)
 
 		#erase the character that represents this object
 	#	if libtcod.map_is_in_fov(fov_map, self.x, self.y):
@@ -340,7 +426,7 @@ class Door:
 		#		if function is not None:
 		#			function(self.owner)
 
-		message('The door crashes down!', libtcod.orange)
+		message('The door crashes down!', color_warning)
 
 		door = self.owner
 		door.blocks = False
@@ -357,14 +443,14 @@ class Door:
 
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
 		
-		if libtcod.random_get_int(0, 0, self.looseness-1) < 2:		#opening unsuccesful
-			message('The door rattles.', libtcod.white)
+		if randint( 0, self.looseness-1) < 2:		#opening unsuccesful
+			message('The door rattles.', default_text_color)
 			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
 			self.looseness = self.looseness + 1		#increase chance of opening in future though
 			self.recently_rattled = True
 
 		else: 
-			message('The door opens', libtcod.white)
+			message('The door opens', default_text_color)
 
 			door = self.owner
 			door.blocks = False
@@ -440,7 +526,7 @@ class Flower:
 
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
-	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
+	def __init__(self, hp, defense, power, death_function=None, attack_color = PLAYER_COLOR, faded_attack_color = PLAYER_COLOR, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
 		self.hp = hp
 		self.defense = defense
@@ -527,7 +613,7 @@ class Fighter:
 class Energy_Fighter:
 	# combat-related properties and methods (player).
 	# trying out an exciting new 'energy system'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
-	def __init__(self, hp, defense, power, death_function=None, attack_color = libtcod.white, faded_attack_color = libtcod.white, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
+	def __init__(self, hp, defense, power, death_function=None, attack_color = PLAYER_COLOR, faded_attack_color = PLAYER_COLOR, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
 		self.hp = hp
 		self.defense = defense
@@ -748,7 +834,7 @@ class Decider:
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
-	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = libtcod.dark_blue, suspicious_color = libtcod.white, alarmed_color = libtcod.dark_red):
+	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_swordsman, suspicious_color = PLAYER_COLOR, alarmed_color = color_axe_maniac):
 		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
 		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
 		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
@@ -912,7 +998,8 @@ class BasicMonster:
 		# 'flee-visible-danger'		Run away from a thing you can see (the player, when you're scared of them?)
 	
 		#keeping it pretty simple for now... pursue the player if you see them
-		if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+		#if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+		if fov_map.fov[monster.x, monster.y]:
 			self.state = 'pursue-visible-target'
 		elif self.state == 'pursue-visible-target':	#go to room-based targeting
 			self.state = 'wander-aimlessly'		
@@ -953,7 +1040,7 @@ class BasicMonster:
 		elif block == 'closed-door':
 			self.blocked_by_door_o_meter = self.blocked_by_door_o_meter + 2
 			#try to open the door, maybe
-			num  = libtcod.random_get_int(0, 0, 1)
+			num  = randint( 0, 1)
 			if num == 0:
 				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 			# or, if not, maybe you want to give up and try something else?
@@ -1035,7 +1122,8 @@ class StupidBasicMonster(BasicMonster):
 		if self.stunned_time <= 0:
 
 			#basically, attack the player if you can see them, and that's about it.
-			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			# if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if fov_map.fov[monster.x, monster.y]:
 				self.state == 'pursue-visible-target'
 				self.engagePlayer(monster, decider)
 
@@ -1188,7 +1276,8 @@ class Wizard_AI:
 
 
 		if self.stunned_time <= 0:
-			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			# if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if fov_map.fov[monster.x, monster.y]:
 				dx = 0
 				dy = 0
 				#if True:			
@@ -1324,7 +1413,8 @@ class Samurai_AI:
 
 
 		if self.stunned_time <= 0:
-			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			#if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if fov_map.fov[monster.x, monster.y]:
 
 
 				#outline of plan for samurai:
@@ -1376,7 +1466,7 @@ class Samurai_AI:
 						attack_command = 0
 						#if the player has charge, try and hit the square where they're standing (because it's likely they'll stay still and attack me)
 						if believe_player_ready:
-							num  = libtcod.random_get_int(0, 0, 2)
+							num  = randint( 0, 2)
 							if num == 0:
 								attack_array = [[oQo,oQo,oWo,oEo,oEo],
 										[oQo,oQo,oQo,oEo,oEo],
@@ -1393,7 +1483,7 @@ class Samurai_AI:
 	
 						#if the player doesn't have charge, try and cover the squares they might run away to, rather than the square they're standing in (because players tend to run if they can't fight)
 						else: 
-							num  = libtcod.random_get_int(0, 0, 2)
+							num  = randint( 0, 2)
 							if num == 0:
 								attack_array = [[ 0 , 0 , 0 , 0 , 0 ],
 										[ 0 ,oAo,oWo,oWo, 0 ],
@@ -1436,7 +1526,7 @@ class Samurai_AI:
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 				#	if self.weapon.current_charge >= self.weapon.default_usage:
 #
-#						num  = libtcod.random_get_int(0, 0, 2)
+#						num  = randint( 0, 2)
 #						if num == 0:
 #							attack_array = [['q','q','w','e','e'],
 #									['q','q','w','e','e'],
@@ -1510,7 +1600,8 @@ class Ninja_AI:
 		# If the player is next to you, walk away!
 
 		if self.stunned_time <= 0:
-			if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			#if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if fov_map.fov[monster.x, monster.y]:
 
 				dx = 0
 				dy = 0
@@ -1555,7 +1646,7 @@ class Ninja_AI:
 							abstract_attack_data = self.weapon.do_attack(ATTCKUPLEFT)
 						else:
 							# okay now there are two choices for square 'in between'... pick one at random? not sure about this
-							num  = libtcod.random_get_int(0, 0, 2)
+							num  = randint( 0, 2)
 							if xdiff == 2 and ydiff == 1:
 								if num == 0:
 									abstract_attack_data = self.weapon.do_attack(ATTCKRIGHT)
@@ -1655,7 +1746,8 @@ class Rook_AI:
 		if self.stunned_time <= 0:
 			
 			# if you can't see the player, go where you think the player is
-			if not libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			#if not libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if not fov_map.fov[monster.x, monster.y]:
 
 				# but only if you're not on guard duty!
 				if self.guard_duty == False:
@@ -1666,7 +1758,7 @@ class Rook_AI:
 					if block == False: 
 						decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 					elif block == 'closed-door':
-						num  = libtcod.random_get_int(0, 0, 1)
+						num  = randint( 0, 1)
 						if num == 0:
 							decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
@@ -1730,7 +1822,7 @@ class Strawman_on_wheels_AI:
 		self.weapon = weapon
 		if self.weapon is not None:
 			self.weapon.owner = self
-		num  = libtcod.random_get_int(0, 0, 4)
+		num  = randint( 0, 4)
 		if num == 0:
 			self.direction = 'left'
 		elif num == 1:
@@ -1843,7 +1935,7 @@ def Move_Towards_Visible_Player(current_x, current_y, rook_moves = False):
 			elif is_blocked(current_x, current_y+ydiff) == True and is_blocked(current_x+xdiff, current_y) == False:
 				return (xdiff, 0)
 			elif is_blocked(current_x, current_y+ydiff) == False and is_blocked(current_x+xdiff, current_y) == False:
-				num =  libtcod.random_get_int(0, 0, 2) 
+				num =  randint( 0, 2) 
 				if num == 0:
 					return (xdiff,0)
 				else:
@@ -1875,7 +1967,7 @@ def Run_Away_From_Visible_Player(current_x, current_y):
 		elif is_blocked(current_x, current_y+dy) == True and  is_blocked(current_x+dx, current_y) == False:
 			return (dx,0)
 		elif is_blocked(current_x, current_y+dy) == False and  is_blocked(current_x+dx, current_y) == False:
-			num =  libtcod.random_get_int(0, 0, 2) 
+			num =  randint( 0, 2) 
 			if num == 0:
 				return (dx,0)
 			else:
@@ -1885,7 +1977,7 @@ def Run_Away_From_Visible_Player(current_x, current_y):
 
 	elif dy!= 0 and dx == 0:
 		# if trying to move vertically, try going left or right instead
-		num =  libtcod.random_get_int(0, 0, 2) 
+		num =  randint( 0, 2) 
 		if num == 0:
 			#bias to going left first
 			if  is_blocked(current_x-1, current_y+dy) == False:
@@ -1913,7 +2005,7 @@ def Run_Away_From_Visible_Player(current_x, current_y):
 
 	elif dy== 0 and dx != 0:
 		# if trying to move horizontally, try going left or right instead
-		num =  libtcod.random_get_int(0, 0, 2) 
+		num =  randint( 0, 2) 
 		if num == 0:
 			#bias to going up first
 			if  is_blocked(current_x+dx, current_y-1) == False:
@@ -1969,7 +2061,7 @@ def Step_Around_Player(current_x,current_y):
 						movement_options.append((xmov,ymov))	
 		# now pick an option at random
 		if len(movement_options) > 0:
-			choice =  libtcod.random_get_int(0, 0, len(movement_options)-1)
+			choice =  randint( 0, len(movement_options)-1)
 			return movement_options[choice]
 		# if there's actually nowhere good to go, maybe run away? Might want to change this depending on the monster
 		else:
@@ -2123,7 +2215,7 @@ class BasicAttack:
 				if target.fighter is not None:
 					if self.attacker is not None:
 						if target is player:
-							message('The ' + self.attacker.name.capitalize() + ' hits!', libtcod.red)	
+							message('The ' + self.attacker.name.capitalize() + ' hits!', color_big_alert)	
 						elif self.attacker is player:
 							message('You hit the ' + target.name.capitalize() + '!')
 							player_hit_something = True	
@@ -2144,7 +2236,7 @@ class BasicAttack:
 						if (target.y < MAP_HEIGHT-1):
 							bgColorArray[target.x][target.y+1] = mergeColors(bgColorArray[target.x][target.y+1], blood_background_color, 0.1)
 
-					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+					translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
 					target.fighter.take_damage(self.damage)
 #					if target.name == 'security system':
 #						if target.raising_alarm is False:
@@ -2154,7 +2246,7 @@ class BasicAttack:
 #							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
 #							spawn_timer = 1	#This is not always working as I'd like???
 				elif target.door is not None and target.name != 'elevator door':
-					libtcod.console_set_char_background(con, target.x, target.y, self.faded_color, libtcod.BKGND_SET)
+					translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
 					target.door.take_damage(self.damage)
 
 				if target.alarmer is not None:
@@ -2248,7 +2340,7 @@ def next_step_towards_center(current_x, current_y, center_number, rook_moves = F
 
 	# if multiple options, pick one at random. If no options, stay where we are
 	if len(temp_array) > 0:
-		num =  libtcod.random_get_int(0, 0, len(temp_array)-1)
+		num =  randint( 0, len(temp_array)-1)
 		return temp_array[num] 
 	else:
 		return (0,0)
@@ -2269,7 +2361,7 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 		if rook_moves == True:	# we can only travel in one axis if rook moves
 			if dx != 0 and dy != 0:
 				#randomly choose either horizontal or vertical to go with
-				num =  libtcod.random_get_int(0, 0, 1)
+				num =  randint( 0, 1)
 				if num == 0:
 					dx = 0
 				elif num == 1:
@@ -2316,7 +2408,8 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 	if prioritise_visible == True:
 		shorterlist = []
 		for (dx,dy) in shortlist:
-			if libtcod.map_is_in_fov(fov_map, current_x + dx, current_y + dy):
+			#if libtcod.map_is_in_fov(fov_map, current_x + dx, current_y + dy):
+			if fov_map.fov[current_x + dx, current_y + dy]:
 				shorterlist.append((dx,dy))
 		if len(shorterlist) > 0:
 			shortlist = shorterlist
@@ -2434,37 +2527,42 @@ def get_names_under_mouse():
 
 # MAIN CONTROL HANDLING METHOD WOO
 
-def handle_keys():
+#def handle_keys():
+def handle_keys(user_input_event):
 	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center, something_changed
 
-	# key = libtcod.console_wait_for_keypress(True)
-	if key.vk == libtcod.KEY_ENTER and key.lalt:
+	# key = translated_console_wait_for_keypress(True)
+	key = user_input_event.key
+	veekay = key	# key.vk
+	key_char = user_input.char
+	#if veekay == libtcod.KEY_ENTER and key.lalt:
+	if veekay == 'ENTER': #and key.lalt:
 	#Alt+Enter: toggle fullscreen
 		something_changed = True
-		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+		translated_console_set_fullscreen(not translated_console_is_fullscreen())
 
-	elif key.vk == libtcod.KEY_ESCAPE:
+	elif veekay == 'ESCAPE': #libtcod.KEY_ESCAPE:
 		something_changed = True
 		return 'pause' #exit game
 
 	if game_state == 'big message':
-		if key.vk != 0:
+		if veekay != 0:
 			something_changed = True
 			game_state = 'playing'
 
 	elif game_state == 'end message':
-		if key.vk != 0:
+		if veekay != 0:
 			something_changed = True
 			game_state = 'end data'
 
 
 	elif game_state == 'end data':
-		if key.vk != 0:
+		if veekay != 0:
 			something_changed = True
 			game_state = 'restartynscreen'
 
 	elif game_state == 'restartynscreen':
-		key_char = chr(key.c) 
+		#key_char = chr(key.c) 
 		if key_char == 'n':
 			something_changed = True
 			game_state='exit'
@@ -2475,13 +2573,13 @@ def handle_keys():
 		
 
 	elif game_state == 'paused':
-		key_char = chr(key.c) 
+		#key_char = chr(key.c) 
 		if key_char == 'q':
 			something_changed = True
 			game_state='exit'
 
 	elif game_state == 'dead':
-		key_char = chr(key.c)
+		#key_char = chr(key.c)
 		if key_char == 'r':
 			something_changed = True
 			restart_game()
@@ -2491,9 +2589,9 @@ def handle_keys():
 
 	
 	elif player_action == 'pickup_dialog':
-		key_char = chr(key.c)
-		#print str(key.vk)
-		keynum = key.vk - 34	#yay magic number:
+		#key_char = chr(key.c)
+		#print str(veekay)
+		keynum = veekay - 34	#yay magic number:
 		weapons_found = []
 		for object in objectsArray[player.x][player.y]:
 			if object.weapon == True: 
@@ -2507,7 +2605,7 @@ def handle_keys():
 			#drop_weapon(old_weapon)
 			weapon_found = True
 			message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name) 
-		elif key.vk != 0:
+		elif veekay != 0:
 			game_state = 'playing'
 			message('Never mind.')
 			#keynum = key
@@ -2518,55 +2616,57 @@ def handle_keys():
 			return 'pickup_dialog'
 
 	elif player_action == 'jump_dialog':
-		key_char = chr(key.c)
+		#key_char = chr(key.c)
 		# jump direction options
 		#TODO HEY THIS STUFF IS HARDCODED AND SHOULD BE FIXED UP, ESPECIALLY WHAT WITH ME NO LONGER USING THIS LAYOUT:
-		if key.vk == libtcod.KEY_KP7 or key.vk == libtcod.KEY_HOME or key_char == 't':
+		# I have replaced e.g. libtcod.KEY_KP7 with 'KP7'  in order to translate to tdl.
+		# But anyway this should all get rewritten so I can allow adjustable controls, later.
+		if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
-		elif key.vk == libtcod.KEY_KP8 or key.vk == libtcod.KEY_UP or key_char == 'y':
+		elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,-2)))
-		elif key.vk == libtcod.KEY_KP9 or key.vk == libtcod.KEY_PAGEUP or key_char == 'u':
+		elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
-		elif key.vk == libtcod.KEY_KP2 or key.vk == libtcod.KEY_DOWN or key_char == 'n':
+		elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
-		elif key.vk == libtcod.KEY_KP1 or key.vk == libtcod.KEY_END or key_char == 'b':
+		elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
-		elif key.vk == libtcod.KEY_KP4 or key.vk == libtcod.KEY_LEFT or key_char == 'g':
+		elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,0)))
-		elif key.vk == libtcod.KEY_KP3 or key.vk == libtcod.KEY_PAGEDOWN or key_char == 'm':
+		elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,2)))
-		elif key.vk == libtcod.KEY_KP6 or key.vk == libtcod.KEY_RIGHT or key_char == 'j':
+		elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,0)))
-		#elif key.vk == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
+		#elif veekay == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
 		#	message('You  perfectly still.')
 		#game_state = 'playing'
-		elif key.vk != 0:
+		elif veekay != 0:
 			game_state = 'playing'
 			message('You stand paralyzed by indecision or maybe bad programming!.')	#TODO probably change this message
 		else: 
 			return 'jump_dialog'
 
 	elif game_state == 'playing':
-		key_char = chr(key.c)
+		#key_char = chr(key.c)
 		#print "walk!"
 		#movement keys
-		if key.vk == libtcod.KEY_KP7 or key.vk == libtcod.KEY_HOME or key_char == 't':
+		if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,-1)))
-		elif key.vk == libtcod.KEY_KP8 or key.vk == libtcod.KEY_UP or key_char == 'y':
+		elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(0,-1)))
-		elif key.vk == libtcod.KEY_KP9 or key.vk == libtcod.KEY_PAGEUP or key_char == 'u':
+		elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,-1)))
-		elif key.vk == libtcod.KEY_KP2 or key.vk == libtcod.KEY_DOWN or key_char == 'n':
+		elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(0,1)))
-		elif key.vk == libtcod.KEY_KP1 or key.vk == libtcod.KEY_END or key_char == 'b':
+		elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,1)))
-		elif key.vk == libtcod.KEY_KP4 or key.vk == libtcod.KEY_LEFT or key_char == 'g':
+		elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,0)))
-		elif key.vk == libtcod.KEY_KP3 or key.vk == libtcod.KEY_PAGEDOWN or key_char == 'm':
+		elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,1)))
-		elif key.vk == libtcod.KEY_KP6 or key.vk == libtcod.KEY_RIGHT or key_char == 'j':
+		elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,0)))
-		elif key.vk == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
+		elif veekay == 'KP5' or veekay == '.' or key_char == 'h':	
 			message('You stand perfectly still.')
 			
 			# update the relevant upgrades, to do with standing still
@@ -2577,7 +2677,7 @@ def handle_keys():
 
 		else:
 			#test for other keys
-			key_char = chr(key.c)
+			# key_char = chr(key.c)
 
 			# picking up a new weapon.   Or maybe doing a thing with a plant?
 			if key_char == 'p':
@@ -2615,7 +2715,7 @@ def handle_keys():
 						message_string = message_string + ( str(count) + '. ' + weapon_item.name + ' ')
 						count += 1
 					message_string = message_string + ')'
-					message(message_string, libtcod.orange)
+					message(message_string, color_warning)
 					return 'pickup_dialog'
 					#handle_keys()	# why do I get the feeling I am going to regret this
 				elif len(plants_found) >= 1:
@@ -2630,15 +2730,15 @@ def handle_keys():
 
 
 			#elif key_char == JUMP:
-			elif key.vk == libtcod.KEY_SPACE:		#todo make this mappable somehow
+			elif veekay == 'SPACE':	#libtcod.KEY_SPACE:		#todo make this mappable somehow
 				canJump = player.fighter.jump_available()
 				if canJump:
 					message_string = 'Jump in which direction?'
-					message(message_string, libtcod.orange)
+					message(message_string, color_warning)
 					return 'jump_dialog'
 				else:
 					message_string = 'Your legs are too tired to jump.'
-					message(message_string, libtcod.orange)
+					message(message_string, color_warning)
 					return 'invalid-move'
 
 			#attacky keys!
@@ -2692,7 +2792,7 @@ def handle_keys():
 									message("You feel a little better")
 									player.fighter.fully_heal()
 							else:
-								message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', libtcod.orange)
+								message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', color_warning)
 							favoured_by_healer = True
 						elif current_god.god_type.type == 'destroyer':
 							tested_by_destroyer = True
@@ -2701,7 +2801,7 @@ def handle_keys():
 						elif current_god.god_type.type == 'deliverer':
 							# do a test: did we get to the shrine quickly enough?
 							if (game_time - time_level_started) > 190:
-								message('\"Hang on a sec, actually you already took too long to get here. Sorry!\"', libtcod.orange)
+								message('\"Hang on a sec, actually you already took too long to get here. Sorry!\"', color_warning)
 							else:
 								tested_by_deliverer = True
 								deliverer_test_count = 200 - (game_time-time_level_started)		#TODO put these kind of values in gods.py
@@ -2806,14 +2906,14 @@ def place_objects(room):
 	max_room_monsters = lev_set.max_room_monsters
 
 	#choose random number of monsters
-	num_monsters = libtcod.random_get_int(0, 0, max_room_monsters)
+	num_monsters = randint( 0, max_room_monsters)
 
 
 	for i in range(num_monsters):
 	#for i in range(50):
 		#choose random spot for this monster
-		x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-		y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+		x = randint( room.x1+1, room.x2-1)
+		y = randint( room.y1+1, room.y2-1)
 
 		#only place it if the tile is not blocked
 		if not is_blocked(x, y):
@@ -2823,7 +2923,7 @@ def place_objects(room):
 			enemy_probabilities = lev_set.enemy_probabilities
 
 			enemy_name = 'none'
-			num = libtcod.random_get_int(0,0, total_enemy_prob)
+			num = randint(0, total_enemy_prob)
 			for (name, prob) in enemy_probabilities:
 				#print( '(' + name + ',' + str(prob) + ')')
 				if num <= prob:
@@ -2838,17 +2938,17 @@ def place_objects(room):
 
 	# on first level, in in 2 chance of a weapon appearing in a room I guess
 	if dungeon_level == 0:
-		num = libtcod.random_get_int(0, 0, 2)
+		num = randint( 0, 2)
 		if num == 0:
-			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+			x = randint( room.x1+1, room.x2-1)
+			y = randint( room.y1+1, room.y2-1)
 			new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True, always_visible = True)
 			drop_weapon(new_weapon)
 			#objects.append(new_weapon)
 			#new_weapon.send_to_back()
 		elif num == 1:
-			x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
-			y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
+			x = randint( room.x1+1, room.x2-1)
+			y = randint( room.y1+1, room.y2-1)
 			new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True, always_visible = True)
 			drop_weapon(new_weapon)
 			#objects.append(new_weapon)
@@ -2856,7 +2956,7 @@ def place_objects(room):
 
 	# on higher levels, maybe there are shrines? Maybe??
 	else:
-		num = libtcod.random_get_int(0,0,18)
+		num = randint(0,18)
 		if num == 0:
 			(shrine_x, shrine_y) = room.center()
 			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
@@ -2881,77 +2981,77 @@ def create_monster(x,y, name, guard_duty = False):
 	global number_alarmers
 	if name == 'strawman':
 		# let's make a strawman!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', libtcod.dark_blue, blocks=True, fighter=strawman_component, decider=decider_component)
+		monster = Object(x, y, 'A', 'strawman', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component)
 
 	elif name == 'flailing strawman':
 		# let's create a strawman that can theoretically do damage!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
 		ai_component = Strawman_AI(weapon = Weapon_Sai())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', libtcod.dark_red, blocks=True, fighter=strawman_component, decider=decider_component)	
+		monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component)	
 
 	elif name == 'strawman on wheels':
 		# let's create a strawman that can move around!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_boman, faded_attack_color = color_boman, bleeds = False)
 		ai_component = Strawman_on_wheels_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman on wheels', libtcod.darker_green, blocks=True, fighter=strawman_component, decider=decider_component)
+		monster = Object(x, y, 'A', 'strawman on wheels', color_boman, blocks=True, fighter=strawman_component, decider=decider_component)
 				
 	elif name == 'swordsman':
 		#create an orc
-		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = BasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'S', 'swordsman', libtcod.dark_blue, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'stupid swordsman':
 		#create an orc
-		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = StupidBasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'S', 'swordsman', libtcod.dark_blue, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'boman':
 		#create a troll
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = Boman_AI(weapon = Weapon_Staff(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'boman', libtcod.darker_green, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'B', 'boman', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'rook':
 		#create a rook! That's a guy with a spear who only moves in four directions
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'R', 'rook', libtcod.darker_blue, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'nunchuck fanatic':
 		#create a troll
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = BasicMonster(weapon = Weapon_Nunchuck(), guard_duty= guard_duty, attack_dist = 2)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'F', 'nunchuck fanatic', libtcod.darker_green, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'F', 'nunchuck fanatic', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'axe maniac':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = BasicMonster(weapon = Weapon_Axe(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'M', 'axe maniac', libtcod.darker_red, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'M', 'axe maniac', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'samurai':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red)
+		fighter_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = Samurai_AI(weapon = Weapon_Katana())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'Z', 'samurai', libtcod.darker_red, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'Z', 'samurai', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'tridentor':
 		#create a guy with an axe!
@@ -2964,36 +3064,36 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'hammer sister':
 		#create a lady with a hammer!
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_green, faded_attack_color = libtcod.darker_green)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component =  Ninja_AI(weapon = Weapon_Hammer())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'H', 'hammer sister', libtcod.darker_green, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'H', 'hammer sister', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'ninja':
 		#create a sneaky ninja!
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = libtcod.black, faded_attack_color = libtcod.black)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
 		ai_component = Ninja_AI(weapon = Weapon_Dagger())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'N', 'ninja', libtcod.black, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'N', 'ninja', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'wizard':
 		#create a wizard!
-		fighter_component = Fighter(hp=10, defense=0, power=1, death_function=monster_death, attack_color = libtcod.dark_purple, faded_attack_color = libtcod.darker_purple)
+		fighter_component = Fighter(hp=10, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
 		ai_component = Wizard_AI(weapon = Weapon_Ring_Of_Power())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'W', 'wizard', libtcod.darker_purple, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'W', 'wizard', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 
 	elif name == 'security system':
 		# let's make a security system! It stays where it is and doesn't attack! In fact it's basically a strawman with more health.
-		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_blue, faded_attack_color = libtcod.darker_blue, bleeds = False)
+		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color =color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
 		alarmer_component = Alarmer()
-		monster = Object(x, y, 'O', 'security system', libtcod.dark_blue, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
+		monster = Object(x, y, 'O', 'security system', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
 
 
 
@@ -3009,10 +3109,10 @@ def create_monster(x,y, name, guard_duty = False):
 
 def create_strawman(x,y, weapon, command):
 	# let's create a strawman that can theoretically do damage!
-	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = libtcod.dark_red, faded_attack_color = libtcod.darker_red, bleeds = False)
+	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
 	ai_component = Strawman_AI(get_weapon_from_name(weapon), command)		
 	decider_component = Decider(ai_component)
-	monster = Object(x, y, 'A', 'strawman', libtcod.dark_red, blocks=True, fighter=strawman_component, decider=decider_component)
+	monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component)
 	return monster
 
 
@@ -3080,7 +3180,7 @@ def make_map():
 	# now create objects from object_data! This code resorting thing is actually getting kind of fun now
 	for od in object_data:
 		if od.name == 'stairs':
-			stairs = Object(od.x, od.y, '<', 'stairs', libtcod.white, always_visible=True)
+			stairs = Object(od.x, od.y, '<', 'stairs', PLAYER_COLOR, always_visible=True)
 			objectsArray[od.x][od.y].append(stairs)
 			stairs.send_to_back()  #so it's drawn below the monsters
 		elif od.name == 'weapon':
@@ -3098,7 +3198,7 @@ def make_map():
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
 			objectsArray[od.x][od.y].append(strawman)
 		elif od.name == 'shrine':
-			num = libtcod.random_get_int(0, 0, 2) 
+			num = randint( 0, 2) 
 			if num == 0:
 				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
 			elif num == 1:
@@ -3124,7 +3224,7 @@ def make_map():
 				objectsArray[od.x][od.y].append(door)
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'key':
-			new_key = Object(od.x, od.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
+			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
@@ -3148,7 +3248,7 @@ def make_map():
 	for ele in elevators:
 		ele.special_door_list = []
 		for ele_door in ele.doors:
-			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', libtcod.red, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True) 
+			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True) 
 			map[ele_door.x][ele_door.y].block_sight = True			
 			objectsArray[ele_door.x][ele_door.y].append(door)
 			ele.special_door_list.append(door)
@@ -3316,6 +3416,8 @@ def player_move_or_attack(dx, dy):
 def process_player_attack(key_char):
 	global upgrade_array
 
+	print('you pressed ' + str(key_char))
+
 	if player_weapon.durability <= 0:
 		message('Your ' +  str(player_weapon.name) + ' is broken!')
 		return 'invalid-move'
@@ -3355,20 +3457,20 @@ def process_player_attack(key_char):
 		#Note: this code might need to change in future if we decide to have other reasons for not being able to attack
 		elif can_attack == 'energy too low':
 			#message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
-			message('You are too tired to attack', libtcod.orange)
+			message('You are too tired to attack', color_warning)
 			return 'invalid-move'
 		elif can_attack == 'in water':
-			message('You are too busy treading water to attack', libtcod.orange)
+			message('You are too busy treading water to attack', color_warning)
 			return 'invalid-move'
 		else:
-			message('Error: cannot attack', libtcod.orange)
+			message('Error: cannot attack', color_warning)
 			return 'invalid-move'
 
 def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
 	temp_attack_list = []
-	temp_color = libtcod.dark_red
+	temp_color = color_swordsman  # libtcod.dark_red
 	if attacker is not None:
 		if attacker.fighter:
 			temp_color = attacker.fighter.attack_color
@@ -3383,7 +3485,7 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 def player_death(player):
 	#the game ended!
 	global game_state
-	message('You collapse to the floor...', libtcod.red)
+	message('You collapse to the floor...', color_big_alert)
 	message('Press R to restart, Q to quit')
 	game_state = 'dead'
  
@@ -3404,7 +3506,7 @@ def monster_death(monster):
 						drop_weapon(item)
 						reorder_objects(item.x, item.y)
 					else:
-						num = libtcod.random_get_int(0,0, 100)
+						num = randint(0, 100)
 						if num <= CHANCE_OF_ENEMY_DROP:
 							drop_weapon(item)
 							reorder_objects(item.x,item.y)
@@ -3415,7 +3517,7 @@ def monster_death(monster):
 	#if monster.name == 'security system':
 	if monster.alarmer is not None:
 		number_alarmers -= 1
-		message(monster.name.capitalize() + ' is destroyed!', libtcod.orange)		
+		message(monster.name.capitalize() + ' is destroyed!', color_warning)		
 		#decrease the alarm level alittle bit! Unless that was the last one, in which case set it to 0
 		if number_alarmers > 0:
 			if alarm_level > 0:
@@ -3427,9 +3529,9 @@ def monster_death(monster):
 
 
 	else:	
-		message(monster.name.capitalize() + ' is dead!', libtcod.orange)
+		message(monster.name.capitalize() + ' is dead!', color_warning)
 	monster.char = '%'
-	monster.color = libtcod.gray
+	monster.color = default_weapon_color
 	monster.blocks = False
 	monster.fighter = None
 	monster.decider = None
@@ -3439,7 +3541,7 @@ def monster_death(monster):
 
 	#monster may drop a key?
 	if monster.drops_key == True:
-		new_key = Object(monster.x,monster.y, '*', 'key', libtcod.white, blocks = False, weapon = False, always_visible=True)
+		new_key = Object(monster.x,monster.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
 		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
 		reorder_objects(monster.x, monster.y)
@@ -3475,17 +3577,17 @@ def next_level():
 	new_upgrade = Get_Random_Upgrade()
 	upgrade_array.append(new_upgrade)
 
-	message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, libtcod.cyan)
+	message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
 
 
 	dungeon_level += 1
 	alarm_level = dungeon_level + 1
 	key_count = 0
 	time_level_started = game_time
-	message('You ascend to the next level!', libtcod.red)
+	message('You ascend to the next level!', color_big_alert)
 	if favoured_by_healer == True:
 		message('You hear the voice of ' + god_healer.name)
-		message('\"Behold my child! Faith in me shall always be rewarded.\"', libtcod.orange)
+		message('\"Behold my child! Faith in me shall always be rewarded.\"', color_warning)
 		player.fighter.max_hp = player.fighter.max_hp + 1
 		player.fighter.cure_wounds(3)
 		player.fighter.fully_heal()
@@ -3495,7 +3597,7 @@ def next_level():
 
 	if favoured_by_destroyer == True:
 		message('You hear the voice of ' + god_destroyer.name)
-		message('\"Your destruction pleases me. I shall grant you a boon!\"', libtcod.orange)
+		message('\"Your destruction pleases me. I shall grant you a boon!\"', color_warning)
 		#player.fighter.fully_heal()
 		player.fighter.increase_strength(1)
 		message('You feel stronger!')
@@ -3503,7 +3605,7 @@ def next_level():
 
 	if favoured_by_deliverer == True:
 		message('You hear the voice of ' + god_deliverer.name)
-		message('\"Good job! Here\'s your reward. Have fun with it!\"', libtcod.orange)
+		message('\"Good job! Here\'s your reward. Have fun with it!\"', color_warning)
 		#player.fighter.increase_recharge_rate(1)
 		# make the player always have an increased max charge on their weapon
 		player.fighter.increase_max_charge(1)
@@ -3530,11 +3632,11 @@ def next_level():
 		for x in range(SCREEN_WIDTH):
 			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
 				#map[x][y].explored = False
-				libtcod.console_set_char_background(con, x, y, libtcod.red, libtcod.red)
+				translated_console_set_char_background(con, x, y, color_big_alert, color_big_alert)
 				#print "blah (" + str(x) + "," + str(y) + ")" 
 			else:
 				map[x][y].explored = False
-				libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
+				translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
 				#print "bloo (" + str(x) + "," + str(y) + ")" 
 	initialize_fov()
 
@@ -3562,10 +3664,16 @@ def initialize_fov():
 	fov_recompute = True
 
 	#create the FOV map, according to the generated map
-	fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
+	#fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
+	fov_map = libtcod.map.Map(MAP_WIDTH, MAP_HEIGHT)
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
-			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
+			#libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
+			#libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
+
+            		# TODO If things end up looking really wierd, it might be because the lines below are wrong
+			fov_map.walkable[x, y] = not map[x][y].blocked
+			fov_map.transparent[x, y] = not map[x][y].block_sight
 
 	#print "FOV intialized"
 
@@ -3705,7 +3813,7 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			map[x][y].explored = False
-			libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
+			translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
 	initialize_fov()
 	initialise_game()
 
@@ -3714,27 +3822,27 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 
 
 
-def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
-	#render a bar (HP, experience, etc). first calculate the width of the bar
-	bar_width = int(float(value) / maximum * total_width)
-
-	#render the background first
-	libtcod.console_set_default_background(panel, back_color)
-	libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
-
-	#now render the bar on top
-	libtcod.console_set_default_background(panel, bar_color)
-	if bar_width > 0:
-		libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
-
-	#finally, some centered text with the values
-	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
-	name + ': ' + str(value) + '/' + str(maximum))
+#def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
+#	#render a bar (HP, experience, etc). first calculate the width of the bar
+#	bar_width = int(float(value) / maximum * total_width)
+#
+#	#render the background first
+#	libtcod.console_set_default_background(panel, back_color)
+#	libtcod.console_rect(panel, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+#
+#	#now render the bar on top
+#	libtcod.console_set_default_background(panel, bar_color)
+#	if bar_width > 0:
+#		libtcod.console_rect(panel, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+#
+#	#finally, some centered text with the values
+#	libtcod.console_set_default_foreground(panel, default_text_color)
+#	translated_console_print_ex(panel, x + total_width / 2, y, libtcod_BKGND_NONE, libtcod_CENTER,
+#	name + ': ' + str(value) + '/' + str(maximum))
 		
 
 
-def message(new_msg, color = libtcod.white):
+def message(new_msg, color = default_text_color):
 	#split the message if necessary, among multiple lines
 	new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
 
@@ -3750,17 +3858,17 @@ def pause_screen():
 
 
 	# print the pause screen I guess 
-	libtcod.console_set_default_background(pause_menu, libtcod.black)
-	libtcod.console_clear(pause_menu)
-	libtcod.console_set_default_foreground(pause_menu, libtcod.white)
-	libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod.BKGND_NONE, libtcod.CENTER,
+	translated_console_set_default_background(pause_menu, default_background_color)
+	translated_console_clear(pause_menu)
+	translated_console_set_default_foreground(pause_menu, default_text_color)
+	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod_BKGND_NONE, libtcod_CENTER,
 	'The game is paused (press Esc to unpause or Q to quit)')
 
-	libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
+	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
 	'----------------------')
 	current_line = 6
 	for upgrade in upgrade_array:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, current_line, libtcod.BKGND_NONE, libtcod.CENTER, 
+		translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
 		upgrade.name + ': ' + upgrade.tech_description)
 		current_line += 2
 
@@ -3769,7 +3877,8 @@ def pause_screen():
 
 	print('p?p')
 	#blit the contents of "pause_menu" to the root console
-	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	#libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)	
 
 def big_message(string):	
 
@@ -3778,17 +3887,17 @@ def big_message(string):
 
 
 	# print the big message
-	libtcod.console_set_default_background(pause_menu, libtcod.black)
-	libtcod.console_clear(pause_menu)
-	libtcod.console_set_default_foreground(pause_menu, libtcod.white)
+	translated_console_set_default_background(pause_menu, default_background_color)
+	translated_console_clear(pause_menu)
+	translated_console_set_default_foreground(pause_menu, default_text_color)
 	y = 2
 	for line in new_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
 		y = y + 1
 
 	#blit the contents of "pause_menu" to the root console
-	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
-
+	#libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
 def end_message():
 	global current_big_message
@@ -3800,18 +3909,23 @@ def end_message():
 	new_msg_lines = textwrap.wrap(string, MSG_WIDTH)
 
 
-	# print the big message
-	libtcod.console_set_default_background(pause_menu, libtcod.black)
-	libtcod.console_clear(pause_menu)
-	libtcod.console_set_default_foreground(pause_menu, libtcod.white)
+#	# print the big message
+#	libtcod.console_set_default_background(pause_menu, default_background_color)
+#	libtcod.console_clear(pause_menu)
+#	libtcod.console_set_default_foreground(pause_menu, default_text_color)
+
+	pause_menu.clear(fg=default_text_color, bg=default_background_color)
+
 	y = 2
 	for line in new_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		# libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, fg=default_text_color, bg=None)
+
 		y = y + 1
 
 	#blit the contents of "pause_menu" to the root console
-	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
-
+#	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 	
 
 def end_data_message():
@@ -3825,21 +3939,27 @@ def end_data_message():
 	new_data_msg_lines = textwrap.wrap(data_string, MSG_WIDTH)
 
 	# print the big message
-	libtcod.console_set_default_background(pause_menu, libtcod.black)
-	libtcod.console_clear(pause_menu)
-	libtcod.console_set_default_foreground(pause_menu, libtcod.white)
+	#libtcod.console_set_default_background(pause_menu, default_background_color)
+	#libtcod.console_clear(pause_menu)
+	#libtcod.console_set_default_foreground(pause_menu, default_text_color)
+	pause_menu.clear(fg = default_text_color, bg = default_background_color)
+
 	y = 2
 	for line in new_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		#libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, bg = None, fg = default_text_color) #, libtcod_CENTER)
 		y = y + 1
 	y = y + 2
 
 	for line in new_data_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		# libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, bg = None, fg = default_text_color) #, libtcod_CENTER)
 		y = y + 1
 
 	#blit the contents of "pause_menu" to the root console
-	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	# libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
+	
 
 def restartynscreen():
 	global current_big_message, player_weapon, game_time
@@ -3855,24 +3975,29 @@ def restartynscreen():
 
 
 	# print the big message
-	libtcod.console_set_default_background(pause_menu, libtcod.black)
-	libtcod.console_clear(pause_menu)
-	libtcod.console_set_default_foreground(pause_menu, libtcod.white)
+	#libtcod.console_set_default_background(pause_menu, default_background_color)
+	#libtcod.console_clear(pause_menu)
+	#libtcod.console_set_default_foreground(pause_menu, default_text_color)
+	pause_menu.clear(fg = default_text_color, bg = default_background_color)
 	y = 2
 	for line in new_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		# libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, bg = None, fg = default_text_color)#, libtcod_CENTER)
 		y = y + 1
 	y = y + 2
 	for line in new_data_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		# libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, bg = None, fg = default_text_color)#, libtcod_CENTER)
 		y = y + 1
 	y = y+2
 	for line in new_query_msg_lines:
-		libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod.BKGND_NONE, libtcod.CENTER, line)
+		# libtcod.console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		pause_menu.draw_str(int(SCREEN_WIDTH/2), y, line, bg = None, fg = default_text_color)#, libtcod_CENTER)
 		y = y + 1
 
 	#blit the contents of "pause_menu" to the root console
-	libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	# libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
 def render_all():
 
@@ -3883,24 +4008,26 @@ def render_all():
 	if fov_recompute:
 		#recompute FOV if needed (the player moved or something)
 		fov_recompute = False
-		libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+		# libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+		fov_map.compute_fov(player.x, player.y, fov=FOV_ALGO, radius=TORCH_RADIUS, light_walls=FOV_LIGHT_WALLS)
 
 	update_camera()
 	#x_offset = camera.x-SCREEN_WIDTH/2
-	x_offset = camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2
+	x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
 	#y_offset = camera.y-SCREEN_HEIGHT/2
-	y_offset = camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2
+	y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
 
 	for y in range(SCREEN_HEIGHT):
 		for x in range(SCREEN_WIDTH):
-			libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod.BKGND_SET)
-
+	#		libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
+			con.draw_char(x, y, None, fg=None, bg=color_fog_of_war)
 
 	#go through all tiles, and set their background color according to the FOV
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			#visible = True # temporary hack to test enemy navigation
-			visible = libtcod.map_is_in_fov(fov_map, x, y)
+			# visible = libtcod.map_is_in_fov(fov_map, x, y)
+			visible = fov_map.fov[x, y]
 			wall = map[x][y].blocked 	#block_sight
 			
 			#if False:
@@ -3910,19 +4037,25 @@ def render_all():
 				#if True: 	#temp making walls and such visible to check enemy behaviour
 					#it's out of the player's FOV
 					if wall:
-						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod.BKGND_SET)
+						con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_wall)
+						# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod_BKGND_SET)
 					else:
-						libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_ground, libtcod.BKGND_SET)
-				else: 
-					libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod.BKGND_SET)
+						con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_ground)
+						# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_ground, libtcod_BKGND_SET)
+				else: 					
+					con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_fog_of_war)
+					#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod_BKGND_SET)
 			else:
 				#todo update based on some desired background colors
-				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod.BKGND_SET  )
+				#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_BKGND_SET)		
+				con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =bgColorArray[x][y])
+			
+
 	#			if wall:
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod.BKGND_SET  )
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod.BKGND_SET  )
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_BKGND_SET  )
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod_BKGND_SET  )
 	#			else:
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod.BKGND_SET )
+	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod_BKGND_SET )
 				
 				map[x][y].explored = True
 
@@ -3932,16 +4065,20 @@ def render_all():
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			for object in objectsArray[x][y]:
-				if libtcod.map_is_in_fov(fov_map, x, y) == True:
+				#if libtcod.map_is_in_fov(fov_map, x, y) == True:
+				if fov_map.fov[x, y] == True:
 					if object.name == 'water':
-						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
+						#libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
+						con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
 					if object.name == 'blood':
-						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
+						# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod_BKGND_SET )
+						con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
 					# ok but if there's attacks draw those instead
 					for other_object in objectsArray[x][y]:
 						if object is not other_object:
 							if object.attack is not None and other_object.fighter is not None:
-								libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
+								# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
+								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
 
 				# DRAW ALL THE THINGS
 				object.draw()
@@ -3951,11 +4088,11 @@ def render_all():
 #			for other_object in objects:
 #				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
 #					if object.attack is not None and other_object.fighter is not None:
-#						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod.BKGND_SET )
+#						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
 #			if object.name == 'water':
-#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod.BKGND_SET )
+#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
 #			if object.name == 'blood':
-#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod.BKGND_SET )
+#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod_BKGND_SET )
 #
 #	for object in objects:
 #		#if object != player:
@@ -3968,7 +4105,9 @@ def render_all():
 	
 
 #	libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
-	libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+#	libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
+	
 
 	
 	# write GUI stuff to "panel"
@@ -3987,8 +4126,9 @@ def create_GUI_panel():
 
 	#GUI STUFF
 	#prepare to render the GUI panel
-	libtcod.console_set_default_background(panel, libtcod.black)
-	libtcod.console_clear(panel)
+	#libtcod.console_set_default_background(panel, default_background_color)
+	#libtcod.console_clear(panel)
+	panel.clear(fg = default_text_color, bg= default_background_color)
 
 	#Three subpanels within this panel. From left to right: attack panel, player panel, level panel
 	attack_panel_width = 20
@@ -4001,26 +4141,30 @@ def create_GUI_panel():
 
 	#ATTACK PANEL STUFF
 	#change color based on weapon status
-	attack_panel_default_color = libtcod.white
+	attack_panel_default_color = default_text_color
 	if player_weapon.durability <= 0:
-		attack_panel_default_color = libtcod.red
+		attack_panel_default_color = color_big_alert
 	elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
-		attack_panel_default_color = libtcod.orange
+		attack_panel_default_color = color_warning
 	elif player_weapon.current_charge < player_weapon.default_usage:
 		attack_panel_default_color = libtcod.blue
 
 
-	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
+	#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 	if len(player_weapon.name) <= attack_panel_width - 10:
-		libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Weapon: ' + str(player_weapon.name).upper())
+		# libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
+	#'Weapon: ' + str(player_weapon.name).upper())
+		panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
+
 	else:
-		libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
-	str(player_weapon.name).upper())
+		#libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
+	#str(player_weapon.name).upper())
+		panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
 
 	# list some attacks out.
 	attack_list = str(player_weapon.command_list)
-	libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT, "Attacks:")
+	#libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Attacks:")
+	panel.draw_str(attack_panel_x, 3, "Attacks:", fg=attack_panel_default_color, bg=None)
 	## set colors based on weapon durability
 	#if player_weapon.durability <= 0:
 	#		libtcod.console_set_default_foreground(panel, libtcod.orange)
@@ -4029,125 +4173,152 @@ def create_GUI_panel():
 	#else: 
 	#		libtcod.console_set_default_foreground(panel, libtcod.white)
 		
-	if ATTCKUPLEFT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKUPLEFT)
-
-	if ATTCKUP in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKUP)
-
-	if ATTCKUPRIGHT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 3, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKUPRIGHT)
-
-	if ATTCKLEFT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKLEFT)
 
 
-	if ATTCKRIGHT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 4, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKRIGHT)
+	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
+	command_display_list = []
+	command_display_list.append((-1,-1,ATTCKUPLEFT))
+	command_display_list.append((0,-1,ATTCKUP))
+	command_display_list.append((1,-1,ATTCKUPRIGHT))
+	command_display_list.append((1,0,ATTCKRIGHT))
+	command_display_list.append((1,1,ATTCKDOWNRIGHT))
+	command_display_list.append((0,1,ATTCKDOWN))
+	command_display_list.append((-1,1,ATTCKDOWNLEFT))
+	command_display_list.append((-1,0,ATTCKLEFT))
 
-		
-	if ATTCKDOWNLEFT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKDOWNLEFT)
+	for(x_adjust, y_adjust, command_str) in  command_display_list:
+		panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
 
-	if ATTCKDOWN in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKDOWN)
 
-	if ATTCKDOWNRIGHT in attack_list:
-			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER,
-		ATTCKDOWNRIGHT)
-	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
+
+#	if ATTCKUPLEFT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKUPLEFT)
+#
+#	if ATTCKUP in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKUP)
+#
+#	if ATTCKUPRIGHT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKUPRIGHT)
+#
+#	if ATTCKLEFT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKLEFT)
+#
+#
+#	if ATTCKRIGHT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKRIGHT)
+#
+#		
+#	if ATTCKDOWNLEFT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKDOWNLEFT)
+#
+#	if ATTCKDOWN in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKDOWN)
+#
+#	if ATTCKDOWNRIGHT in attack_list:
+#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
+#		ATTCKDOWNRIGHT)
+#	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 
 	# Display weapon charge details.
-	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
+	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
+	panel.draw_str(int(attack_panel_x) , 6, 'Weight: ' + str(player_weapon.get_default_usage_cost() + 1), bg=None, fg=attack_panel_default_color)
+
 	#uncharged_color = libtcod.blue
 	#insufficient_charge_color = libtcod.red
 	#charge_color = libtcod.green
 	#bonus_charge_color = libtcod.darker_green
-	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,	'Charge:')
+	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Charge:')
 	#if player_weapon.current_charge < player_weapon.default_usage:
 	#	libtcod.console_set_default_foreground(panel, insufficient_charge_color)
 	#	for i in range(player_weapon.current_charge):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 	#else:
 	#	libtcod.console_set_default_foreground(panel, bonus_charge_color)
 	#	for i in range(player_weapon.current_charge - player_weapon.default_usage):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 	#	libtcod.console_set_default_foreground(panel, charge_color)
 	#	for i in range(player_weapon.current_charge - player_weapon.default_usage, player_weapon.current_charge):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 	#
 	#libtcod.console_set_default_foreground(panel, uncharged_color)
 	#for i in range(player_weapon.current_charge, player_weapon.max_charge):
-	#	libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod.BKGND_NONE, libtcod.LEFT,
+	#	libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT,
 	#'*')
 
 
 	
-	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
+	#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 
 #	if player_weapon.current_charge < player_weapon.default_usage:
 #	else:
-#	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod.BKGND_NONE, libtcod.LEFT,
+#	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,
 #	'Charge:** ' + str(player_weapon.current_charge) + '/' + str(player_weapon.max_charge) + ' (req:' + str(player_weapon.default_usage) + ')')
+
+	current_text_color = default_text_color
 	if player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > 0:
-		libtcod.console_set_default_foreground(panel, libtcod.orange)
+		#libtcod.console_set_default_foreground(panel, color_warning)
+		current_text_color = color_warning
 	elif player_weapon.durability <= 0:
-		libtcod.console_set_default_foreground(panel, libtcod.red)
-	libtcod.console_print_ex(panel, attack_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT,
-	'Durability: ' + str(player_weapon.durability))
+		#libtcod.console_set_default_foreground(panel, color_big_alert)
+		current_text_color = color_big_alert
+	#libtcod.console_print_ex(panel, attack_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
+	#'Durability: ' + str(player_weapon.durability))
+	panel.draw_str(int(attack_panel_x) , 7, 'Durability: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
+
 
 	#PLAYER PANEL STUFF
 
 	#show the player's energy stats
-	energy_color = libtcod.cyan
-	non_energy_color = libtcod.blue
-	wound_color = libtcod.red	
+	energy_color = color_energy
+	non_energy_color = color_faded_energy
+	wound_color = color_big_alert	
 #	adrenaline_color = libtcod.green
 #	non_adrenaline_color = libtcod.darker_green
 #	if player.fighter.adrenaline_mode == False:
-	libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "Energy:")
+	#libtcod.console_print_ex(panel, player_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT, "Energy:")
+	panel.draw_str(player_panel_x, 1, "Energy:", bg=None, fg=default_text_color)
 	for i in range(player.fighter.max_hp):
 		#if i < player.fighter.wounds:
 		#	libtcod.console_set_default_foreground(panel, wound_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 		#elif i < player.fighter.wounds + player.fighter.hp:			
 		#	libtcod.console_set_default_foreground(panel, energy_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 		#else: 
 		#	libtcod.console_set_default_foreground(panel, non_energy_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
 
 		if i <  player.fighter.hp:			
-			libtcod.console_set_default_foreground(panel, energy_color)
-			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+			translated_console_set_default_foreground(panel, energy_color)
+			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 		elif i < player.fighter.max_hp - player.fighter.wounds:
-			libtcod.console_set_default_foreground(panel, non_energy_color)
-			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+			translated_console_set_default_foreground(panel, non_energy_color)
+			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
 		else:
-			libtcod.console_set_default_foreground(panel, wound_color)
-			libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '\\')
+			translated_console_set_default_foreground(panel, wound_color)
+			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '\\')
 
 
 #	else:
 #		libtcod.console_set_default_foreground(panel, adrenaline_color)
-#		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT, "ENERGY:")
+#		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT, "ENERGY:")
 #		for i in range(player.fighter.max_hp):
 #			if i < player.fighter.adrenaline_level:
 #				libtcod.console_set_default_foreground(panel, adrenaline_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 #			#elif i < player.fighter.wounds + player.fighter.hp:			
 #			#	libtcod.console_set_default_foreground(panel, adrenaline_color)
-#			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 #			else: 
 #				libtcod.console_set_default_foreground(panel, non_adrenaline_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod.BKGND_NONE, libtcod.LEFT, '.')
+#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
 
 
 			
@@ -4156,71 +4327,72 @@ def create_GUI_panel():
 	#libtcod.light_red, libtcod.darker_red)
 
 	#display some sweet moves!
-	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, player_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT, "Moves:")
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '7')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '8')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod.BKGND_NONE, libtcod.CENTER, '9')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '4')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '.')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod.BKGND_NONE, libtcod.CENTER, '6')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '1')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '2')
-	libtcod.console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod.BKGND_NONE, libtcod.CENTER, '3')
+	translated_console_set_default_foreground(panel, default_text_color)
+	translated_console_print_ex(panel, player_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Moves:")
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '7')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '8')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '9')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '4')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '.')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '6')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '1')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '2')
+	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '3')
 
 
 #	#Display some stuff about jumps, woo!
 #	jump_charged_color = libtcod.orange
 #	jump_uncharged_color = libtcod.red
 #	if  len(player.fighter.jump_array) > 0:
-#		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod.BKGND_NONE, libtcod.LEFT, "Jumps:")
+#		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT, "Jumps:")
 #		for i in range(len(player.fighter.jump_array)):
 #			if player.fighter.jump_array[i] == 0:
 #				libtcod.console_set_default_foreground(panel, jump_charged_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 #			else:
 #				libtcod.console_set_default_foreground(panel, jump_uncharged_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod.BKGND_NONE, libtcod.LEFT, '*')
+#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 
 
 	#LEVEL PANEL STUFF
-	libtcod.console_set_default_foreground(panel, libtcod.white)
-	libtcod.console_print_ex(panel, level_panel_x, 1, libtcod.BKGND_NONE, libtcod.LEFT,
+	translated_console_set_default_foreground(panel, default_text_color)
+	translated_console_print_ex(panel, level_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Level:  ' + str(dungeon_level))
-	libtcod.console_print_ex(panel, level_panel_x, 2, libtcod.BKGND_NONE, libtcod.LEFT,
+	translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Time:   ' + str(game_time))
-	libtcod.console_print_ex(panel, level_panel_x, 3, libtcod.BKGND_NONE, libtcod.LEFT,
+	translated_console_print_ex(panel, level_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Alarm:  ' + str(alarm_level))
-	libtcod.console_print_ex(panel, level_panel_x, 4, libtcod.BKGND_NONE, libtcod.LEFT,
+	translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Keys:   ' + str(key_count) + '/' + str(lev_set.keys_required))
 
 
 	if favoured_by_healer:
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Favoured by ' + god_healer.name)
 
 	elif favoured_by_destroyer:
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Favoured by ' + god_destroyer.name)
 
 	elif tested_by_destroyer:
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Tested by ' + god_destroyer.name + '(' + str(destroyer_test_count) + ')')
 
 	elif favoured_by_deliverer:	# actually for the deliverer you probably never get this message, right? If the mission is to complete level quickly?
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Favoured by ' + god_deliverer.name)
 
 	elif tested_by_deliverer:
-		libtcod.console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod.BKGND_NONE, libtcod.CENTER,
+		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Tested by ' + god_deliverer.name + '(' + str(deliverer_test_count) + ')')
 
-	#display names of objects under the mouse
-	libtcod.console_set_default_foreground(panel, libtcod.light_gray)
-	libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
+	#display names of objects under the mouse  #commenting out for now!
+	#libtcod.console_set_default_foreground(panel, libtcod.light_gray)
+	#libtcod.console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_names_under_mouse())
 
 	#blit the contents of "panel" to the root console
-	libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+	#libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
+	root_console.blit(panel, 0, PANEL_Y, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0)
 
 
 # Here is where all the messages go
@@ -4228,21 +4400,22 @@ def create_message_panel():
 
 	#GUI STUFF
 	#prepare to render the GUI panel
-	libtcod.console_set_default_background(message_panel, libtcod.black)
-	libtcod.console_clear(message_panel)	
+	translated_console_set_default_background(message_panel, default_background_color)
+	translated_console_clear(message_panel)	
 	
 	#print the game messages, one line at a time
 	y = 0
 	for (line, color) in game_msgs:
-		libtcod.console_set_default_foreground(message_panel, color)
-		libtcod.console_print_ex(message_panel, 1, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
-		#libtcod.console_print_ex(message_panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, line)
+		translated_console_set_default_foreground(message_panel, color)
+		translated_console_print_ex(message_panel, 1, y, libtcod_BKGND_NONE, libtcod_LEFT, line)
+		#libtcod.console_print_ex(message_panel, MSG_X, y, libtcod_BKGND_NONE, libtcod_LEFT, line)
 		y += 1 
 
 
 	#blit the contents of "message_panel" to the root console
 	#libtcod.console_blit(message_panel, 0, 0, SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
-	libtcod.console_blit(message_panel, 0, 0, MESSAGE_PANEL_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+	# libtcod.console_blit(message_panel, 0, 0, MESSAGE_PANEL_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+	root_console.blit(message_panel, 0, 0, MESSAGE_PANEL_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0)
 
 
 def update_camera():
@@ -4372,11 +4545,11 @@ def initialise_game():
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
-	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, decider=decider_component)
+	player = Object(0, 0, '@', 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component)
 	camera = Location(player.x, player.y)
 
 	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
-	#upgrade_choice = libtcod.random_get_int(0, 0, 1)
+	#upgrade_choice = randint( 0, 1)
 	#if upgrade_choice == 0:
 	#	starting_upgrade = WallHugger()
 	#else:	
@@ -4418,34 +4591,72 @@ def initialise_game():
 	player_action = None
 	
 	#a warm welcoming message!
-	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', libtcod.cyan)
+	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', color_energy)
+
+	# TODO i'm commenting this out without replacing! may be a mistake
+	#libtcod.console_set_default_foreground(con, default_text_color)
 
 
-	libtcod.console_set_default_foreground(con, libtcod.white)
-	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+	#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 	#print('6')
 	render_all()
-	libtcod.console_flush()
+	translated_console_flush()
 
 
 
 
 #libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 
-libtcod.console_set_custom_font('arial14test2.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+
+#libtcod.console_set_custom_font('arial14test2.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+
+# tdl version
+
+#For some reason, this font choice makes all the text into alien giberish, the doors become fikkin mars symbols, and there's no player character.  (Maybe something to do with the fact that I added a custom font?)
+#libtcod.set_font('arial14x14.png', greyscale=True, altLayout=True)
+
+# If we use this font, everything looks fine but it's way too small. Also the controls do nothing and time advances at an alarming speed, but I think that's due to me commenting out other stuff elsewhere.
+#libtcod.set_font('arial10x10.png', greyscale=True, altLayout=True)
+
+# This font might be best so far... not super keen since it still looks different to what I had before, but it might grow on me.
+# It is quite easy to parse in terms of the action screen. Less readable in terms of game messages.
+# (I wonder if it's possible to change the fonts on different sub-consoles...)
+libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
 
 
-libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
+#But hang on maybe I just need to change the 'altLayout' settings to make my original file work...
+#libtcod.set_font('arial14x14.png', greyscale=True, altLayout=False)
+# Oh hey it does work! Good to have you back, custom font. But now I'm reminded that I nevergot the things to align properly, and yeah, I should probably change it anyway.
 
-con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
-panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
-message_panel = libtcod.console_new(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
-pause_menu = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-mouse = libtcod.Mouse()
-key = libtcod.Key()
 
-libtcod.sys_set_fps(LIMIT_FPS) 
+#libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
+#tdl version
+root_console = libtcod.init(SCREEN_WIDTH, SCREEN_HEIGHT, title='Roguelike Tutorial Revised')
+
+# tdl version
+con = libtcod.Console(MAP_WIDTH, MAP_HEIGHT)
+panel = libtcod.Console(SCREEN_WIDTH, PANEL_HEIGHT)
+message_panel = libtcod.Console(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
+pause_menu = libtcod.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
+#con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
+#panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
+#message_panel = libtcod.console_new(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
+#pause_menu = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+
+# cutting out mouse stuff for now, because it hasn't worked in a while.
+# may come back to it once i have everything working with tdl. but for now, it's not worth porting faulty code
+# mouse = libtcod.Mouse()
+mouse = None
+#TEMP COMMENTING OUT OH GOD
+#key = libtcod.Key()
+key = None
+
+
+#TEMP COMMENTING OUT OH GOD
+# libtcod.sys_set_fps(LIMIT_FPS) 
 
 initialise_game()
 
@@ -4459,18 +4670,20 @@ time_since_last_elevator_message = 0
 
 ready_for_next_level = False
 
+libtcod.set_fps(30)
+
 # So for future reference, this code prints the numbers 1 to 9:
 #for num in range(1,10):
 #	print str(num)
 
 
 # Main loop!
-while not libtcod.console_is_window_closed():
+while not translated_console_is_window_closed():
 
 
 	garbage_list = []	#list of things (e.g. dead bodies) to delete from objects list at the end of the loop
 
-#	libtcod.console_put_char(con, playerx, playery, ' ', libtcod.BKGND_NONE)
+#	libtcod.console_put_char(con, playerx, playery, ' ', libtcod_BKGND_NONE)
 	#for object in objects:
 	#	object.clear()
 
@@ -4480,7 +4693,25 @@ while not libtcod.console_is_window_closed():
 				object.clear()
 
 	#get player decisions and handle keys and exit game if needed
-	player_action = handle_keys()
+	
+	#trying to adapt the code from the tdl tutorial to this game. Let's see how much stuff this breaks:
+	for event in libtcod.event.get():
+		if event.type == 'KEYDOWN':
+			user_input = event
+			break
+	else:
+		user_input = None
+
+	if not user_input:
+		continue
+
+	print('key press?' + str(libtcod.get_fps()))
+
+
+
+	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+	# player_action = handle_keys()
+	player_action = handle_keys(user_input)
 	if player_action == 'pause':
 		something_changed = True
 		if game_state == 'playing':
@@ -4708,7 +4939,7 @@ while not libtcod.console_is_window_closed():
 			
 		if floor_message_found == True:
 			message('You see a message on the floor:')
-			message('\"' + floor_message_text + '\"', libtcod.cyan)
+			message('\"' + floor_message_text + '\"', color_energy)
 
 		if len(names) > 0:
 			names = ', '.join(names)
@@ -4731,11 +4962,12 @@ while not libtcod.console_is_window_closed():
 				for object in objectsArray[x][y]:
 		#for object in objects:
 					object.clear()
-		libtcod.console_set_default_foreground(con, libtcod.white)
-		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+		translated_console_set_default_foreground(con, default_text_color)
+		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+		#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 		#print('1')
 		render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 
 		#put in a pause before drawing the other stuff?
 		time.sleep(0.05)
@@ -4767,7 +4999,8 @@ while not libtcod.console_is_window_closed():
 			if ele.doors_opening == True:
 				#play a 'ding' noise if the player can see the doors opening
 				for door in ele.special_door_list:
-					if libtcod.map_is_in_fov(fov_map, door.x, door.y):
+					# if libtcod.map_is_in_fov(fov_map, door.x, door.y):
+					if fov_map.fov[door.x, door.y]:
 						player_can_see_elevator_opening = True
 
 
@@ -4834,8 +5067,9 @@ while not libtcod.console_is_window_closed():
 				#print "opening door"
 				victim.door.open()
 				# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
-				libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-		
+				# libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+				fov_map.compute_fov(player.x, player.y, fov=FOV_ALGO, radius=TORCH_RADIUS, light_walls=FOV_LIGHT_WALLS)
+
 
 
 		spotted = False
@@ -4847,7 +5081,8 @@ while not libtcod.console_is_window_closed():
 		#for object in objects:
 	#	for ob in objects:
 					if ob.alarmer is not None:
-						if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
+						#if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
+						if fov_map.fov[ob.x, ob.y]:	
 							# print('a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status))
 							ob.alarmer.update(True)
 							spotted = True
@@ -4910,11 +5145,13 @@ while not libtcod.console_is_window_closed():
 				for object in objectsArray[x][y]:
 		#for object in objects:
 					object.clear()
-		libtcod.console_set_default_foreground(con, libtcod.white)
-		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+		translated_console_set_default_foreground(con, default_text_color)
+
+		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+		# libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 		#print('2')
 		render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 		#put in a pause before drawing the other stuff?
 		time.sleep(0.05)
 
@@ -5077,7 +5314,7 @@ while not libtcod.console_is_window_closed():
 		if number_hit_by_player > 1:
 			bonus = number_hit_by_player - 1
 			player.fighter.gain_energy(bonus)
-			message("Combo! +" + str(bonus) + " energy", libtcod.cyan)
+			message("Combo! +" + str(bonus) + " energy", color_energy)
 	
 			
 
@@ -5091,10 +5328,10 @@ while not libtcod.console_is_window_closed():
 			else:
 				degredation = 1
 			if player_weapon.durability - degredation  <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > WEAPON_FAILURE_WARNING_PERIOD:
-				message("Your "  + player_weapon.name + " is close to breaking!", libtcod.orange)
+				message("Your "  + player_weapon.name + " is close to breaking!", color_warning)
 			player_weapon.durability -= degredation
 			if player_weapon.durability <= 0:
-				message("Your " + player_weapon.name + " breaks!", libtcod.red)
+				message("Your " + player_weapon.name + " breaks!", color_big_alert)
 		
 
 		# clean up stuff
@@ -5151,13 +5388,13 @@ while not libtcod.console_is_window_closed():
 							ob.color = ob.alarmer.idle_color
 						elif ob.alarmer.status == 'suspicious':
 							if ob.alarmer.prev_suspicious == False:
-								message('The ' + ob.name + ' is suspicious!', libtcod.orange)		
+								message('The ' + ob.name + ' is suspicious!', color_warning)		
 								ob.color = ob.alarmer.suspicious_color
 
 						elif ob.alarmer.status == 'raising-alarm':
 							alarm_level += ob.alarmer.alarm_value
 							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-							message('The ' + ob.name + ' sounds a loud alarm!', libtcod.red)
+							message('The ' + ob.name + ' sounds a loud alarm!', color_big_alert)
 							ob.color = ob.alarmer.alarmed_color
 						elif ob.alarmer.status == 'alarm-raised':
 							ob.color = ob.alarmer.alarmed_color	
@@ -5208,14 +5445,14 @@ while not libtcod.console_is_window_closed():
 			if total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
 				elevator_shortlist = []
 				if lev_set.level_type == 'arena':	#pick one elvator at random
-					choice =  libtcod.random_get_int(0, 0, len(elevators)-1)
+					choice =  randint( 0, len(elevators)-1)
 					elevator_shortlist.append(elevators[choice])
 				else:					# do all elevators at once
 					elevator_shortlist = elevators
 				for ele in elevator_shortlist:
 					#pick a random spawn point from those available
 	
-					num =  libtcod.random_get_int(0, 0, len(ele.spawn_points)-1)
+					num =  randint( 0, len(ele.spawn_points)-1)
 					(x,y) = ele.spawn_points[num] 
 					#for (x,y) in ele.spawn_points:
 					if not is_blocked(x, y):
@@ -5224,7 +5461,7 @@ while not libtcod.console_is_window_closed():
 						total_enemy_prob = lev_set.total_enemy_prob
 						enemy_probabilities = lev_set.enemy_probabilities
 						enemy_name = 'none'
-						num = libtcod.random_get_int(0,0, total_enemy_prob)
+						num = randint(0, total_enemy_prob)
 						for (name, prob) in enemy_probabilities:
 						#	print('hi')
 							#print('(' + name + ',' + str(prob) + ')')
@@ -5255,28 +5492,28 @@ while not libtcod.console_is_window_closed():
 		# reorder_objects()	#TODO probably put this somewhere else?
 		#print('4.5')
 		render_all()
-		libtcod.console_flush()
-	#num_monsters = libtcod.random_get_int(0, 0, max_room_monsters)
+		translated_console_flush()
+	#num_monsters = randint( 0, max_room_monsters)
 #
 
 
 	elif game_state == 'playing' and player_action == 'pickup_dialog':
 		#print('3')
 		render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 
 
 	elif game_state == 'playing' and player_action == 'jump_dialog':
 		#print('4')
 		render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 
 
 	# I think this goes here: want to draw stuff if there's a "you can't do that" message
 	elif game_state == 'playing' and player_action == 'invalid-move':
 		print('oog')
 		render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 
 
 	# I guess let's draw things once more?	
@@ -5286,11 +5523,14 @@ while not libtcod.console_is_window_closed():
 		for x in range(MAP_WIDTH):
 			for object in objectsArray[x][y]:
 				object.clear()
-	libtcod.console_set_default_foreground(con, libtcod.white)
+
+# 	TODO; I'm commenting this out without replacing it, might cause huge issues!
+#	libtcod.console_set_default_foreground(con, default_text_color)
 	
 	
 
-	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+	# libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 
 
 	if something_changed:
@@ -5309,7 +5549,7 @@ while not libtcod.console_is_window_closed():
 		else:
 			print('8' + game_state)
 			render_all()
-		libtcod.console_flush()
+		translated_console_flush()
 	
 	something_changed = False
 
