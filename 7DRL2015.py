@@ -4513,10 +4513,19 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 
 
 def mergeColors(initial_color, new_color, mix_level = 0.5):
-	rval = initial_color.r * (1- mix_level) + new_color.r * mix_level
-	gval = initial_color.g * (1- mix_level) + new_color.g * mix_level
-	bval = initial_color.b * (1- mix_level) + new_color.b * mix_level
-	return libtcod.Color(int(round(rval)), int(round(gval)), int(round(bval)))
+
+	(initial_color_r, initial_color_g, initial_color_b) = initial_color
+	(new_color_r, new_color_g, new_color_b) = new_color
+	rval = initial_color_r * (1- mix_level) + new_color_r * mix_level
+	gval = initial_color_g * (1- mix_level) + new_color_g * mix_level
+	bval = initial_color_b * (1- mix_level) + new_color_b * mix_level
+	return (int(round(rval)), int(round(gval)), int(round(bval)))
+
+
+	#rval = initial_color.r * (1- mix_level) + new_color.r * mix_level
+	#gval = initial_color.g * (1- mix_level) + new_color.g * mix_level
+	#bval = initial_color.b * (1- mix_level) + new_color.b * mix_level
+	#return libtcod.Color(int(round(rval)), int(round(gval)), int(round(bval)))
 
 
 
