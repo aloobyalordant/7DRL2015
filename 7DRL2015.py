@@ -2531,6 +2531,7 @@ def get_names_under_mouse():
 def handle_keys(user_input_event):
 	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center, something_changed
 
+
 	# key = translated_console_wait_for_keypress(True)
 	key = user_input_event.key
 	veekay = key	# key.vk
@@ -3474,10 +3475,13 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 	if attacker is not None:
 		if attacker.fighter:
 			temp_color = attacker.fighter.attack_color
-	for (i,j,val) in abstract_attack_data:
-		# adjust attack for position, and also extra strength from the fighter.
-		temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker))
-		temp_attack_list.append(temp_attack)
+	# not having this condition leads to the wierd event handling issues leaf to game-crashing bugs.
+	# Let's add this condition so we can investigate the wierd handling issues a bit, and/or find another game-crashing bug
+	if abstract_attack_data is not None:	
+		for (i,j,val) in abstract_attack_data:
+			# adjust attack for position, and also extra strength from the fighter.
+			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker))
+			temp_attack_list.append(temp_attack)
 	return temp_attack_list
 
 	
@@ -4676,6 +4680,7 @@ libtcod.set_fps(30)
 #for num in range(1,10):
 #	print str(num)
 
+internal_loop_count = 0
 
 # Main loop!
 while not translated_console_is_window_closed():
@@ -4695,22 +4700,69 @@ while not translated_console_is_window_closed():
 	#get player decisions and handle keys and exit game if needed
 	
 	#trying to adapt the code from the tdl tutorial to this game. Let's see how much stuff this breaks:
-	for event in libtcod.event.get():
-		if event.type == 'KEYDOWN':
-			user_input = event
+
+	user_input = None
+	# ok so adding the line below seems to sort out the bugs when jumping or attacking. But we still have the problem that if you hold down a direction for too long the player character will start moving in that direction for several frames.
+	# there's clearly some issue of a... input memory not being cleared, or something. But that wouldn't explain why you get actual game crashing bugs. (i mean pressing the same attack button does not crash the game...)
+	#libtcod.event.wait(timeout = 0.005, flush = True)
+	
+	#what if we... do the wait thing instead?
+	#user_input = libtcod.event.key_wait()
+	#nope
+
+	#temp_list = libtcod.event.get()
+	
+	#for event in temp_list: #libtcod.event.get():
+	#	#print('heyo ' + str(event))
+	#	if event.type == 'KEYDOWN' and user_input == None:
+	#		print('HALLO ' + str(event))
+	#		user_input = event
+	#		break
+	#else:
+	#	user_input = None
+
+
+
+	# Well hello.
+	# This  hack below is to deal with the fact that I could never figure out how to clear the event queue properly.
+	# Which meant that besides some game-crashing bugs (whch I think are mostly fixed, and more to do with trying to 
+	# parse 'text' events improperly), the character would keep moving for too long if you held the key down for a bit,
+	# because the game was working through the backlog of 'keydown' events.
+	# So now what we do is just manually get the events out, until there's none left.
+	# Probably inefficient, and almost certainly not how I was meant to do it. But the other things I tried didn't work.
+	
+	while True:
+		for temp_event in libtcod.event.get():
+			event = temp_event
+			if event.type == 'KEYDOWN' and user_input == None:
+				# for now we just care about non-TEXT events I think. But later we might care about text events
+				# (e.g. for handling menu choices? I unno.)
+				if event.type != 'TEXT':
+					print('HALLO ' + str(event))
+					user_input = event
+		
+		if user_input is not None:
 			break
-	else:
-		user_input = None
 
-	if not user_input:
-		continue
 
-	print('key press?' + str(libtcod.get_fps()))
+
+	#if not user_input:
+	#	continue
+
+	#testing this out to see if stuff works.
+	#it does not
+	# libtcod.event.wait(timeout = 0.05, flush = True)
+
+	print('internal loop count = ' + str(internal_loop_count) +  ', game_time = ' + str(game_time) + str(user_input))
+	internal_loop_count += 1
+
+	#print('key press?' + str(game_time)) # str(libtcod.get_fps()))
 
 
 
 	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
 	# player_action = handle_keys()
+	#print('handling ' + str(user_input))
 	player_action = handle_keys(user_input)
 	if player_action == 'pause':
 		something_changed = True
@@ -5552,6 +5604,7 @@ while not translated_console_is_window_closed():
 		translated_console_flush()
 	
 	something_changed = False
+
 
 
 
