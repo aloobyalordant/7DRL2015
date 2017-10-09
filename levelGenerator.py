@@ -375,13 +375,14 @@ class Level_Generator:
 			for i in range((horiz_upper_bound - horiz_lower_bound)*(vert_upper_bound- vert_lower_bound)/30):
 			#for i in range(50):
 				#choose random spot to place a block
-				x = randint(new_room.x1+1, new_room.x2-1)
-				y = randint(new_room.y1+1, new_room.y2-1)
+				if new_room.x1 < new_room.x2 - 1 and new_room.y1 < new_room.y2 - 1:
+					x = randint(new_room.x1+1, new_room.x2-1)
+					y = randint(new_room.y1+1, new_room.y2-1)
 		
-				#only place it if the tile is not already blocked
-				if not self.is_occupied(x, y, map, object_data):				
-					map[x][y].blocked = True
-					map[x][y].block_sight = True
+					#only place it if the tile is not already blocked
+					if not self.is_occupied(x, y, map, object_data):				
+						map[x][y].blocked = True
+						map[x][y].block_sight = True
 	
 	
 
@@ -719,11 +720,15 @@ class Level_Generator:
 		num_monsters = randint(0, max_room_monsters)
 		
 
+		print('x1 ' + str(room.x1) + ', x2 ' + str(room.x2) + ',y1 ' +  str(room.y1) + ',y2 ' + str(room.y2) + ',)')
+
 		for i in range(num_monsters):
 		#for i in range(50):
 			#choose random spot for this monster
-			x = randint(room.x1+1, room.x2-1)
-			y = randint(room.y1+1, room.y2-1)
+			x = randint(room.x1, room.x2)
+			y = randint(room.y1, room.y2)
+			# x = randint(room.x1+1, room.x2-1)
+			# y = randint(room.y1+1, room.y2-1)
 	
 			#only place it if the tile is not blocked
 			if not self.is_occupied(x, y, map, object_data):
@@ -751,16 +756,20 @@ class Level_Generator:
 		if dungeon_level == 0:
 			num = randint(0, 2)
 			if num == 0:
-				x = randint(room.x1+1, room.x2-1)
-				y = randint(room.y1+1, room.y2-1)
+				x = randint(room.x1, room.x2)
+				y = randint(room.y1, room.y2)
+			#	x = randint(room.x1+1, room.x2-1)
+			#	y = randint(room.y1+1, room.y2-1)
 				#new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True)
 				#drop_weapon(new_weapon)
 				#objects.append(new_weapon)
 				#new_weapon.send_to_back()
 				object_data.append(Object_Datum(x,y,'weapon', 'sword'))
 			elif num == 1:
-				x = randint(room.x1+1, room.x2-1)
-				y = randint(room.y1+1, room.y2-1)
+				x = randint(room.x1, room.x2)
+				y = randint(room.y1, room.y2)
+			#	x = randint(room.x1+1, room.x2-1)
+			#	y = randint(room.y1+1, room.y2-1)
 				#new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True)
 				#drop_weapon(new_weapon)
 				#objects.append(new_weapon)
@@ -829,9 +838,10 @@ class Level_Generator:
 							object_data.append(Object_Datum(x,y, 'water'))
 
 			# Let's also plant plants! In every room, for now.
-			x = randint(room.x1+1, room.x2-1)
-			y = randint(room.y1+1, room.y2-1)
-			object_data.append(Object_Datum(x,y,'plant', 'tulip'))
+			if room.x1 < room.x2 -1 and room.y1 < room.y2 - 1:
+				x = randint(room.x1+1, room.x2-1)
+				y = randint(room.y1+1, room.y2-1)
+				object_data.append(Object_Datum(x,y,'plant', 'tulip'))
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.
 	def decorate_room(self, room, lev_set, map, object_data, dungeon_level,symbol = '~'):

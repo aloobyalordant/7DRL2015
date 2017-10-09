@@ -3056,10 +3056,10 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'tridentor':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = libtcod.blue, faded_attack_color = libtcod.dark_blue)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
 		ai_component = Tridentor_AI(weapon = Weapon_Trident(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'T', 'tridentor', libtcod.blue, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 
@@ -4151,7 +4151,7 @@ def create_GUI_panel():
 	elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
 		attack_panel_default_color = color_warning
 	elif player_weapon.current_charge < player_weapon.default_usage:
-		attack_panel_default_color = libtcod.blue
+		attack_panel_default_color = color_tridentor
 
 
 	#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
