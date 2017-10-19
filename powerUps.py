@@ -1,4 +1,8 @@
-import libtcodpy as libtcod
+import tdl as libtcod
+#import libtcodpy as libtcod
+import random
+from random import randint
+
 
 class PowerUp:
 
@@ -303,7 +307,8 @@ def Get_Random_Upgrade():
 	upgrade_list.append(Leapfrog())
 
 	# return a random upgrade from list
-	choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
+	# choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
+	choice = randint( 0, len(upgrade_list)-1)
 	return upgrade_list[choice]
 	#return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
 

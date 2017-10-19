@@ -4619,13 +4619,13 @@ def initialise_game():
 
 
 
-#libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+#libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod	.FONT_LAYOUT_TCOD)
 
 
 #libtcod.console_set_custom_font('arial14test2.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 
 # tdl version
-
+	
 #For some reason, this font choice makes all the text into alien giberish, the doors become fikkin mars symbols, and there's no player character.  (Maybe something to do with the fact that I added a custom font?)
 #libtcod.set_font('arial14x14.png', greyscale=True, altLayout=True)
 
@@ -4635,8 +4635,8 @@ def initialise_game():
 # This font might be best so far... not super keen since it still looks different to what I had before, but it might grow on me.
 # It is quite easy to parse in terms of the action screen. Less readable in terms of game messages.
 # (I wonder if it's possible to change the fonts on different sub-consoles...)
-libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
-
+# libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
+font_choice = 'terminal16x16.png'
 
 #But hang on maybe I just need to change the 'altLayout' settings to make my original file work...
 #libtcod.set_font('arial14x14.png', greyscale=True, altLayout=False)
@@ -4644,9 +4644,23 @@ libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
 
 
 
+# Trying now to specfiy the font location in such a way that it can always be found, no matter where you call 7DRL2015.py from.
+# Which is trickier than you might think.
+
+import sys, os
+
+print ('sys.argv[0] =' + sys.argv[0]) 
+pathname = os.path.dirname(sys.argv[0])       
+print ('path = ' + pathname)
+fontpath = os.path.join(pathname,  font_choice)
+print ('font file = ' + fontpath)
+libtcod.set_font(fontpath, greyscale=True, altLayout=False)
+
+
+
 #libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'python/libtcod tutorial', False)
 #tdl version
-root_console = libtcod.init(SCREEN_WIDTH, SCREEN_HEIGHT, title='Roguelike Tutorial Revised')
+root_console = libtcod.init(SCREEN_WIDTH, SCREEN_HEIGHT, title='Sword Dancer')
 
 # tdl version
 con = libtcod.Console(MAP_WIDTH, MAP_HEIGHT)

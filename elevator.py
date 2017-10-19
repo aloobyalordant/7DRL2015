@@ -1,6 +1,54 @@
 #PROBABLY NOT IN USE AT THE MOMENT BECAUSE I CAN'T GET THE HANG OF IMPORTING CODE :(
 
-import libtcodpy as libtcod
+import tdl as libtcod
+#import libtcodpy as libtcod
+
+
+# COLORS. LET'S TRY AND PUT ALL THE COLORS HERE
+
+# Environment colors (walls +floors, altars, visible or not)
+color_dark_wall = (100,100,100)		#(0, 0, 100)
+color_light_wall = (130, 110, 50)
+color_dark_ground = (150,150,150)		#(50, 50, 150)
+color_light_ground = (200, 180, 50)
+color_fog_of_war = (0,0,0)			#libtcod.black
+default_altar_color = color_light_wall
+default_message_color = color_light_wall
+default_decoration_color = (250,230,50)		#(165,145,50)
+water_background_color = (100,100,250)
+water_foreground_color = (25,25,250)
+blood_background_color = (200,0,0)
+blood_foreground_color = (150,0,0)
+
+# collectiable e.g. weapons and plants and keys
+default_flower_color = 	(50,150,0)
+default_weapon_color = (50,50,50) #libtcod.grey
+
+
+# enemies, including player
+PLAYER_COLOR = (255, 255, 255)
+#color_sneaky_enemy
+#color_shortrange_enemy
+#color_midrange_enemy
+#color_longrange_enemy
+#color_big_boss
+
+color_swordsman = (0,0,191)		#libtcod.dark_blue
+color_boman = 	(0,128,0)		#libtcod.darker_green
+color_rook = 	(0,0,128)		#libtcod.darker_blue
+color_axe_maniac = (128,0,0)		#libtcod.darker_red
+color_tridentor = (0,0, 255)		#libtcod.blue
+color_ninja = 	(0,0,0)		#libtcod.black
+color_wizard = (95, 0, 128)			#libtcod.darker_purple
+
+# text colors
+default_background_color = (0,0,0)
+default_text_color = (255,255,255)
+color_energy = (0,255,255)
+color_faded_energy = (0,0,255)
+color_warning = (255,127,0)
+color_big_alert = (255,0,0)
+
 #from objectClass import Object
 class Elevator:
 

@@ -1,4 +1,5 @@
-import libtcodpy as libtcod
+import tdl as libtcod
+#import libtcodpy as libtcod
 import math
 import textwrap
 
