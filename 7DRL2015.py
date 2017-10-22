@@ -2529,7 +2529,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, already_healed_this_level, TEMP_player_previous_center, something_changed
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -2686,11 +2686,14 @@ def handle_keys(user_input_event):
 				plants_found = []
 				weapon_found = False
 				keys_found = []
+				favours_found = []
 				for object in objectsArray[player.x][player.y]:
 					if  object.weapon == True: 
 						weapons_found.append(object)
 					if object.name == 'key': 
 						keys_found.append(object)
+					if object.name == 'favour token': 
+						favours_found.append(object)
 					if object.plant is not None:
 						plants_found.append(object)
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
@@ -2699,6 +2702,12 @@ def handle_keys(user_input_event):
 					key_count = key_count + len(keys_found)
 					for ki in keys_found:
 						objectsArray[player.x][player.y].remove(ki)	
+				#similarly, favours take priority over weapons but after keys.
+				elif len(favours_found) > 0:
+					message('You humbly accept this favour.')
+					currency_count = currency_count + len(favours_found)
+					for fa in favours_found:
+						objectsArray[player.x][player.y].remove(fa)	
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
 				elif len(weapons_found) == 1:
 					new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
@@ -3119,7 +3128,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
+	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
 
 	lev_gen = Level_Generator()
 
@@ -3531,6 +3540,12 @@ def monster_death(monster):
 			alarm_level = 0
 			message('A sudden silence descends as the alarms stop.')
 
+		# Temp hack, probably: if thismonster is an alarmer (i.e. a security system), make it drop currency?
+
+		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True)
+		objectsArray[monster.x][monster.y].append(favour_object) 
+		reorder_objects(monster.x, monster.y)
+
 
 	else:	
 		message(monster.name.capitalize() + ' is dead!', color_warning)
@@ -3565,7 +3580,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, spawn_timer,  already_healed_this_level
+	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level
 
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
@@ -3813,6 +3828,7 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 	dungeon_level = 0
 	alarm_level = 1
 	key_count = 0
+	currency_count = 0
 	make_map()  #create a fresh new level!
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
@@ -4368,6 +4384,8 @@ def create_GUI_panel():
 	'Alarm:  ' + str(alarm_level))
 	translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Keys:   ' + str(key_count) + '/' + str(lev_set.keys_required))
+	translated_console_print_ex(panel, level_panel_x, 5, libtcod_BKGND_NONE, libtcod_LEFT,
+	'Favour: ' + str(currency_count))
 
 
 	if favoured_by_healer:
@@ -4455,6 +4473,14 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 		if ob.name == 'key':
 			ob.send_to_back()
 		index = index + 1 
+	#step 1.5: move all favour tokens to back
+	index = 0
+	while index < total: 				# >= 0:	
+		#print str(objects[index].name)
+		ob = objectsArray[x][y][index]
+		if ob.name == 'favour token':
+			ob.send_to_back()
+		index = index + 1 
 	#step 2: move all weapons to back
 	index = 0
 	while index < total: 				# >= 0:	
@@ -4530,7 +4556,7 @@ def mergeColors(initial_color, new_color, mix_level = 0.5):
 
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -4552,6 +4578,7 @@ def initialise_game():
 	tested_by_deliverer = False
 	favoured_by_deliverer = False
 	already_healed_this_level = False
+	currency_count = 2
 	game_time = 1
 	
 	#create object representing the player
