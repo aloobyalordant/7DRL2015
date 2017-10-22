@@ -6,11 +6,12 @@ from random import randint
 
 class PowerUp:
 
-	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims."):
+	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", cost = 3):
 #, updates_on_player_attack_choice = False, affects_strength_at_attack_choice = False):
 		self.name = name
 		self.tech_description = tech_description  		# short description of what item does
 		self.verbose_description= verbose_description  		# a wordier description that someone in the game world might give
+		self.cost = cost 					# default cost for this upgrade (currency to be determined)
 		# self.updates_on_player_attack_choice = updates_on_player_attack_choice
 		# self.affects_strength_at_attack_choice = affects_strength_at_attack_choice
 		self.activated = False		# generally this is a thing that determines whether to grant a bonus. Won't always be applicable
