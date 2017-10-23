@@ -396,12 +396,21 @@ class Rect:
 
 
 class Shrine:
-	def __init__(self, god):
+	def __init__(self, god, cost = None):
 		self.god = god
 		self.visited = False
+		self.upgrade = Get_Random_Upgrade()
+		if cost is not None:
+			self.cost = cost
+		else:
+			self.cost = self.upgrade.cost
 	
 	def visit(self):
 		self.visited = True
+
+	# this will get more complicated later...
+	def get_cost(self):
+		return self.cost
 
 
 class Floor_Message:
@@ -2529,7 +2538,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -2615,6 +2624,26 @@ def handle_keys(user_input_event):
 
 		else:
 			return 'pickup_dialog'
+
+
+	elif player_action == 'upgrade shop dialog':
+
+		if key_char == 'y':	# player has decided to buy an upgrade...
+			upgrade_cost = current_shrine.get_cost()
+			if currency_count >= upgrade_cost:	#then let them get the upgrade
+				something_changed = True
+				currency_count = currency_count - upgrade_cost
+				upgrade_array.append(current_shrine.upgrade)
+				message('Yaaay '+ current_shrine.upgrade.name +'!', color_energy)
+				current_shrine.upgrade = None
+			else:
+				something_changed = True
+				message('You do not have enough favour!', color_big_alert)
+		elif key_char == 'n':
+			something_changed = True
+			message('You feel good about your decision to abstain from ' + current_shrine.upgrade.name + '. But in years to come, to start to wonder what could have been.')
+		else:
+			message('Never mind??')
 
 	elif player_action == 'jump_dialog':
 		#key_char = chr(key.c)
@@ -2784,37 +2813,54 @@ def handle_keys(user_input_event):
 						current_god = current_shrine.god
 						message('You close your eyes and focus your mind.')
 						current_shrine.visit()
-						message('You hear the voice of ' + current_god.name + ' whisper to you...')
-						message(current_god.first_prayer_message, current_god.color)
-						#message('\"Be at peace, my child. I watch over all who come to me with faith in their hearts.\"', libtcod.orange)
 
-						favoured_by_healer = False
-						favoured_by_destroyer = False
-						tested_by_destroyer = False
-						favoured_by_deliverer = False
-						tested_by_deliverer = False
-						if current_god.god_type.type == 'healer':
-							if already_healed_this_level == False:
-								if player.fighter.hp < player.fighter.max_hp:
-									already_healed_this_level = True
-									#player.fighter.heal(3)
-									player.fighter.cure_wounds(1)
-									message("You feel a little better")
-									player.fighter.fully_heal()
-							else:
-								message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', color_warning)
-							favoured_by_healer = True
-						elif current_god.god_type.type == 'destroyer':
-							tested_by_destroyer = True
-							#destroyer_test_count = 10
-							destroyer_test_count = lev_set.max_monsters
-						elif current_god.god_type.type == 'deliverer':
-							# do a test: did we get to the shrine quickly enough?
-							if (game_time - time_level_started) > 190:
-								message('\"Hang on a sec, actually you already took too long to get here. Sorry!\"', color_warning)
-							else:
-								tested_by_deliverer = True
-								deliverer_test_count = 200 - (game_time-time_level_started)		#TODO put these kind of values in gods.py
+						if current_shrine.upgrade is not None:
+							message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
+							message(message_string, color_warning)
+							return 'upgrade shop dialog'
+						else:
+							message('... but nothing happens.')
+						#handle_keys()	# why do I get 
+
+						# Commenting out this deity interaction stuff now... very sad
+
+		#				message('You hear the voice of ' + current_god.name + ' whisper to you...')
+		#				message(current_god.first_prayer_message, current_god.color)
+		#				#message('\"Be at peace, my child. I watch over all who come to me with faith in their hearts.\"', libtcod.orange)
+
+		#				favoured_by_healer = False
+		#				favoured_by_destroyer = False
+		#				tested_by_destroyer = False
+		#				favoured_by_deliverer = False
+		#				tested_by_deliverer = False
+		#				if current_god.god_type.type == 'healer':
+		#					if already_healed_this_level == False:
+		#						if player.fighter.hp < player.fighter.max_hp:
+		#							already_healed_this_level = True
+		#							#player.fighter.heal(3)
+		#							player.fighter.cure_wounds(1)
+		#							message("You feel a little better")
+		#							player.fighter.fully_heal()
+		#					else:
+		#						message('\"Sadly I can do no more for you at this moment. But hold on to your faith, and it shall be well rewarded.\"', color_warning)
+		#					favoured_by_healer = True
+		#				elif current_god.god_type.type == 'destroyer':
+		#					tested_by_destroyer = True
+		#					#destroyer_test_count = 10
+		#					destroyer_test_count = lev_set.max_monsters
+		#				elif current_god.god_type.type == 'deliverer':
+		#					# do a test: did we get to the shrine quickly enough?
+		#					if (game_time - time_level_started) > 190:
+		#						message('\"Hang on a sec, actually you already took too long to get here. Sorry!\"', color_warning)
+		#					else:
+		#						tested_by_deliverer = True
+		#						deliverer_test_count = 200 - (game_time-time_level_started)		#TODO put these kind of values in gods.py
+
+
+
+
+
+
 					else:
 						message('There is no shrine here.')
 						return 'invalid-move'
@@ -3593,10 +3639,10 @@ def next_level():
 
 
 	# give player ane wrandom upgrade?
-	new_upgrade = Get_Random_Upgrade()
-	upgrade_array.append(new_upgrade)
+	#new_upgrade = Get_Random_Upgrade()
+	#upgrade_array.append(new_upgrade)
 
-	message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
+	#message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
 
 
 	dungeon_level += 1
@@ -4823,7 +4869,7 @@ while not translated_console_is_window_closed():
 	#	break
 
 	# Game things happen woo!
-	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'jump_dialog' :
+	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'upgrade shop dialog' and player_action != 'jump_dialog' :
 		
 		
 		game_time += 1
@@ -5599,7 +5645,7 @@ while not translated_console_is_window_closed():
 #
 
 
-	elif game_state == 'playing' and player_action == 'pickup_dialog':
+	elif game_state == 'playing' and player_action == 'pickup_dialog' or player_action == 'upgrade shop dialog':
 		#print('3')
 		render_all()
 		translated_console_flush()
