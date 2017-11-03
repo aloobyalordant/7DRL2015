@@ -1,5 +1,7 @@
 import tdl as libtcod
 #import libtcodpy as libtcod
+import random
+from random import randint
 
 #Controls
 ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
@@ -1814,7 +1816,8 @@ class Weapon_Nunchuck:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				#for (com, data, usage) in self.command_items:
-				choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
+				#choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
+				choice = randint(0, len(self.command_items)-1)
 				(com, data, usage) = self.command_items[choice]
 				if usage <= self.current_charge and self.durability > 0:
 					self.current_charge = self.current_charge - usage
@@ -1826,7 +1829,8 @@ class Weapon_Nunchuck:
 	def do_energy_attack(self, command):
 		for (com, data, usage) in self.command_items:
 			if com == command:
-				choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
+				#choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
+				choice = randint(0, 0, len(self.command_items)-1)
 				(com, data, usage) = self.command_items[choice]
 				if self.durability > 0:
 					self.just_attacked = True

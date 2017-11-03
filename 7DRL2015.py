@@ -110,49 +110,64 @@ TORCH_RADIUS = 50 #20
 max_nav_data_loops = 1
 
 # COLORS. LET'S TRY AND PUT ALL THE COLORS HERE
+val_player = 255
+val_seen_floor = 185
+val_unseen_floor = 170
+val_unseen_wall = 130
+val_seen_wall = 100
+val_enemies = 50
+val_fog_of_war = 0
+
+v_p = val_player
+vsf = val_seen_floor
+vuf = val_unseen_floor
+vuw = val_unseen_wall
+vsw = val_seen_wall
+v_e = val_enemies
+vfw = val_fog_of_war
 
 # Environment colors (walls +floors, altars, visible or not)
-color_dark_wall = (100,100,100)		#(0, 0, 100)
-color_light_wall = (130, 110, 50)
-color_dark_ground = (150,150,150)		#(50, 50, 150)
-color_light_ground = (200, 180, 50)
-color_fog_of_war = (0,0,0)			#libtcod.black
+color_dark_wall = 	(vuw,vuw,vuw)	#	(100,100,100)		#(0, 0, 100)
+color_light_wall = 	(vsw,vsw,vsw)	#	(130, 110, 50)
+color_dark_ground = 	(vuf,vuf,vuf)	#	(150,150,150)		#(50, 50, 150)
+color_light_ground = 	(vsf,vsf,vsf)	#	(200, 180, 50)
+color_fog_of_war = 	(vfw,vfw,vfw)	#	(0,0,0)			#libtcod.black
 default_altar_color = color_light_wall
 default_message_color = color_light_wall
-default_decoration_color = (250,230,50)		#(165,145,50)
-water_background_color = (100,100,250)
-water_foreground_color = (25,25,250)
-blood_background_color = (200,0,0)
-blood_foreground_color = (150,0,0)
+default_decoration_color = 	(vuw,vuw,vuw)	#	(250,230,50)		#(165,145,50)
+water_background_color = 	(vuf,vuf,vuf)	#	(100,100,250)
+water_foreground_color = 	(vsw,vsw,vsw)	#	(25,25,250)
+blood_background_color = 	(vuf,vuf,vuf)	#	(200,0,0)
+blood_foreground_color = 	(vsw,vsw,vsw)	#	(150,0,0)
 
 # collectiable e.g. weapons and plants and keys
-default_flower_color = 	(50,150,0)
-default_weapon_color = (50,50,50) #libtcod.grey
+default_flower_color = 	(vsw,vsw,vsw)	#(50,150,0)
+default_weapon_color = (vsw,vsw,vsw)	#(50,50,50) #libtcod.grey
 
 
 # enemies, including player
-PLAYER_COLOR = (255, 255, 255)
+PLAYER_COLOR = (v_p,v_p,v_p)	#(255, 255, 255)
 #color_sneaky_enemy
 #color_shortrange_enemy
 #color_midrange_enemy
 #color_longrange_enemy
 #color_big_boss
 
-color_swordsman = (0,0,191)		#libtcod.dark_blue
-color_boman = 	(0,128,0)		#libtcod.darker_green
-color_rook = 	(0,0,128)		#libtcod.darker_blue
-color_axe_maniac = (128,0,0)		#libtcod.darker_red
-color_tridentor = (0,0, 255)		#libtcod.blue
-color_ninja = 	(0,0,0)		#libtcod.black
-color_wizard = (95, 0, 128)			#libtcod.darker_purple
+color_swordsman = 	(v_e,v_e,v_e)	#	(0,0,191)		#libtcod.dark_blue
+color_boman = 		(v_e,v_e,v_e)	#	(0,128,0)		#libtcod.darker_green
+color_rook = 		(v_e,v_e,v_e)	#	(0,0,128)		#libtcod.darker_blue
+color_axe_maniac =	(v_e,v_e,v_e)	#	 (128,0,0)		#libtcod.darker_red
+color_tridentor = 	(v_e,v_e,v_e)	#	(0,0, 255)		#libtcod.blue
+color_ninja = 		(v_e,v_e,v_e)	#	(0,0,0)		#libtcod.black
+color_wizard = 		(v_e,v_e,v_e)	#	(95, 0, 128)			#libtcod.darker_purple
 
 # text colors
-default_background_color = (0,0,0)
-default_text_color = (255,255,255)
-color_energy = (0,255,255)
-color_faded_energy = (0,0,255)
-color_warning = (255,127,0)
-color_big_alert = (255,0,0)
+default_background_color = 	(vfw,vfw,vfw)	#(0,0,0)
+default_text_color = 		(vsf,vsf,vsf)	#(255,255,255)
+color_energy = 			(v_p,v_p,v_p)	#(0,255,255)
+color_faded_energy = 		(vsf,vsf,vsf)	#	(0,0,255)
+color_warning = 		(v_p,v_p,v_p)	#	(255,127,0)
+color_big_alert = 		(v_p,v_p,v_p)	#(255,0,0)
 
 
 
@@ -404,6 +419,7 @@ class Shrine:
 			self.cost = cost
 		else:
 			self.cost = self.upgrade.cost
+		# list of possible visions for the deity?
 	
 	def visit(self):
 		self.visited = True
@@ -2815,6 +2831,11 @@ def handle_keys(user_input_event):
 						current_shrine.visit()
 
 						if current_shrine.upgrade is not None:
+							message('A small god appears before you.', color_warning)
+							message_string = '\"For a small display of faith, I will grant you the boon of ' + current_shrine.upgrade.name +'!\"'
+							message(message_string, color_energy)
+							message_string = '\"' + current_shrine.upgrade.verbose_description +'\"'
+							message(message_string, color_energy)
 							message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
 							message(message_string, color_warning)
 							return 'upgrade shop dialog'
@@ -3286,8 +3307,8 @@ def make_map():
 			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
 			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'plant':
-			flower_part = Flower(flower_type = od.info)
-			new_plant = Object(od.x, od.y, 'o', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
+			flower_part = Flower(flower_type = od.info, state = 'blooming')
+			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
 			objectsArray[od.x][od.y].append(new_plant)
 		elif od.name == 'message':
 			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))

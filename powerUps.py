@@ -296,6 +296,15 @@ class Leapfrog(PowerUp):
 			self.consumed = True
 
 
+#TODO
+# Pick up objects from further away... probably the code for this actually has to be in the main file.
+class FarReaching(PowerUp):
+	
+	def __init__(self):
+		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.")
+#
+
+
 def Get_Random_Upgrade():
 	# create list of possible upgrades
 	upgrade_list = []
@@ -306,6 +315,7 @@ def Get_Random_Upgrade():
 	upgrade_list.append(PersonalSpace())
 	upgrade_list.append(Perfectionist())
 	upgrade_list.append(Leapfrog())
+	upgrade_list.append(FarReaching())
 
 	# return a random upgrade from list
 	# choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
