@@ -5,12 +5,14 @@ import time
 import math
 import textwrap
 import random
+import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
 from random import randint
 from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
 from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade
+from saveDataHandler import SaveDataHandler #, SaveDatum
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -62,7 +64,7 @@ JUMP = 'r'
 
 
 # and now here are some  3-character forms of these string names, to make AI code more readable.
-# it's gonna use QWERTY-specific terms (like aQa for ATTCKUPLEFT), just because that makes 
+# it's gonna use QWERTY-specific terms (like oQo for ATTCKUPLEFT), just because that makes 
 # editing in these terms easier. sorry about that. when it comes to writing AI movement/ attack patterns,
 # you would probably benefit from looking at a QWERTY keyboard.
 oQo = ATTCKUPLEFT
@@ -111,9 +113,9 @@ max_nav_data_loops = 1
 
 # COLORS. LET'S TRY AND PUT ALL THE COLORS HERE
 val_player = 255
-val_seen_floor = 185
-val_unseen_floor = 170
-val_unseen_wall = 130
+val_seen_floor = 160
+val_unseen_floor = 140
+val_unseen_wall = 90
 val_seen_wall = 100
 val_enemies = 50
 val_fog_of_war = 0
@@ -3649,6 +3651,10 @@ def monster_death(monster):
 def next_level():
 	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level
 
+	# doing some test saving
+	save_game()
+
+
 	#Go to the end screen if you just beat the final level woo!
 	if lev_set.final_level is True:
 		beat_game()	
@@ -3729,7 +3735,7 @@ def next_level():
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 	enemy_spawn_rate = lev_set.enemy_spawn_rate
-	spawn_timer = int(enemy_spawn_rate/alarm_level)
+	spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
 
 	#for ele in elevators:			#open the doors when the level starts?
 	#	ele.set_doors_open(True)
@@ -3738,6 +3744,24 @@ def next_level():
 	#current_big_message = "As you ascend the stairs, you inwardly breathe a sigh of relief. The trials of the floor below you are now in the past, but what dangers lie up ahead? Your enemies only seem to be getting more deadly the closer you get to your nemesis. You think back to the wise words of your mentor: \"Stick 'em with the pointy end.\""
 
 	#game_state  = 'big message'
+
+
+# Figure out how often enemies should spawn, based on overall rate for this floor, and the alarm level.
+# Originally was just one divided by the other; now it's going to be something a bit more tierd, hopefully?
+def decide_spawn_time(enemy_spawn_rate,alarm_level):
+
+	# spawn very rarely (i mean, ideally not at all but whatevs) if alarm level is 0.
+	if alarm_level == 0:
+		return 100 * enemy_spawn_rate
+	elif alarm_level <= 2:
+		return 2*enemy_spawn_rate
+	elif alarm_level <= 6:
+		return enemy_spawn_rate
+	else:
+		return int(4*enemy_spawn_rate/alarm_level)
+
+
+
 
 def beat_game():
 	global dungeon_level, objectsArray, game_state, current_big_message
@@ -3942,7 +3966,7 @@ def message(new_msg, color = default_text_color):
 		game_msgs.append( (line, color) )
 
 def pause_screen():
-
+	global test_save_message, gameSaveDataHandler, play_count
 
 	# print the pause screen I guess 
 	translated_console_set_default_background(pause_menu, default_background_color)
@@ -3950,7 +3974,11 @@ def pause_screen():
 	translated_console_set_default_foreground(pause_menu, default_text_color)
 	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod_BKGND_NONE, libtcod_CENTER,
 	'The game is paused (press Esc to unpause or Q to quit)')
-
+	#translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
+	#test_save_message)
+	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
+	"This is play number" + str(play_count))
+	
 	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
 	'----------------------')
 	current_line = 6
@@ -4621,11 +4649,50 @@ def mergeColors(initial_color, new_color, mix_level = 0.5):
 	#return libtcod.Color(int(round(rval)), int(round(gval)), int(round(bval)))
 
 
+def save_game():	
+	global gameSaveDataHandler, play_count
+	with shelve.open('savegame.dat', 'n') as data_file:		
+		data_file['test_string'] = "hello I'm a test string"
+
+#	file = open("testfile.txt","w") 
+#
+#	file.write("Hello World\n") 
+#	file.write("This is our new text file\n") 
+#	file.write("and this is another line.\n") 
+#	file.write("Why? Because we can.\n") 
+#
+#	file.close() 
+
+	play_count = play_count + 1
+	gameSaveDataHandler.updateTestFileDataValue("FLD_PLAY_COUNT", play_count)
+	gameSaveDataHandler.saveTestFileData()
+	gameSaveDataHandler.saveControlData()
+
+def load_game():
+	global gameSaveDataHandler, play_count
+	global test_save_message
+	if not os.path.isfile('savegame.dat'):		#may have to add .db when building with cxfreeze, because reasons?
+		test_save_message = "woops, file not fou-ound!"
+	else:	
+		with shelve.open('savegame.dat', 'r') as data_file:	#may have to add .db when building with cxfreeze, because reasons?
+			test_save_message = data_file['test_string']
+
+#	file = open("testfile.txt", "r") 
+#	print (file.read()) 
+#	file.close()
+
+	gameSaveDataHandler = SaveDataHandler()
+	gameSaveDataHandler.loadData()
+	testFileData = gameSaveDataHandler.getTestFileData()
+	play_count = int(testFileData["FLD_PLAY_COUNT"])
 
 def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count
 	current_big_message = 'You weren\'t supposed to see this'
 
+
+	# load stuff. yay, I'm testing loading and saving
+	load_game()
 
 	#Initialise controls
 
@@ -4785,7 +4852,7 @@ initialise_game()
 lev_set = game_level_settings.get_setting(dungeon_level)
 
 enemy_spawn_rate = lev_set.enemy_spawn_rate
-spawn_timer = int(enemy_spawn_rate/alarm_level)
+spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
 
 time_since_last_elevator_message = 0
 
@@ -5573,7 +5640,7 @@ while not translated_console_is_window_closed():
 		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
 		if alarm_level > 0 and spawn_timer <= 0:
 			#reset timer
-			spawn_timer = int(enemy_spawn_rate/alarm_level)
+			spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
 
 		#	reorder_objects() #temp test
 		#	print('tick')
