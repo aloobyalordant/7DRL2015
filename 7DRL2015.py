@@ -5,7 +5,7 @@ import time
 import math
 import textwrap
 import random
-import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
+#import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
 from random import randint
 from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
@@ -4651,8 +4651,8 @@ def mergeColors(initial_color, new_color, mix_level = 0.5):
 
 def save_game():	
 	global gameSaveDataHandler, play_count
-	with shelve.open('savegame.dat', 'n') as data_file:		
-		data_file['test_string'] = "hello I'm a test string"
+	#with shelve.open('savegame.dat', 'n') as data_file:		
+	#	data_file['test_string'] = "hello I'm a test string"
 
 #	file = open("testfile.txt","w") 
 #
@@ -4671,11 +4671,11 @@ def save_game():
 def load_game():
 	global gameSaveDataHandler, play_count
 	global test_save_message
-	if not os.path.isfile('savegame.dat'):		#may have to add .db when building with cxfreeze, because reasons?
-		test_save_message = "woops, file not fou-ound!"
-	else:	
-		with shelve.open('savegame.dat', 'r') as data_file:	#may have to add .db when building with cxfreeze, because reasons?
-			test_save_message = data_file['test_string']
+	#if not os.path.isfile('savegame.dat'):		#may have to add .db when building with cxfreeze, because reasons?
+	#	test_save_message = "woops, file not fou-ound!"
+	#else:	
+	#	with shelve.open('savegame.dat', 'r') as data_file:	#may have to add .db when building with cxfreeze, because reasons?
+	#		test_save_message = data_file['test_string']
 
 #	file = open("testfile.txt", "r") 
 #	print (file.read()) 
