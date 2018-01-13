@@ -2633,7 +2633,13 @@ def handle_keys(user_input_event):
 	elif player_action == 'pickup_dialog':
 		#key_char = chr(key.c)
 		#print str(veekay)
-		keynum = veekay - 34	#yay magic number:
+		#keynum = veekay - 34	#yay magic number:
+
+		# translate what button the player pressed into an int, if possible
+		keynum = -1
+		if key_char in controlHandler.intFromLetter:
+			keynum = controlHandler.intFromLetter[key_char]
+			
 		weapons_found = []
 		for object in objectsArray[player.x][player.y]:
 			if object.weapon == True: 
@@ -2647,7 +2653,7 @@ def handle_keys(user_input_event):
 			#drop_weapon(old_weapon)
 			weapon_found = True
 			message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name) 
-		elif veekay != 0:
+		elif veekay != None:
 			game_state = 'playing'
 			message('Never mind.')
 			#keynum = key
@@ -2805,7 +2811,8 @@ def handle_keys(user_input_event):
 					message_string = ('Pick up what? (')
 					count = 1
 					for weapon_item in weapons_found:
-						message_string = message_string + ( str(count) + '. ' + weapon_item.name + ' ')
+						if count <= 26: #don't bother printing more than 26 things to pick up
+							message_string = message_string + ( controlHandler.letterFromInt[count] + '. ' + weapon_item.name + ' ')
 						count += 1
 					message_string = message_string + ')'
 					message(message_string, color_warning)
