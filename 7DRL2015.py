@@ -244,6 +244,10 @@ def translated_console_flush():
 def translated_console_print_ex(console, x, y, libtcod_bkcgnd_type, libtcod_alignment, string):
 	console.draw_str(int(x), int(y), string)		#maybe? ignore the other stuff and hope colors are already set ok?
 
+def translated_console_print_ex_center(console, x, y, libtcod_bkcgnd_type, libtcod_alignment, string):
+	console.draw_str(int(x) - int(len(string)/2), int(y), string)		
+	#console.draw_str(int(x), int(y), string)		
+
 def translated_console_set_char_background(console, x, y, color, libtcod_bkcgnd_type):
         console.draw_char(x, y, None,  fg=None, bg=color,)
 
@@ -2619,6 +2623,24 @@ def handle_keys(user_input_event):
 		if key_char == 'q':
 			something_changed = True
 			game_state='exit'
+		elif key_char == 'c':
+			something_changed = True
+			game_state = 'control screen'
+
+	elif game_state == 'control screen':
+		#key_char = chr(key.c) 
+		if key_char == 'q':
+			something_changed = True
+			return 'pause'
+		elif key_char in controlHandler.intFromLetter:
+			control_num = controlHandler.intFromLetter[key_char] - 1
+			# Update control scheme if we chose a new thing!
+			if control_num < len(controlHandler.controlOptionsArray):
+				(controlType, control_description) = controlHandler.controlOptionsArray[control_num]
+				controlHandler = ControlHandler(controlType)
+				something_changed = True
+				game_state = 'playing'
+				
 
 	elif game_state == 'dead':
 		#key_char = chr(key.c)
@@ -4034,25 +4056,58 @@ def pause_screen():
 	translated_console_set_default_background(pause_menu, default_background_color)
 	translated_console_clear(pause_menu)
 	translated_console_set_default_foreground(pause_menu, default_text_color)
-	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 2, libtcod_BKGND_NONE, libtcod_CENTER,
-	'The game is paused (press Esc to unpause or Q to quit)')
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 2, libtcod_BKGND_NONE, libtcod_CENTER,
+	'The game is paused')
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
+	'Press Esc to unpause, C to change controls or Q to quit')
 	#translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
 	#test_save_message)
-	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
-	"This is play number" + str(play_count))
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 6, libtcod_BKGND_NONE, libtcod_CENTER,
+	"This is play number " + str(play_count))
 	
-	translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
-	'----------------------')
-	current_line = 6
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+	'-------------------------------------------------------')
+	# Add a list of what upgrades the player has
+	current_line = 10
 	for upgrade in upgrade_array:
-		translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
+		translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
 		upgrade.name + ': ' + upgrade.tech_description)
 		current_line += 2
 
 
-	# Add a list of what upgrades the player has
 
-	print('p?p')
+	#blit the contents of "pause_menu" to the root console
+	#libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)	
+
+
+def control_screen():
+	global test_save_message, gameSaveDataHandler, play_count, controlHandler
+
+	# print the pause screen I guess 
+	translated_console_set_default_background(pause_menu, default_background_color)
+	translated_console_clear(pause_menu)
+	translated_console_set_default_foreground(pause_menu, default_text_color)
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 2, libtcod_BKGND_NONE, libtcod_CENTER,
+	'Control Settings')
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
+	'Select a control scheme, or press Esc to return to pause menu')
+
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 6, libtcod_BKGND_NONE, libtcod_CENTER,
+	'-------------------------------------------------------')
+
+	
+	# Add a list of available options
+	current_line = 8
+	for i in range(len(controlHandler.controlOptionsArray)):
+		(control_code, control_description) = controlHandler.controlOptionsArray[i]
+		control_option_string = controlHandler.letterFromInt[i+1] + ": " + control_description
+		translated_console_print_ex(pause_menu, int(SCREEN_WIDTH/4), current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
+		control_option_string)
+		current_line += 2
+
+
+
 	#blit the contents of "pause_menu" to the root console
 	#libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)	
@@ -4069,7 +4124,7 @@ def big_message(string):
 	translated_console_set_default_foreground(pause_menu, default_text_color)
 	y = 2
 	for line in new_msg_lines:
-		translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
+		translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, y, libtcod_BKGND_NONE, libtcod_CENTER, line)
 		y = y + 1
 
 	#blit the contents of "pause_menu" to the root console
@@ -5032,7 +5087,7 @@ while not translated_console_is_window_closed():
 	player_action = handle_keys(user_input)
 	if player_action == 'pause':
 		something_changed = True
-		if game_state == 'playing':
+		if game_state == 'playing' or game_state == 'control screen':
 			game_state = 'paused'
 		elif game_state == 'paused' or game_state == 'big message':
 			game_state = 'playing'
@@ -5854,6 +5909,8 @@ while not translated_console_is_window_closed():
 	if something_changed:
 		if game_state == 'paused':
 			pause_screen()
+		elif game_state == 'control screen':
+			control_screen()
 		elif game_state == 'big message':
 			big_message(current_big_message)
 		elif game_state == 'end message':

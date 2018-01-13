@@ -3,6 +3,7 @@ import tdl as libtcod
 class ControlHandler:
 
 	def __init__(self, controlType = "QWERTY-numpad", customDictionary = None):
+		print("Setting controls with type " + controlType)
 		self.controlType = controlType	# options: "QWERTY-numpad"  "QWERTY-nopad" "AZERTY-numpad" "AZERTY-nopad" "custom"
 		if self.controlType == "custom":
 			self.controlDictionary = customDictionary	# maps keynames (and/or characters?) to command names
@@ -17,6 +18,9 @@ class ControlHandler:
 		self.intFromLetter = self.getIntFromLetterLookup()
 		self.letterFromInt = self.getLetterFromIntLookup()
 
+		self.controlOptionsArray = self.getControlOptionsArray()
+		print("Done setting controls.")
+
 
 	
 	def getDefaultDictionary(self, controlType = "QWERTY-numpad"):
@@ -24,6 +28,7 @@ class ControlHandler:
 		newDictionary = {}
 
 		if controlType == "AZERTY-numpad":
+			print("Setting AZERTY-numpad...")
 			# customisable controls	
 			newDictionary = dict([('a', "ATTCKUPLEFT"),('z', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('w',	"ATTCKDOWNLEFT"), ('q', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('KP7', "MOVEUPLEFT"), ('HOME', "MOVEUPLEFT"), ('KP8', "MOVEUP"), ('UP',"MOVEUP"),('KP9', "MOVEUPRIGHT"), ('PAGEUP', "MOVEUPRIGHT"), ('KP6', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('KP3', "MOVEDOWNRIGHT"), ('PAGEDOWN', "MOVEDOWNRIGHT"), ('KP2', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('KP1', "MOVEDOWNLEFT"), ('KP4', "MOVELEFT"), ('LEFT', "MOVELEFT"),
@@ -31,12 +36,29 @@ class ControlHandler:
 			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
 
 		elif controlType == "QWERTY-numpad":
+			print("Setting QWERTY-numpad...")
 			# customisable controls	
 			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('KP7', "MOVEUPLEFT"), ('HOME', "MOVEUPLEFT"), ('KP8', "MOVEUP"), ('UP',"MOVEUP"),('KP9', "MOVEUPRIGHT"), ('PAGEUP', "MOVEUPRIGHT"), ('KP6', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('KP3', "MOVEDOWNRIGHT"), ('PAGEDOWN', "MOVEDOWNRIGHT"), ('KP2', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('KP1', "MOVEDOWNLEFT"), ('KP4', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('KP5', "STANDSTILL"), ('.', "STANDSTILL"),
 			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
+
+
+		elif controlType == "QWERTY-nopad":
+			print("Setting QWERTY-nopad...")
+			# customisable controls	
+			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
+			('t', "MOVEUPLEFT"), ('y', "MOVEUP"), ('UP',"MOVEUP"),('u', "MOVEUPRIGHT"), ('j', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('m', "MOVEDOWNRIGHT"), ('n', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('b', "MOVEDOWNLEFT"), ('g', "MOVELEFT"), ('LEFT', "MOVELEFT"),
+			('h', "STANDSTILL"), ('.', "STANDSTILL"),
+			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
 		
+		elif controlType == "AZERTY-nopad":
+			print("Setting AZERTY-nopad...")
+			# customisable controls	
+			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
+			('t', "MOVEUPLEFT"), ('y', "MOVEUP"), ('UP',"MOVEUP"),('u', "MOVEUPRIGHT"), ('j', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), (',', "MOVEDOWNRIGHT"), ('n', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('b', "MOVEDOWNLEFT"), ('g', "MOVELEFT"), ('LEFT', "MOVELEFT"),
+			('h', "STANDSTILL"), ('.', "STANDSTILL"),
+			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
 
 		#TODO nopad versions
 		
@@ -83,18 +105,17 @@ class ControlHandler:
 		for k,v in self.controlDictionary.items():
 			#add sensible single character option if possible, otherwise add first character
 			if len(k) == 1:
-				print('BANHD')
 				newDictionary[v] = k
 			elif len(k) == 3 and k[0:2] == 'KP':
-				print('wooop')
 				newDictionary[v] =  k[2]
 			elif v not in newDictionary:
 			#else:
 				newDictionary[v] =  k[0]
 
 		# a bad hack that is dishonest to the player: if '.' is an option for "STANDSTILL" then use that because it looks better
-		if self.controlDictionary['.'] == "STANDSTILL":
-			newDictionary["STANDSTILL"] = '.'
+		if '.' in self.controlDictionary:
+			if self.controlDictionary['.'] == "STANDSTILL":
+				newDictionary["STANDSTILL"] = '.'
 
 		return newDictionary
 
@@ -109,5 +130,12 @@ class ControlHandler:
 		return newDictionary
 
 
+	def getControlOptionsArray(self):		
+		control_option_list = []
+		control_option_list.append(("QWERTY-numpad", "QWERTY with numpad"))
+		control_option_list.append(("QWERTY-nopad", "QWERTY, no numpad"))
+		control_option_list.append(("AZERTY-numpad", "AZERTY with numpad"))
+		control_option_list.append(("AZERTY-nopad", "AZERTY, no numpad"))
+		return control_option_list
 # if key in array:
   # do somethin
