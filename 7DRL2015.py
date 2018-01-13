@@ -5295,17 +5295,17 @@ while not translated_console_is_window_closed():
 			if weapon_found == False and obj.weapon == True:
 				weapon_found = True
 				if key_found == False:
-					possible_commands.append('p to pick up')
+					possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
 			if key_found == False and obj.name == 'key':
 				key_found = True
 				if weapon_found== False:
-					possible_commands.append('p to pick up')
+					possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
 			if stairs_found == False and obj.name == 'stairs':
 				stairs_found = True
 				possible_commands.append('< to ascend')
 			if shrine_found == False and obj.shrine is not None:
 				shrine_found = True
-				possible_commands.append('o to meditate')
+				possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
 			if floor_message_found == False and obj.floor_message is not None:
 				floor_message_text = obj.floor_message.string
 				floor_message_found = True

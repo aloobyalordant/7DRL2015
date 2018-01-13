@@ -33,7 +33,7 @@ class ControlHandler:
 			newDictionary = dict([('a', "ATTCKUPLEFT"),('z', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('w',	"ATTCKDOWNLEFT"), ('q', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('KP7', "MOVEUPLEFT"), ('HOME', "MOVEUPLEFT"), ('KP8', "MOVEUP"), ('UP',"MOVEUP"),('KP9', "MOVEUPRIGHT"), ('PAGEUP', "MOVEUPRIGHT"), ('KP6', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('KP3', "MOVEDOWNRIGHT"), ('PAGEDOWN', "MOVEDOWNRIGHT"), ('KP2', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('KP1', "MOVEDOWNLEFT"), ('KP4', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('KP5', "STANDSTILL"), ('.', "STANDSTILL"),
-			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
+			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 
 		elif controlType == "QWERTY-numpad":
 			print("Setting QWERTY-numpad...")
@@ -41,7 +41,7 @@ class ControlHandler:
 			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('KP7', "MOVEUPLEFT"), ('HOME', "MOVEUPLEFT"), ('KP8', "MOVEUP"), ('UP',"MOVEUP"),('KP9', "MOVEUPRIGHT"), ('PAGEUP', "MOVEUPRIGHT"), ('KP6', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('KP3', "MOVEDOWNRIGHT"), ('PAGEDOWN', "MOVEDOWNRIGHT"), ('KP2', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('KP1', "MOVEDOWNLEFT"), ('KP4', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('KP5', "STANDSTILL"), ('.', "STANDSTILL"),
-			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
+			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 
 
 		elif controlType == "QWERTY-nopad":
@@ -50,7 +50,7 @@ class ControlHandler:
 			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('t', "MOVEUPLEFT"), ('y', "MOVEUP"), ('UP',"MOVEUP"),('u', "MOVEUPRIGHT"), ('j', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('m', "MOVEDOWNRIGHT"), ('n', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('b', "MOVEDOWNLEFT"), ('g', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('h', "STANDSTILL"), ('.', "STANDSTILL"),
-			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
+			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 		
 		elif controlType == "AZERTY-nopad":
 			print("Setting AZERTY-nopad...")
@@ -58,7 +58,7 @@ class ControlHandler:
 			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('t', "MOVEUPLEFT"), ('y', "MOVEUP"), ('UP',"MOVEUP"),('u', "MOVEUPRIGHT"), ('j', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), (',', "MOVEDOWNRIGHT"), ('n', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('b', "MOVEDOWNLEFT"), ('g', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('h', "STANDSTILL"), ('.', "STANDSTILL"),
-			('p', "PICKUP"), ('o', "MEDIDATE"), ('SPACE', "JUMP")])
+			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 
 		#TODO nopad versions
 		
