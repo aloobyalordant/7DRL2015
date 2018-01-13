@@ -4,29 +4,43 @@ import random
 from random import randint
 
 #Controls
-ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
-if ControlMode == 'Glados':
-	ATTCKUPLEFT	 = 'q'
-	ATTCKUP		 = 'w'
-	ATTCKUPRIGHT	 = 'e'
-	ATTCKRIGHT	 = 'd'
-	ATTCKDOWNRIGHT	 = 'c'
-	ATTCKDOWN	 = 'x'
-	ATTCKDOWNLEFT	 = 'z'
-	ATTCKLEFT	 = 'a'
+#ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
+#if ControlMode == 'Glados':
+#	ATTCKUPLEFT	 = 'q'
+#	ATTCKUP		 = 'w'
+#	ATTCKUPRIGHT	 = 'e'
+#	ATTCKRIGHT	 = 'd'
+#	ATTCKDOWNRIGHT	 = 'c'
+#	ATTCKDOWN	 = 'x'
+#	ATTCKDOWNLEFT	 = 'z'
+#	ATTCKLEFT	 = 'a'
+#
+#	ATTCKDOWNALT	 = 's'
+#elif ControlMode == 'Crypsis':
+#	ATTCKUPLEFT	 = 'a'
+#	ATTCKUP		 = 'z'
+#	ATTCKUPRIGHT	 = 'e'
+#	ATTCKRIGHT	 = 'd'
+#	ATTCKDOWNRIGHT	 = 'c'
+#	ATTCKDOWN	 = 'x'
+#	ATTCKDOWNLEFT	 = 'w'
+#	ATTCKLEFT	 = 'q'
+#
+#	ATTCKDOWNALT	 = 's'
 
-	ATTCKDOWNALT	 = 's'
-elif ControlMode == 'Crypsis':
-	ATTCKUPLEFT	 = 'a'
-	ATTCKUP		 = 'z'
-	ATTCKUPRIGHT	 = 'e'
-	ATTCKRIGHT	 = 'd'
-	ATTCKDOWNRIGHT	 = 'c'
-	ATTCKDOWN	 = 'x'
-	ATTCKDOWNLEFT	 = 'w'
-	ATTCKLEFT	 = 'q'
 
-	ATTCKDOWNALT	 = 's'
+
+# Some lazy coding. this part of the code originally used variable names (e.g. ATTCKUP = 'z') for attack commands.
+# Other parts now use string. We're just mapping one to the other so I don't have to rewrite a bunch
+ATTCKUPLEFT	 = "ATTCKUPLEFT"
+ATTCKUP		 = "ATTCKUP"
+ATTCKUPRIGHT	 = "ATTCKUPRIGHT"
+ATTCKRIGHT	 = "ATTCKRIGHT"
+ATTCKDOWNRIGHT	 = "ATTCKDOWNRIGHT"
+ATTCKDOWN	 = "ATTCKDOWN"
+ATTCKDOWNLEFT	 = "ATTCKDOWNLEFT"
+ATTCKLEFT	 = "ATTCKLEFT"
+ATTCKDOWNALT	 = "ATTCKDOWNALT"
 
 class Weapon_Staff:
 

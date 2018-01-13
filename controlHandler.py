@@ -11,7 +11,8 @@ class ControlHandler:
 
 		self.menuDictionary = self.getMenuDictionary()		# for 'menu' commands (e.g. y/n, q for quit, r for restart)
 		
-
+		self.controlLookup = self.getControlLookup()
+		self.singleCharacterControlLookup = self.getSingleCharacterLookup()
 
 
 	
@@ -62,6 +63,38 @@ class ControlHandler:
 			return "NO_COMMAND" 
 
 
+	# reverse dictionary for controlDictionary
+	def getControlLookup(self):
+		newDictionary = {}
+		# obvs only going to have one result, even if multiple keys do the same command. That's fine.
+		for k,v in self.controlDictionary.items():
+			newDictionary[v] = k
+		return newDictionary
+
+	# reverse dictionary for controlDictionary, but finds a single character key if one is available, 
+	# and if not returns the first character 
+	# of an available command
+	def getSingleCharacterLookup(self):
+		newDictionary = {}
+		# obvs only going to have one result, even if multiple keys do the same command. That's fine.
+		for k,v in self.controlDictionary.items():
+			#add sensible single character option if possible, otherwise add first character
+			if len(k) == 1:
+				print('BANHD')
+				newDictionary[v] = k
+			elif len(k) == 3 and k[0:2] == 'KP':
+				print('wooop')
+				newDictionary[v] =  k[2]
+			elif v not in newDictionary:
+			#else:
+				newDictionary[v] =  k[0]
+
+		# a bad hack that is dishonest to the player: if '.' is an option for "STANDSTILL" then use that because it looks better
+		if self.controlDictionary['.'] == "STANDSTILL":
+			newDictionary["STANDSTILL"] = '.'
+
+
+		return newDictionary
 
 
 # if key in array:

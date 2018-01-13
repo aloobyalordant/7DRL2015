@@ -26,28 +26,28 @@ LIMIT_FPS = 20
 ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
 
 
-if ControlMode == 'Glados':
-	ATTCKUPLEFT	 = 'q'
-	ATTCKUP		 = 'w'
-	ATTCKUPRIGHT	 = 'e'
-	ATTCKRIGHT	 = 'd'
-	ATTCKDOWNRIGHT	 = 'c'
-	ATTCKDOWN	 = 'x'
-	ATTCKDOWNLEFT	 = 'z'
-	ATTCKLEFT	 = 'a'
-
-	ATTCKDOWNALT	 = 's'
-elif ControlMode == 'Crypsis':
-	ATTCKUPLEFT	 = 'a'
-	ATTCKUP		 = 'z'
-	ATTCKUPRIGHT	 = 'e'
-	ATTCKRIGHT	 = 'd'
-	ATTCKDOWNRIGHT	 = 'c'
-	ATTCKDOWN	 = 'x'
-	ATTCKDOWNLEFT	 = 'w'
-	ATTCKLEFT	 = 'q'
-
-	ATTCKDOWNALT	 = 's'
+#if ControlMode == 'Glados':
+#	ATTCKUPLEFT	 = 'q'
+#	ATTCKUP		 = 'w'
+#	ATTCKUPRIGHT	 = 'e'
+#	ATTCKRIGHT	 = 'd'
+#	ATTCKDOWNRIGHT	 = 'c'
+#	ATTCKDOWN	 = 'x'
+#	ATTCKDOWNLEFT	 = 'z'
+#	ATTCKLEFT	 = 'a'
+#
+#	ATTCKDOWNALT	 = 's'
+#elif ControlMode == 'Crypsis':
+#	ATTCKUPLEFT	 = 'a'
+#	ATTCKUP		 = 'z'
+#	ATTCKUPRIGHT	 = 'e'
+#	ATTCKRIGHT	 = 'd'
+#	ATTCKDOWNRIGHT	 = 'c'
+#	ATTCKDOWN	 = 'x'
+#	ATTCKDOWNLEFT	 = 'w'
+#	ATTCKLEFT	 = 'q'
+#
+#	ATTCKDOWNALT	 = 's'
 
 #MOVEUPLEFT
 #MOVEUP
@@ -61,7 +61,20 @@ elif ControlMode == 'Crypsis':
 #MEDITATE
 #PICKUP
 
-JUMP = 'r'
+#JUMP = 'r'
+
+
+# Some lazy coding. this part of the code originally used variable names (e.g. ATTCKUP = 'z') for attack commands.
+# Other parts now use string. We're just mapping one to the other so I don't have to rewrite a bunch
+ATTCKUPLEFT	 = "ATTCKUPLEFT"
+ATTCKUP		 = "ATTCKUP"
+ATTCKUPRIGHT	 = "ATTCKUPRIGHT"
+ATTCKRIGHT	 = "ATTCKRIGHT"
+ATTCKDOWNRIGHT	 = "ATTCKDOWNRIGHT"
+ATTCKDOWN	 = "ATTCKDOWN"
+ATTCKDOWNLEFT	 = "ATTCKDOWNLEFT"
+ATTCKLEFT	 = "ATTCKLEFT"
+ATTCKDOWNALT	 = "ATTCKDOWNALT"
 
 
 # and now here are some  3-character forms of these string names, to make AI code more readable.
@@ -2826,8 +2839,9 @@ def handle_keys(user_input_event):
 			else :			
 	
 
-				if key_char in player_weapon.command_list:
-					return process_player_attack(key_char)
+#				if key_char in player_weapon.command_list:
+				if actionCommand in { "ATTCKUPLEFT","ATTCKUP","ATTCKUPRIGHT","ATTCKRIGHT","ATTCKDOWNRIGHT","ATTCKDOWN","ATTCKDOWNLEFT","ATTCKLEFT", "ATTCKDOWNALT"}:
+					return process_player_attack(actionCommand)
 
 		#		abstract_attack_data = player_weapon.do_attack(key_char)
 		#		if abstract_attack_data is not None:
@@ -3516,17 +3530,34 @@ def player_move_or_attack(dx, dy):
 
 
 #Processing player attack, woop woo! we want the decision for whether an attack is possible to belong to the player's Fighter class rather than the weapon itself; we're putting the wrapper for all that stuff around here.
-def process_player_attack(key_char):
+def process_player_attack(actionCommand):
 	global upgrade_array
 
-	print('you pressed ' + str(key_char))
+	# little adjustment that might not be necessary
+	if actionCommand == "ATTCKDOWNALT":
+		actionCommand = "ATTCKDOWN"
+
+	#print('you pressed ' + str(key_char))
 
 	if player_weapon.durability <= 0:
 		message('Your ' +  str(player_weapon.name) + ' is broken!')
 		return 'invalid-move'
+	# check whether the weapon can do this kind of attack
+	# probably this should be a separate command in the weapons class, but that would mean repeating yet more code or cleaning up how the weapon code exists, and I am too lazy to do either right now
+	command_recognised = False
+	for (com, data, usage) in player_weapon.command_items:
+		if com == actionCommand:
+			command_recognised = True
+	if command_recognised == False:
+		message('You can\'t use a ' + str(player_weapon.name) + ' like that!', color_warning)
+		return 'invalid-move'
+		 
+
 	else:
-		energy_cost = player_weapon.get_usage_cost(key_char) + 1   #let's try and make weapons a bit harder to use...
+		energy_cost = player_weapon.get_usage_cost(actionCommand) + 1   #let's try and make weapons a bit harder to use...
 		can_attack =  player.fighter.can_attack(energy_cost, return_message = True)
+
+		# if able, do the attack!
 		if can_attack == True:
 
 			# Add extra bonus strength maybe! TODO: Probably put in own method later
@@ -3552,7 +3583,7 @@ def process_player_attack(key_char):
 		#			print "+1 strength for being on an altar"
 		#			bonus_strength += 1
 
-			abstract_attack_data = player_weapon.do_energy_attack(key_char)
+			abstract_attack_data = player_weapon.do_energy_attack(actionCommand)
 			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
 			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
 			player.fighter.lose_energy(energy_cost)
@@ -4259,6 +4290,7 @@ def create_GUI_panel():
 	global color_dark_ground, color_light_ground
 	global fov_recompute, bgColorArray
 	global game_level_settings, dungeon_level
+	global controlHandler
 
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
@@ -4316,14 +4348,14 @@ def create_GUI_panel():
 
 	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
 	command_display_list = []
-	command_display_list.append((-1,-1,ATTCKUPLEFT))
-	command_display_list.append((0,-1,ATTCKUP))
-	command_display_list.append((1,-1,ATTCKUPRIGHT))
-	command_display_list.append((1,0,ATTCKRIGHT))
-	command_display_list.append((1,1,ATTCKDOWNRIGHT))
-	command_display_list.append((0,1,ATTCKDOWN))
-	command_display_list.append((-1,1,ATTCKDOWNLEFT))
-	command_display_list.append((-1,0,ATTCKLEFT))
+	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPLEFT"]))
+	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["ATTCKUP"]))
+	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPRIGHT"]))
+	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["ATTCKRIGHT"]))
+	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNRIGHT"]))
+	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["ATTCKDOWN"]))
+	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNLEFT"]))
+	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["ATTCKLEFT"]))
 
 	for(x_adjust, y_adjust, command_str) in  command_display_list:
 		panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
@@ -4466,17 +4498,34 @@ def create_GUI_panel():
 	#libtcod.light_red, libtcod.darker_red)
 
 	#display some sweet moves!
+	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
+	command_display_list = []
+	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["MOVEUPLEFT"]))
+	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["MOVEUP"]))
+	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["MOVEUPRIGHT"]))
+	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["MOVERIGHT"]))
+	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNRIGHT"]))
+	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["MOVEDOWN"]))
+	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNLEFT"]))
+	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["MOVELEFT"]))
+	command_display_list.append((0,0,controlHandler.singleCharacterControlLookup["STANDSTILL"]))
+
 	translated_console_set_default_foreground(panel, default_text_color)
 	translated_console_print_ex(panel, player_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Moves:")
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '7')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '8')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '9')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '4')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '.')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '6')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '1')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '2')
-	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '3')
+	for(x_adjust, y_adjust, command_str) in  command_display_list:
+		#panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
+		
+		translated_console_print_ex(panel, int(player_panel_x + player_panel_width/2 + 2*x_adjust), 4 + y_adjust, libtcod_BKGND_NONE, libtcod_CENTER, command_str)
+
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '7')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '8')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '9')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '4')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '.')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '6')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '1')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '2')
+#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '3')
 
 
 #	#Display some stuff about jumps, woo!
