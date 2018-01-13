@@ -13,6 +13,7 @@ from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
 from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade
 from saveDataHandler import SaveDataHandler #, SaveDatum
+from controlHandler import ControlHandler
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -2556,7 +2557,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -2664,26 +2665,35 @@ def handle_keys(user_input_event):
 			message('Never mind??')
 
 	elif player_action == 'jump_dialog':
+		actionCommand = controlHandler.getGameplayCommand(veekay, key_char)
 		#key_char = chr(key.c)
 		# jump direction options
 		#TODO HEY THIS STUFF IS HARDCODED AND SHOULD BE FIXED UP, ESPECIALLY WHAT WITH ME NO LONGER USING THIS LAYOUT:
 		# I have replaced e.g. libtcod.KEY_KP7 with 'KP7'  in order to translate to tdl.
 		# But anyway this should all get rewritten so I can allow adjustable controls, later.
-		if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
+		#if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
+		if actionCommand == "MOVEUPLEFT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
-		elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
+		#elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
+		elif actionCommand == "MOVEUP":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,-2)))
-		elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
+		#elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
+		elif actionCommand == "MOVEUPRIGHT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
-		elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
+		#elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
+		elif actionCommand == "MOVEDOWN":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
-		elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
+		#elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
+		elif actionCommand == "MOVEDOWNLEFT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
-		elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
+		#elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
+		elif actionCommand == "MOVELEFT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,0)))
-		elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
+		#elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
+		elif actionCommand == "MOVEDOWNRIGHT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,2)))
-		elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
+		#elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
+		elif actionCommand == "MOVERIGHT":
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,0)))
 		#elif veekay == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
 		#	message('You  perfectly still.')
@@ -2695,26 +2705,38 @@ def handle_keys(user_input_event):
 			return 'jump_dialog'
 
 	elif game_state == 'playing':
+
+		actionCommand = controlHandler.getGameplayCommand(veekay, key_char)
+
 		#key_char = chr(key.c)
 		#print "walk!"
 		#movement keys
-		if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
+		#if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
+		if actionCommand == "MOVEUPLEFT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,-1)))
-		elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
+		#elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
+		elif actionCommand == "MOVEUP":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(0,-1)))
-		elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
+		#elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
+		elif actionCommand == "MOVEUPRIGHT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,-1)))
-		elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
+		#elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
+		elif actionCommand == "MOVEDOWN":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(0,1)))
-		elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
+		#elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
+		elif actionCommand == "MOVEDOWNLEFT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,1)))
-		elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
+		#elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
+		elif actionCommand == "MOVELEFT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(-1,0)))
-		elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
+		#elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
+		elif actionCommand == "MOVEDOWNRIGHT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,1)))
-		elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
+		#elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
+		elif actionCommand == "MOVERIGHT":
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,0)))
-		elif veekay == 'KP5' or veekay == '.' or key_char == 'h':	
+		#elif veekay == 'KP5' or veekay == '.' or key_char == 'h':	
+		elif actionCommand == "STANDSTILL":
 			message('You stand perfectly still.')
 			
 			# update the relevant upgrades, to do with standing still
@@ -2728,7 +2750,8 @@ def handle_keys(user_input_event):
 			# key_char = chr(key.c)
 
 			# picking up a new weapon.   Or maybe doing a thing with a plant?
-			if key_char == 'p':
+			#if key_char == 'p':
+			if actionCommand == "PICKUP":
 				weapons_found = []
 				plants_found = []
 				weapon_found = False
@@ -2787,7 +2810,8 @@ def handle_keys(user_input_event):
 
 
 			#elif key_char == JUMP:
-			elif veekay == 'SPACE':	#libtcod.KEY_SPACE:		#todo make this mappable somehow
+			#elif veekay == 'SPACE':	#libtcod.KEY_SPACE:		#todo make this mappable somehow
+			elif actionCommand == "JUMP":
 				canJump = player.fighter.jump_available()
 				if canJump:
 					message_string = 'Jump in which direction?'
@@ -4687,7 +4711,7 @@ def load_game():
 	play_count = int(testFileData["FLD_PLAY_COUNT"])
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -4695,6 +4719,8 @@ def initialise_game():
 	load_game()
 
 	#Initialise controls
+	controlHandler = ControlHandler("AZERTY-numpad")
+
 
 	#create the list of game messages and their colors, starts empty
 	game_msgs = []
