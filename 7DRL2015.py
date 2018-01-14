@@ -2723,37 +2723,59 @@ def handle_keys(user_input_event):
 		# I have replaced e.g. libtcod.KEY_KP7 with 'KP7'  in order to translate to tdl.
 		# But anyway this should all get rewritten so I can allow adjustable controls, later.
 		#if veekay == 'KP7' or veekay == 'HOME' or key_char == 't':
+
+		temp_jump_decision = (0,0)
+
 		if actionCommand == "MOVEUPLEFT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
+			temp_jump_decision = (-2, -2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,-2)))
 		#elif veekay == 'KP8' or veekay == 'UP' or key_char == 'y':
-		elif actionCommand == "MOVEUP":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,-2)))
+		elif actionCommand == "MOVEUP": 
+			temp_jump_decision = (0, -2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,-2)))
 		#elif veekay == 'KP9' or veekay == 'PAGEUP' or key_char == 'u':
 		elif actionCommand == "MOVEUPRIGHT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
+			temp_jump_decision = (2, -2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,-2)))
 		#elif veekay == 'KP2' or veekay == 'DOWN' or key_char == 'n':
 		elif actionCommand == "MOVEDOWN":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
+			temp_jump_decision = (0, 2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(0,2)))
 		#elif veekay == 'KP1' or veekay == 'END' or key_char == 'b':
 		elif actionCommand == "MOVEDOWNLEFT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
+			temp_jump_decision = (-2, 2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,2)))
 		#elif veekay == 'KP4' or veekay == 'LEFT' or key_char == 'g':
 		elif actionCommand == "MOVELEFT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,0)))
+			temp_jump_decision = (-2, 0)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(-2,0)))
 		#elif veekay == 'KP3' or veekay == 'PAGEDOWN' or key_char == 'm':
 		elif actionCommand == "MOVEDOWNRIGHT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,2)))
+			temp_jump_decision = (2, 2)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,2)))
 		#elif veekay == 'KP6' or veekay == 'RIGHT' or key_char == 'j':
 		elif actionCommand == "MOVERIGHT":
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,0)))
+			temp_jump_decision = (2, 0)
+			# player.decider.set_decision(Decision(jump_decision=Jump_Decision(2,0)))
 		#elif veekay == libtcod.KEY_KP5 or chr(key.c) == '.' or key_char == 'h':	
 		#	message('You  perfectly still.')
 		#game_state = 'playing'
 		elif veekay != 0:
 			game_state = 'playing'
-			message('You stand paralyzed by indecision or maybe bad programming!.')	#TODO probably change this message
+			# message('You stand paralyzed by indecision or maybe bad programming!.')	#TODO probably change this message
+			message('Never mind.')
+			return 'invalid-move'
 		else: 
 			return 'jump_dialog'
+		# check if there's a wall in the way before letting player jump
+		(dx,dy) = temp_jump_decision
+		if map[player.x + dx][player.y + dy].blocked:
+			message("There's a wall in the way!")
+			return 'invalid-move'
+		else:
+			player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
+
+
 
 	elif game_state == 'playing':
 
@@ -5228,7 +5250,7 @@ while not translated_console_is_window_closed():
 						message("Your legs are too tired to jump!")
 					elif map[player.x + tempx][player.y + tempy].blocked:
 						somethingInWay = True
-						message("There's a wall in the way!")
+						message("There's a wall in the way!!!")
 					else: 
 						#check for doors, and/or find the thing the player is jumping over.
 						for ob in objectsArray[player.x + tempx][player.y + tempy]:
@@ -5320,7 +5342,7 @@ while not translated_console_is_window_closed():
 				floor_message_text = obj.floor_message.string
 				floor_message_found = True
 			
-		if floor_message_found == True:
+		if floor_message_found == True and player.decider.decision is not None and player.decider.decision.move_decision is not None: # trying to make it so messages don't repeat themselves
 			message('You see a message on the floor:')
 			message('\"' + floor_message_text + '\"', color_energy)
 
