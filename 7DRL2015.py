@@ -254,6 +254,11 @@ def translated_console_set_char_background(console, x, y, color, libtcod_bkcgnd_
 def translated_console_is_window_closed():
 	return libtcod.event.is_window_closed()  # I THINK??
 
+def translated_console_set_fullscreen(fullscreen_val):
+	libtcod.set_fullscreen(fullscreen_val)
+
+def translated_console_is_fullscreen():
+	return libtcod.get_fullscreen()
 
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
@@ -2774,7 +2779,7 @@ def handle_keys(user_input_event):
 			return 'invalid-move'
 		else:
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
-			# upgrade_array.append(Get_Random_Upgrade())
+			#upgrade_array.append(Get_Random_Upgrade())
 
 
 
