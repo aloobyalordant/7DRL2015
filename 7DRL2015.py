@@ -658,6 +658,7 @@ class Fighter:
 class Energy_Fighter:
 	# combat-related properties and methods (player).
 	# trying out an exciting new 'energy system'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
+	# UPDATE: actually let's make it so that you die only if your max energy goes to 0, and losing more energy than you have doesn't kill you, just reduces your max health by more
 	def __init__(self, hp, defense, power, death_function=None, attack_color = PLAYER_COLOR, faded_attack_color = PLAYER_COLOR, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
 		self.hp = hp
@@ -681,16 +682,25 @@ class Energy_Fighter:
 	def take_damage(self, damage):
 		#apply damage if possible
 		if damage > 0:
+			#add wounds! these basically reduce your max health
+			self.wounds += damage
+
+			# also lose energy equal to the damage you took
 			self.hp -= damage
-			#check for death. if there's a death function, call it
+			# if you lose more energy than you have, take extra wounds!
 			if self.hp < 0:
+				self.wounds += (-self.hp)
+				self.hp = 0
+				message("OUCH! You take extra damage at low energy." )
+			if self.wounds > self.max_hp:
+				self.wounds = self.max_hp
+
+			# is your max hp (after wounds) 0 or less? then you die!
+			if self.max_hp <= self.wounds:
 				function = self.death_function
 				if function is not None:
 					function(self.owner)
-			#add wounds!
-			self.wounds += damage
-			if self.wounds > self.max_hp:
-				self.wounds = self.max_hp
+
 
 	#		#check to see if we should announce the start of ADRENALINE MODE #commented out
 	#		if self.adrenaline_mode == False and self.max_hp - self.wounds < self.adrenaline_threshold:
