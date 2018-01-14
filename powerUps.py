@@ -6,20 +6,22 @@ from random import randint
 
 class PowerUp:
 
-	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", cost = 3):
+	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", code = '???', cost = 3, status =  'dormant'):
 #, updates_on_player_attack_choice = False, affects_strength_at_attack_choice = False):
 		self.name = name
 		self.tech_description = tech_description  		# short description of what item does
 		self.verbose_description= verbose_description  		# a wordier description that someone in the game world might give
+		self.code = code 					# 3 character code to represent this upgrade in GUI ?
 		self.cost = cost 					# default cost for this upgrade (currency to be determined)
 		# self.updates_on_player_attack_choice = updates_on_player_attack_choice
 		# self.affects_strength_at_attack_choice = affects_strength_at_attack_choice
 		self.activated = False		# generally this is a thing that determines whether to grant a bonus. Won't always be applicable
+		self.status = status		# 'dormant' - not doing anything; 'enabled' = in a situation to potentially do a thing; 'active' - doing a thing
 
 class WallHugger(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength.")
+		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength.", code='W.H')
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has 3 wall segments on one side
@@ -56,6 +58,7 @@ class WallHugger(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print("+1 strength from " + str(self.name))
+			self.status = 'active'
 			return 1
 		else:
 			return 0
@@ -66,7 +69,7 @@ class WallHugger(PowerUp):
 class Mindfulness(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Mindfulness", tech_description = "+1 energy recharge when standing still", verbose_description = "Stop and take a moment to focus on yourself and your surroundings, and you will find yourself energised and better prepared for the challenges ahead.")
+		PowerUp.__init__(self, name = "Mindfulness", tech_description = "+1 energy recharge when standing still", verbose_description = "Stop and take a moment to focus on yourself and your surroundings, and you will find yourself energised and better prepared for the challenges ahead.", code='Mnd')
 
 	#standing still is enough to activate this ability
 	def update_on_standing_still(self, player, objectsArray, map):
@@ -76,6 +79,7 @@ class Mindfulness(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print("+1 energy from " + str(self.name))
+			self.status = 'active'
 			return 1
 		else:
 			return 0
@@ -84,7 +88,7 @@ class Mindfulness(PowerUp):
 class NeptunesBlessing(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Neptune's Blessing", tech_description = "+1 strength when next to or in water", verbose_description = "A coral amulet that grants increased strength when near water.")
+		PowerUp.__init__(self, name = "Neptune's Blessing", tech_description = "+1 strength when next to or in water", verbose_description = "A coral amulet that grants increased strength when near water.", code='N.B')
 
 	#TODO: 
 	# Activates if there is water on the player's square or hoirzontally/vertically adjacent
@@ -135,6 +139,7 @@ class NeptunesBlessing(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print("+1 strength from " + str(self.name))
+			self.status = 'active'
 			return 1
 		else:
 			return 0
@@ -143,7 +148,7 @@ class NeptunesBlessing(PowerUp):
 class Amphibious(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Amphibious", tech_description = "able to attack in water", verbose_description = "Fight in water as easily as on land.")
+		PowerUp.__init__(self, name = "Amphibious", tech_description = "able to attack in water", verbose_description = "Fight in water as easily as on land.", code='Amp')
 
 
 	def update_on_testing_can_attack(self, error_message):
@@ -155,6 +160,7 @@ class Amphibious(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print("attack allowed due to " + str(self.name))
+			self.status = 'active'
 			return True
 		else:
 			return False
@@ -162,7 +168,7 @@ class Amphibious(PowerUp):
 class PersonalSpace(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when not next to any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.")
+		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when not next to any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S')
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has no walls or doors on any adjacent space (including diagonally)
@@ -255,6 +261,7 @@ class PersonalSpace(PowerUp):
 		if self.activated:
 			self.activated = False			# probably a good safety tip is to always reset activated status
 			print("+1 strength from " + str(self.name))
+			self.status = 'active'
 			return 1
 		else:
 			return 0
@@ -266,7 +273,7 @@ class Perfectionist(PowerUp):
 
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Perfectionist", tech_description = "+1 strength when all attacks hit", verbose_description = "Power is nothing without control. Additional strength for attacks with 100%% accuracy.")
+		PowerUp.__init__(self, name = "Perfectionist", tech_description = "+1 strength when all attacks hit", verbose_description = "Power is nothing without control. Additional strength for attacks with 100%% accuracy.", code='Pef')
 
 	def update_based_on_player_accuracy(self, all_player_attacks_on_target):
 		if all_player_attacks_on_target:
@@ -281,17 +288,19 @@ class Perfectionist(PowerUp):
 			if attack_object.attack.attacker == player:
 				#self.activated = False	 # Not reseting activated, because it has to affect multiple attakcs. Be careful!
 				print("+1 strength from " + str(self.name))
+				self.status = 'active'
 				attack_object.attack.damage += 1
 
 class Leapfrog(PowerUp):
 	
 	def __init__(self):
-		PowerUp.__init__(self, name = "Leapfrog", tech_description = "-1 energy cost for jumping", verbose_description = "Leap through the air with ease!")
+		PowerUp.__init__(self, name = "Leapfrog", tech_description = "-1 energy cost for jumping", verbose_description = "Leap through the air with ease!", code='L.F')
 		self.consumed = False
 
 	def upgrade_player_stats_once(self,player):
 		if self.consumed == False:
 			print('boh')
+			self.status = 'active'
 			player.fighter.jump_recharge_time = max(player.fighter.jump_recharge_time - 1, 0) #to a minimum 0? Or should it be 1?
 			self.consumed = True
 
@@ -301,7 +310,7 @@ class Leapfrog(PowerUp):
 class FarReaching(PowerUp):
 	
 	def __init__(self):
-		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.")
+		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.", code='F.R')
 #
 
 

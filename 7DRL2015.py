@@ -2774,6 +2774,7 @@ def handle_keys(user_input_event):
 			return 'invalid-move'
 		else:
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
+			# upgrade_array.append(Get_Random_Upgrade())
 
 
 
@@ -4102,9 +4103,10 @@ def pause_screen():
 	# Add a list of what upgrades the player has
 	current_line = 10
 	for upgrade in upgrade_array:
-		translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
-		upgrade.name + ': ' + upgrade.tech_description)
-		current_line += 2
+		if current_line < SCREEN_HEIGHT:
+			translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 
+			upgrade.name + ': ' + upgrade.tech_description)
+			current_line += 2
 
 
 
@@ -4385,6 +4387,7 @@ def create_GUI_panel():
 	global fov_recompute, bgColorArray
 	global game_level_settings, dungeon_level
 	global controlHandler
+	global upgrade_array
 
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
@@ -4395,13 +4398,16 @@ def create_GUI_panel():
 	#libtcod.console_clear(panel)
 	panel.clear(fg = default_text_color, bg= default_background_color)
 
-	#Three subpanels within this panel. From left to right: attack panel, player panel, level panel
+	# Three subpanels within this panel. From left to right: attack panel, player panel, level panel
+	# Suprise 4th panel: upgrades ?
 	attack_panel_width = 20
 	player_panel_width = 20
 	level_panel_width = 20
+	upgrade_panel_width = 13
 	attack_panel_x = 1
 	player_panel_x = attack_panel_x + attack_panel_width + 1
 	level_panel_x = player_panel_x + player_panel_width + 1
+	upgrade_panel_x = SCREEN_WIDTH - upgrade_panel_width
 
 
 	#ATTACK PANEL STUFF
@@ -4639,9 +4645,9 @@ def create_GUI_panel():
 	#LEVEL PANEL STUFF
 	translated_console_set_default_foreground(panel, default_text_color)
 	translated_console_print_ex(panel, level_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Level:  ' + str(dungeon_level))
-	translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Time:   ' + str(game_time))
+	translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
+	'Level:  ' + str(dungeon_level))
 	translated_console_print_ex(panel, level_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Alarm:  ' + str(alarm_level))
 	translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
@@ -4673,6 +4679,69 @@ def create_GUI_panel():
 	#display names of objects under the mouse  #commenting out for now!
 	#libtcod.console_set_default_foreground(panel, libtcod.light_gray)
 	#libtcod.console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_names_under_mouse())
+
+
+
+
+	# Surprise upgrade panel stuff!
+	upgrade_count = len(upgrade_array)
+	if upgrade_count > 0 and upgrade_count < 22:
+		translated_console_print_ex_center(panel, SCREEN_WIDTH - int(upgrade_panel_width/2) -2, 1, libtcod_BKGND_NONE, libtcod_CENTER,
+		'Upgrades:')
+
+	upg_offset = 0
+	if upgrade_count > 15 and upgrade_count < 22:
+		upg_offset = -1
+	elif upgrade_count >= 22:
+		upg_offset = -2
+
+	for j in range (10):  # (int((upgrade_count+3)/3)):
+		if 3+j + upg_offset < PANEL_HEIGHT:
+			for i in range (3):
+				if 3*j + i < upgrade_count:
+
+					temp_upgrade = upgrade_array[3*j + i]
+					if temp_upgrade.status == 'dormant':
+						translated_console_set_default_foreground(panel, default_text_color)
+						translated_console_set_default_background(panel, default_background_color)
+					elif temp_upgrade.status == 'enabled':
+						translated_console_set_default_foreground(panel, color_energy)
+						translated_console_set_default_background(panel, default_background_color)
+					elif temp_upgrade.status == 'active':
+						translated_console_set_default_foreground(panel, default_background_color)
+						translated_console_set_default_background(panel, color_energy)
+					else: 
+						translated_console_set_default_foreground(panel, default_text_color)
+						translated_console_set_default_background(panel, default_background_color)
+				#	if temp_upgrade.activated:
+				#		translated_console_set_default_foreground(panel, default_background_color)
+				#		translated_console_set_default_background(panel, color_energy)
+				#	else: 
+				#		translated_console_set_default_foreground(panel, default_text_color)
+				#		translated_console_set_default_background(panel, default_background_color)
+
+					translated_console_print_ex(panel, upgrade_panel_x + i*4, 3+j+upg_offset, libtcod_BKGND_NONE, 						libtcod_CENTER,	temp_upgrade.code)
+	
+	translated_console_set_default_foreground(panel, default_text_color)
+	translated_console_set_default_background(panel, default_background_color)
+				
+
+#default_background_color = 	(vfw,vfw,vfw)	#(0,0,0)
+#default_text_color = 		(vsf,vsf,vsf)	#(255,255,255)
+#color_energy = 			(v_p,v_p,v_p)	#(0,255,255)
+#color_faded_energy = 		(vsf,vsf,vsf)	#	(0,0,255)
+#color_warning = 		(v_p,v_p,v_p)	#	(255,127,0)
+#color_big_alert = 		(v_p,v_p,v_p)	#(255,0,0)
+
+		
+
+#		for power_up in upgrade_array:
+#			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
+#				power_up.upgrade_player_stats_once(player)
+
+
+
+
 
 	#blit the contents of "panel" to the root console
 	#libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
@@ -5899,6 +5968,12 @@ while not translated_console_is_window_closed():
 		render_all()
 		translated_console_flush()
 	#num_monsters = randint( 0, max_room_monsters)
+
+
+		# reset upgrade statuses to 'dormant' ? this is probably not where this goes...
+		for upgrade in upgrade_array:
+			upgrade.status = 'dormant'
+
 #
 
 
