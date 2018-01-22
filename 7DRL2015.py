@@ -176,6 +176,9 @@ color_axe_maniac =	(v_e,v_e,v_e)	#	 (128,0,0)		#libtcod.darker_red
 color_tridentor = 	(v_e,v_e,v_e)	#	(0,0, 255)		#libtcod.blue
 color_ninja = 		(v_e,v_e,v_e)	#	(0,0,0)		#libtcod.black
 color_wizard = 		(v_e,v_e,v_e)	#	(95, 0, 128)			#libtcod.darker_purple
+color_alarmer_idle =	(vsw,vsw,vsw)
+color_alarmer_suspicious = (v_p,v_p,v_p)
+color_alarmer_alarmed = (v_e,v_e,v_e)
 
 # text colors
 default_background_color = 	(vfw,vfw,vfw)	#(0,0,0)
@@ -460,11 +463,12 @@ class Floor_Message:
 
 
 class Door:
-	def __init__(self, horizontal, default_looseness = 3):
+	def __init__(self, horizontal, default_looseness = 3, easy_open = False):
 		self.horizontal = horizontal
 		self.default_looseness = default_looseness
 		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
 		self.recently_rattled = False
+		self.easy_open = easy_open
 
 	def take_damage(self, damage):
 		#destroy the door!
@@ -493,7 +497,7 @@ class Door:
 
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
 		
-		if randint( 0, self.looseness-1) < 2:		#opening unsuccesful
+		if randint( 0, self.looseness-1) < 2 and not self.easy_open:		#opening unsuccesful
 			message('The door rattles.', default_text_color)
 			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
 			self.looseness = self.looseness + 1		#increase chance of opening in future though
@@ -894,7 +898,7 @@ class Decider:
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
-	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_swordsman, suspicious_color = PLAYER_COLOR, alarmed_color = color_axe_maniac):
+	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed):
 		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
 		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
 		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
@@ -3277,7 +3281,7 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
 		alarmer_component = Alarmer()
-		monster = Object(x, y, 'O', 'security system', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
+		monster = Object(x, y, 'O', 'security system', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
 
 
 
@@ -3397,7 +3401,7 @@ def make_map():
 				monster.drops_key = True
 			objectsArray[od.x][od.y].append(monster)	
 			#number_alarmers += 1			#Now doing this elsewhere..
-		elif  od.name == 'door':
+		elif  od.name == 'door'or od.name == 'easydoor':
 			if od.info == 'horizontal':
 				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
 				map[od.x][od.y].block_sight = True
@@ -3406,6 +3410,8 @@ def make_map():
 				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
+			if od.name == 'easydoor':		# a door that doesn't stick!!
+				door.door.easy_open = True
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'key':
 			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)

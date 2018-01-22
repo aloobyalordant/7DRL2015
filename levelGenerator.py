@@ -262,115 +262,14 @@ class Level_Generator:
  
 	
 		if dungeon_level == 0:
-			new_room = Rect(10,10,5,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-
-			(new_x, new_y) = new_room.center()
-			#this is the first room, where the player starts at
-			player_start_x = new_x
-			player_start_y = new_y
-
-			#object_data.append(Object_Datum(new_x,new_y,'stairs'))
-
-
-			self.create_half_corridor(new_room, 5, 12, map, center_points, nearest_points_array, object_data)
-
-
-			object_data.append(Object_Datum(19,12,'message', 'Lesson 1. The true warrior can strike enemies from many directions. Up, left, even diagonally.'))
-			old_room = new_room
-			new_room = Rect(20,10,8,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			self.append_segment(map, self.create_segment('Tut-Attack'), 20, 10, object_data)
-			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-			#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
-
-
-
-			object_data.append(Object_Datum(32,12,'message', 'Lesson 2. The secret of all combat is this: Hit your enemy without your enemy hitting you!'))
-			old_room = new_room
-			new_room = Rect(33,10,7,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			self.append_segment(map, self.create_segment('Tut-Avoid-Attacks'), 33, 10, object_data)
-			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-			#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-
-
-
-			object_data.append(Object_Datum(44,12,'message', 'Lesson 3. Do not strike at where your enemy is! Strike at where your enemy is going to be!'))
-			old_room = new_room
-			new_room = Rect(50,10,7,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			self.append_segment(map, self.create_segment('Tut-Moving-Enemies'), 50, 10, object_data)
-			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-
-
-			self.create_half_corridor(new_room, 53, 5, map, center_points, nearest_points_array, object_data)
-
-
-			object_data.append(Object_Datum(53,19,'message', 'Lesson 4. A warrior is not their weapon. A warrior knows when it is time to trade their weapon for another.')) #. PS BEWARE THERE IS AN ENEMY LYING IN WAIT IN THIS ROOM'))
-			#object_data.append(Object_Datum(58,19,'monster', 'swordsman'))
-			old_room = new_room
-			new_room = Rect(50,20,7,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-			#self.append_segment(map, self.create_segment('Tut-Moving-Enemies'), 50, 10, object_data)
-			#self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-			self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
-
-
-			self.create_half_corridor(new_room, 53, 27, map, center_points, nearest_points_array, object_data)
-
-
-			self.create_half_corridor(new_room, 58, 20, map, center_points, nearest_points_array, object_data)
-
-			object_data.append(Object_Datum(41,22,'message', 'Lesson 6. Be not afraid to run into the place your enemy has just struck.'))
-			old_room = new_room
-			new_room = Rect(33,20,7,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			self.append_segment(map, self.create_segment('Tut-Gauntlet'), 33, 20, object_data)
-			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-			#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-
-			object_data.append(Object_Datum(28,22,'message', 'The sentry in this next room holds a key. You must defeat it to move forward! But beware, it will summon aid.'))
-			old_room = new_room
-			new_room = Rect(15,18,12,5)
-			self.create_room(new_room, map, center_points, nearest_points_array)
-			(new_x, new_y) = new_room.center()
-			(prev_x, prev_y) = old_room.center()
-			self.append_segment(map, self.create_segment('Tut-Test'), 15, 18, object_data)
-			self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-
-		#	old_room = new_room
-		#	new_room = Rect(20,20,7,5)
-		#	self.create_room(new_room, map, center_points, nearest_points_array)
-		#	(new_x, new_y) = new_room.center()
-		#	(prev_x, prev_y) = old_room.center()
-		#	#self.append_segment(map, self.create_segment('Tut-Gauntlet'), 33, 10, object_data)
-		#	self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#	#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-
-
-			#object_data.append(Object_Datum(new_x,new_y,'stairs'))
-
-			#finally... add some elevators??
-			#print 'adding elevators...'
-			elev1 = Rect(5, 10, 5, 4)
-			elev2 = Rect(10, 20, 5, 4)
-			rooms.append(elev1)
-			rooms.append(elev2)
-
-			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
-			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
+			#self.original_tutorial(object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			#player_start_x = 12
+			#player_start_y = 12
+			
+			self.new_tutorial(object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			player_start_x = 14
+			player_start_y = 20
+			max_map_width = lev_set.max_map_width + 1
 
 		elif lev_set.level_type == 'arena':
 
@@ -455,7 +354,7 @@ class Level_Generator:
 
 			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 			
-			print("super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)))
+			#print("super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)))
 
 #			new_room = Rect(20,20,5,5)
 #			self.create_room(new_room, map, center_points, nearest_points_array)
@@ -767,7 +666,7 @@ class Level_Generator:
 		num_monsters = randint(0, max_room_monsters)
 		
 
-		print('x1 ' + str(room.x1) + ', x2 ' + str(room.x2) + ',y1 ' +  str(room.y1) + ',y2 ' + str(room.y2) + ',)')
+		#print('x1 ' + str(room.x1) + ', x2 ' + str(room.x2) + ',y1 ' +  str(room.y1) + ',y2 ' + str(room.y2) + ',)')
 
 		for i in range(num_monsters):
 		#for i in range(50):
@@ -1182,9 +1081,8 @@ class Level_Generator:
 
 
 			
-	def create_segment(self, code = None):
+	def create_segment(self, seg_map = [[]], code = None):
 		seg_data = []
-		seg_map = [[]]
 
 		if code == 'Tut-Attack':
 			A = Object_Name('monster', 'strawman')
@@ -1295,7 +1193,7 @@ class Level_Generator:
 					[0,0,0,0,0,0,0,0,0,0,0,0]]
 
 
-		else:
+		elif seg_map == [[]]:
 			H = Object_Name('shrine', 'healer')	
 			seg_map =      [[0,0,0,0,0],
 					[0,0,0,0,0],
@@ -1806,7 +1704,7 @@ class Level_Generator:
 
 
 
-		print( "super length " + str(len(adjacency)))
+		#print( "super length " + str(len(adjacency)))
 
 		# now, append some elevators? Just slap bang in the middle of everything....
 
@@ -1818,3 +1716,345 @@ class Level_Generator:
 		# Step 2: Join things that are adjacent. Maybe a bit selectively but to begin with let's just join everything.
 
 
+	def original_tutorial(self, object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
+	
+		new_room = Rect(10,10,5,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+
+		(new_x, new_y) = new_room.center()
+		#this is the first room, where the player starts at
+		player_start_x = new_x
+		player_start_y = new_y
+
+		#object_data.append(Object_Datum(new_x,new_y,'stairs'))
+
+
+		self.create_half_corridor(new_room, 5, 12, map, center_points, nearest_points_array, object_data)
+
+
+		object_data.append(Object_Datum(19,12,'message', 'Lesson 1. The true warrior can strike enemies from many directions. Up, left, even diagonally.'))
+		old_room = new_room
+		new_room = Rect(20,10,8,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment('Tut-Attack'), 20, 10, object_data)
+		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+
+		object_data.append(Object_Datum(32,12,'message', 'Lesson 2. The secret of all combat is this: Hit your enemy without your enemy hitting you!'))
+		old_room = new_room
+		new_room = Rect(33,10,7,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment('Tut-Avoid-Attacks'), 33, 10, object_data)
+		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+
+
+
+		object_data.append(Object_Datum(44,12,'message', 'Lesson 3. Do not strike at where your enemy is! Strike at where your enemy is going to be!'))
+		old_room = new_room
+		new_room = Rect(50,10,7,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment('Tut-Moving-Enemies'), 50, 10, object_data)
+		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+
+
+		self.create_half_corridor(new_room, 53, 5, map, center_points, nearest_points_array, object_data)
+
+
+		object_data.append(Object_Datum(53,19,'message', 'Lesson 4. A warrior is not their weapon. A warrior knows when it is time to trade their weapon for another.')) #. PS BEWARE THERE IS AN ENEMY LYING IN WAIT IN THIS ROOM'))
+		#object_data.append(Object_Datum(58,19,'monster', 'swordsman'))
+		old_room = new_room
+		new_room = Rect(50,20,7,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.append_segment(map, self.create_segment('Tut-Moving-Enemies'), 50, 10, object_data)
+		#self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+		self.create_half_corridor(new_room, 53, 27, map, center_points, nearest_points_array, object_data)
+
+
+		self.create_half_corridor(new_room, 58, 20, map, center_points, nearest_points_array, object_data)
+
+		object_data.append(Object_Datum(41,22,'message', 'Lesson 6. Be not afraid to run into the place your enemy has just struck.'))
+		old_room = new_room
+		new_room = Rect(33,20,7,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment('Tut-Gauntlet'), 33, 20, object_data)
+		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+
+		object_data.append(Object_Datum(28,22,'message', 'The sentry in this next room holds a key. You must defeat it to move forward! But beware, it will summon aid.'))
+		old_room = new_room
+		new_room = Rect(15,18,12,5)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment('Tut-Test'), 15, 18, object_data)
+		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+
+	#	old_room = new_room
+	#	new_room = Rect(20,20,7,5)
+	#	self.create_room(new_room, map, center_points, nearest_points_array)
+	#	(new_x, new_y) = new_room.center()
+	#	(prev_x, prev_y) = old_room.center()
+	#	#self.append_segment(map, self.create_segment('Tut-Gauntlet'), 33, 10, object_data)
+	#	self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+	#	#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+
+
+		#object_data.append(Object_Datum(new_x,new_y,'stairs'))
+
+		#finally... add some elevators??
+		#print 'adding elevators...'
+		elev1 = Rect(5, 10, 5, 4)
+		elev2 = Rect(10, 20, 5, 4)
+		rooms.append(elev1)
+		rooms.append(elev2)
+
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
+
+
+	def new_tutorial(self, object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
+
+
+		# I think stuff is gonna get moved around a bunch, so here are some values you can adjust to move the whole thing
+		ryofst = 5
+		rxofst = 0
+	
+	#	new_room = Rect(10 + rxofst,10 + ryofst,5,5)
+	#	self.create_room(new_room, map, center_points, nearest_points_array)
+
+	#	(new_x, new_y) = new_room.center()
+		#this is the first room, where the player starts at
+	#	player_start_x = new_x
+	#	player_start_y = new_y
+
+
+	#	object_data.append(Object_Datum(19 +rxofst,12 + ryofst,'message', 'Lesson 1. The true warrior can strike enemies from many directions. Up, left, even diagonally.'))
+	#	old_room = new_room
+	#	new_room = Rect(20 + rxofst,10 + ryofst,8,5)
+	#	self.create_room(new_room, map, center_points, nearest_points_array)
+	#	(new_x, new_y) = new_room.center()
+	#	(prev_x, prev_y) = old_room.center()
+	#	self.append_segment(map, self.create_segment('Tut-Attack'), 20 + rxofst, 10 + ryofst, object_data)
+	#	self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+	#	#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+
+
+
+
+		A = Object_Name('monster', 'strawman')
+		B = Object_Name('weapon', 'sword')
+		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
+#		B = Object_Name('shrine', 'healer')	
+		#B = Object_Name('strawman', 'sai', 'w')
+		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press SVEEN)")
+		E = Object_Name('message', "Move to the weapon ahead of you and press PEEE to pick it up.")		
+		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
+		seg_map =      [[0,0,0,0,0,0,0,0,0],
+				[0,A,0,0,F,0,0,A,0],
+				[0,0,A,0,0,0,A,0,0],
+				[0,A,0,0,B,0,0,A,0],
+				[0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,E,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0],
+				[1,1,1,1,0,1,1,1,1],
+				[1,1,1,1,0,1,1,1,1],
+				[1,1,1,1,C,1,1,1,1],
+				[1,0,0,0,0,0,0,0,1],
+				[0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,D,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,1],
+				[1,1,1,1,1,1,1,1,1]]
+
+		#old_room = new_room
+		new_room = Rect(10 + rxofst,0 + ryofst,8,16)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment(seg_map), 10 + rxofst, 0 + ryofst, object_data)
+#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+		A = Object_Name('strawman')
+		B = Object_Name('strawman', 'sai', 'ATTCKLEFT')
+		C = Object_Name('strawman', 'sai', 'ATTCKUP')
+#		B = Object_Name('shrine', 'healer')	
+		#B = Object_Name('strawman', 'sai', 'w')
+		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+		D = Object_Name('message', "'Lesson 2. The secret of all combat is this: Hit your enemy without your enemy hitting you!'")
+		E = Object_Name('message', "Move to the weapon ahead of you and press PEEE to pick it up.")		
+		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
+				[1,1,1,0,0,0,0,0,0,0,1],
+				[A,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,C,0,0,0,1],
+				[1,1,1,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,C,0,0,1],
+				[1,1,1,D,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,B,0,0],
+				[1,1,1,0,0,0,0,0,0,0,1],
+				[1,1,1,1,1,1,1,1,1,1,1]]
+
+		#old_room = new_room
+		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+		rxofst = rxofst + 11
+
+		A = Object_Name('monster', 'strawman on wheels')
+#		B = Object_Name('shrine', 'healer')	
+		#B = Object_Name('strawman', 'sai', 'w')
+		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+		D = Object_Name('message', "Lesson 3. Do not strike at where your enemy is! Strike at where your enemy is going to be!")
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
+				[1,1,1,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,A,0,0,0,0,A,1],
+				[1,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,A,0,A,0,0,1],
+				[1,1,1,A,0,0,0,0,0,0,1],
+				[0,D,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,0,0,1],
+				[1,1,1,1,1,1,1,1,1,1,1]]
+
+		#old_room = new_room
+		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+	
+
+		# "The Gauntlet"
+		A = Object_Name('strawman')
+		B = Object_Name('strawman', 'spear', 'ATTCKLEFT')
+		C = Object_Name('strawman', 'spear', 'ATTCKUP')
+		D = Object_Name('strawman', 'spear', 'ATTCKDOWN')
+		E = Object_Name('strawman', 'spear', 'ATTCKRIGHT')
+#		B = Object_Name('shrine', 'healer')	
+		#B = Object_Name('strawman', 'sai', 'w')
+		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
+		F = Object_Name('message', "Lesson 3. Be not afraid to run into the place your enemy has just struck.")
+		seg_map =      [[1,1,1,1,D,1,D,1,D,1,1,1,1],
+				[1,1,1,1,0,1,0,1,0,1,1,1,1],
+				[0,F,0,0,0,0,0,0,0,0,0,B,0],
+				[1,1,1,1,1,1,1,1,1,0,1,1,1],
+				[1,1,1,1,1,1,1,1,1,0,0,B,1],
+				[1,1,1,1,1,0,0,0,0,0,1,1,1],
+				[1,1,1,1,1,0,1,0,1,0,1,1,1],
+				[1,1,1,1,1,0,1,C,1,C,1,1,1],
+				[1,1,1,1,1,0,1,1,1,1,1,1,1]]
+
+		#old_room = new_room
+		new_room = Rect(28 + rxofst,0 + ryofst,8,9)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment(seg_map), 28 + rxofst, 0 + ryofst, object_data)
+#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+
+		# JUMPING ROOM!
+		A = Object_Name('strawman')
+		W = Object_Name('water')
+		B = Object_Name('plant')
+		D = Object_Name('message', "Lesson 4. JUMP! (Press SPACEY BAR)")
+		E = Object_Name('message', "Jumping and attacking use up ENERGY. Getting hit on extra energy is super bad. Try to avoid it.")
+		F = Object_Name('message', "The rest is up to you. Good luck!")
+#		B = Object_Name('shrine', 'healer')	
+		#B = Object_Name('strawman', 'sai', 'w')
+		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
+		seg_map =      [[1,1,1,B,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,0],
+				[1,1,1,0,0,B,0,0,W,0,0,0,W,0,0,0,F],
+				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,0],
+				[1,1,1,0,0,0,0,D,W,0,0,0,A,0,E,0,1],
+				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,1],
+				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
+				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
+				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+
+		#old_room = new_room
+		new_room = Rect(30 + rxofst,9 + ryofst,17,9)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, self.create_segment(seg_map), 30 + rxofst, 9 + ryofst, object_data)
+#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+
+
+
+
+		#finally... add some elevators??
+		#print 'adding elevators...'
+		elev1 = Rect(-5 + rxofst, 13 + ryofst, 5, 4)
+		elev2 = Rect(44 + rxofst, 9 + ryofst, 5, 4)
+		rooms.append(elev1)
+		rooms.append(elev2)
+
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
+
+		
+		# . Move
+		# .   Moving diagonally
+		# . Pick up weapon 
+		# . attack enemies
+		# . avoid enemy attacks
+		# .   Hit moving enemies by hitting where they will be! I forgot that one
+		# . can go where enemies have just hit
+		# . Jump
+		# . beware about energy
+		# . pick up keys
+		# . fight one enemy
+		# . fight a rook
+		# . fight two enemies
+		# .  o k so security systems:
+		#		 - increase the alarm when they see you
+		# 		 - decrease the alarm when they get killed
+		#		 - higher alarm means more enemies are coming for you
+		#		 - sometimes but not always have keys!
+		#	hum hum hum how do I communicate all that.
+
+		# . you need keys to get out of the level
+		# "This sentry will sound an alarm if it sees you for too long! And it is hard to kill. But killing it will reduce the alarm. And sometimes it has keys.
