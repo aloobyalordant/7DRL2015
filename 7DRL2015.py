@@ -14,6 +14,7 @@ from gods import God, God_Healer, God_Destroyer, God_Deliverer
 from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade
 from saveDataHandler import SaveDataHandler #, SaveDatum
 from controlHandler import ControlHandler
+from colorHandler import ColorHandler
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
@@ -4879,6 +4880,55 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 	# Well; let's see if this works..
 
 
+def setColorScheme(colorScheme = 'default'):
+	global colorHandler
+	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_fog_of_war, default_altar_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
+	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
+	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
+	
+	levelColors = colorHandler.levelColors
+	
+	color_dark_wall = levelColors['color_dark_wall']
+	color_light_wall = levelColors['color_light_wall']
+	color_dark_ground = levelColors['color_dark_ground']
+	color_light_ground = levelColors['color_light_ground']
+	color_fog_of_war = levelColors['color_fog_of_war']
+	default_altar_color = levelColors['default_altar_color']
+	default_message_color = levelColors['default_message_color']
+	default_decoration_color = levelColors['default_decoration_color']
+	water_background_color = levelColors['water_background_color']
+	water_foreground_color = levelColors['water_foreground_color']
+	blood_background_color = levelColors['blood_background_color']
+	blood_foreground_color = levelColors['blood_foreground_color']
+
+	# collectiable e.g. weapons and plants and keys
+	default_flower_color = levelColors['default_flower_color']
+	default_weapon_color = levelColors['default_weapon_color']
+
+	# enemies, including player
+	PLAYER_COLOR = levelColors['PLAYER_COLOR']
+	color_swordsman = levelColors['color_swordsman']
+	color_boman = levelColors['color_boman']
+	color_rook = levelColors['color_rook']
+	color_axe_maniac = levelColors['color_axe_maniac']
+	color_tridentor = levelColors['color_tridentor']
+	color_ninja = levelColors['color_ninja']
+	color_wizard = levelColors['color_wizard']
+	color_alarmer_idle = levelColors['color_alarmer_idle']
+	color_alarmer_suspicious = levelColors['color_alarmer_suspicious']
+	color_alarmer_alarmed = levelColors['color_alarmer_alarmed']
+
+
+	menuColors = colorHandler.menuColors
+	# text colors
+	default_background_color = menuColors['default_background_color']
+	default_text_color = menuColors['default_text_color']
+	color_energy = menuColors['color_energy']
+	color_faded_energy = menuColors['color_faded_energy']
+	color_warning = menuColors['color_warning']
+	color_big_alert = menuColors['color_big_alert']
+
+
 
 def mergeColors(initial_color, new_color, mix_level = 0.5):
 
@@ -4934,7 +4984,7 @@ def load_game():
 	play_count = int(testFileData["FLD_PLAY_COUNT"])
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -4943,6 +4993,9 @@ def initialise_game():
 
 	#Initialise controls
 	controlHandler = ControlHandler("AZERTY-numpad")
+
+	colorHandler = ColorHandler('adjustedOriginal')
+	setColorScheme()
 
 
 	#create the list of game messages and their colors, starts empty
