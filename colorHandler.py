@@ -44,91 +44,159 @@ class ColorHandler:
 	def getLevelColors(self, colorScheme):	
 		newDictionary = {}
 		
-		if colorScheme == 'default':
-			# start with 4 values - the unadjusted rgb, then the desired capital V Value.
-			# later we'll come back and turn this into adjust RGB values
-			newDictionary = dict([	
-			# Environment colors (walls +floors, altars, visible or not)
-				('color_dark_wall',((vuw,vuw,vuw),vuw)),	#	(100,100,100)		#(0, 0, 100)
-				('color_light_wall', ((vsw,vsw,vsw), vsw)),	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
-				('color_dark_ground', ((vuf,vuf,vuf),vuf)),	#	(150,150,150)		#(50, 50, 150)
-				('color_light_ground', ((vsf,vsf,vsf),vsf)),	#	(200, 180, 50)
-				('color_fog_of_war', ((vfw,vfw,vfw),vfw)),	#	(0,0,0)			#libtcod.black
-				('default_altar_color', ((vsw,vsw,vsw), vsw)),
-				('default_message_color', ((vsw,vsw,vsw), vsw)),
-				('default_decoration_color',((vuw,vuw,vuw), vuw)),	#	(250,230,50)		#(165,145,50)
-				('water_background_color',((vuf,vuf,vuf), vuf)),	#	(100,100,250)
-				('water_foreground_color', ((vsw,vsw,vsw),vsw)),	#	(25,25,250)
-				('blood_background_color',((vuf,vuf,vuf),vuf)),	#	(200,0,0)
-				('blood_foreground_color',((vsw,vsw,vsw),vsw)),	#	(150,0,0)
-				# collectiable e.g. weapons and plants and keys
-				('default_flower_color',((vsw,vsw,vsw),vsw)),	#(50,150,0)
-				('default_weapon_color',((vsw,vsw,vsw),vsw)),	#(50,50,50) #libtcod.grey
-				# enemies, including player
-				('PLAYER_COLOR',((v_p,v_p,v_p),v_p)),	#(255, 255, 255)
-				#color_sneaky_enemy
-				#color_shortrange_enemy
-				#color_midrange_enemy
-				#color_longrange_enemy
-				#color_big_boss
-				('color_swordsman',((v_e,v_e,v_e),v_e)),	#	(0,0,191)		#libtcod.dark_blue
-				('color_boman',((v_e,v_e,v_e),v_e)),	#	(0,128,0)		#libtcod.darker_green
-				('color_rook',((v_e,v_e,v_e),v_e)),	#	(0,0,128)		#libtcod.darker_blue
-				('color_axe_maniac',((v_e,v_e,v_e),v_e)),	#	 (128,0,0)		#libtcod.darker_red
-				('color_tridentor',((v_e,v_e,v_e),v_e)),	#	(0,0, 255)		#libtcod.blue
-				('color_ninja',((v_e,v_e,v_e),v_e)),	#	(0,0,0)		#libtcod.black
-				('color_wizard',((v_e,v_e,v_e),v_e)),	#	(95, 0, 128)			#libtcod.darker_purple
-				('color_alarmer_idle',((vsw,vsw,vsw),vsw)),
-				('color_alarmer_suspicious',((v_p,v_p,v_p),v_p)),
-				('color_alarmer_alarmed',((v_e,v_e,v_e),v_e))
-			])
 
-		elif colorScheme == 'adjustedOriginal':
-			# start with 4 values - the unadjusted rgb, then the desired capital V Value.
-			# later we'll come back and turn this into adjust RGB values
-			newDictionary = dict([	
-			# Environment colors (walls +floors, altars, visible or not)
-				('color_dark_wall',((100,100,100),vuw)),	#	(100,100,100)		#(0, 0, 100)
-				('color_light_wall', ((130, 110, 50), vsw)),	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
-				('color_dark_ground', ((150,150,150),vuf)),	#	(150,150,150)		#(50, 50, 150)
-				('color_light_ground', ((200, 180, 50),vsf)),	#	(200, 180, 50)
-				('color_fog_of_war', ((0,0,0),vfw)),	#	(0,0,0)			#libtcod.black
-				('default_altar_color', ((130, 110, 50), vsw)),
-				('default_message_color', ((130, 110, 50), vsw)),
-				('default_decoration_color',((130, 110, 50), vuw+10)),	#	(250,230,50)		#(165,145,50)
-				('water_background_color',((100,100,250), vuf+3)),	#	(100,100,250)
-				('water_foreground_color', ((25,25,250),vsw+3)),	#	(25,25,250)
-				('blood_background_color',((200,0,0),vuf-5)),	#	(200,0,0)
-				('blood_foreground_color',((150,0,0),vsw-5)),	#	(150,0,0)
-				# collectiable e.g. weapons and plants and keys
-				('default_flower_color',((50,150,0),vsw)),	#(50,150,0)
-				('default_weapon_color',((50,50,50),vsw)),	#(50,50,50) #libtcod.grey
-				# enemies, including player
-				('PLAYER_COLOR',((255, 255, 255),v_p)),	#(255, 255, 255)
-				#color_sneaky_enemy
-				#color_shortrange_enemy
-				#color_midrange_enemy
-				#color_longrange_enemy
-				#color_big_boss
-				('color_swordsman',((0,0,191),v_e)),	#	(0,0,191)		#libtcod.dark_blue
-				('color_boman',((0,128,0),v_e)),	#	(0,128,0)		#libtcod.darker_green
-				('color_rook',((0,0,128),v_e)),	#	(0,0,128)		#libtcod.darker_blue
-				('color_axe_maniac',((128,0,0),v_e)),	#	 (128,0,0)		#libtcod.darker_red
-				('color_tridentor',((0,0, 255),v_e)),	#	(0,0, 255)		#libtcod.blue
-				('color_ninja',((0,0,0),v_e)),	#	(0,0,0)		#libtcod.black
-				('color_wizard',((95, 0, 128),v_e)),	#	(95, 0, 128)			#libtcod.darker_purple
-				('color_alarmer_idle',((0,0,191),vsw)),
-				('color_alarmer_suspicious',((255, 255, 255),v_p)),
-				('color_alarmer_alarmed',((128,0,0),v_e))
-			])
 
-		# Update colors to be value-adjusted
-		for name in newDictionary:
-			colorInfo = newDictionary[name]
-			(oldRGB,val) = colorInfo
-			newRGB = self.adjustForValue(oldRGB,val)
-			newDictionary[name] = newRGB
 
+		newDictionary = dict([	
+		# Environment colors (walls +floors, altars, visible or not)
+			('color_dark_wall',(100,100,100)),	#	(100,100,100)		#(0, 0, 100)
+			('color_light_wall', (130, 110, 50)),	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
+			('color_dark_ground', (150,150,150)),	#	(150,150,150)		#(50, 50, 150)
+			('color_light_ground', (200, 180, 100)),	#	(200, 180, 50)
+			('color_light_ground_alt', (250, 100, 100)),	#	(200, 180, 50)
+			('color_fog_of_war', (0,0,0)),	#	(0,0,0)			#libtcod.black
+			('default_altar_color', (130, 110, 50)),
+			('default_door_color', (130, 110, 50)),
+			('default_message_color', (130, 110, 50)),
+			('default_decoration_color',(130, 110, 50)),	#	(250,230,50)		#(165,145,50)
+			('water_background_color',(100,100,250)),	#	(100,100,250)
+			('water_foreground_color', (25,25,250)),	#	(25,25,250)
+			('blood_background_color',(200,0,0)),	#	(200,0,0)
+			('blood_foreground_color',(150,0,0)),	#	(150,0,0)
+			# collectiable e.g. weapons and plants and keys
+			('default_flower_color',(50,150,0)),	#(50,150,0)
+			('default_weapon_color',(50,50,50)),	#(50,50,50) #libtcod.grey
+			# enemies, including player
+			('PLAYER_COLOR',(255, 255, 255)),	#(255, 255, 255)
+			#color_sneaky_enemy
+			#color_shortrange_enemy
+			#color_midrange_enemy
+			#color_longrange_enemy
+			#color_big_boss
+			('color_swordsman',(0,0,191)),	#	(0,0,191)		#libtcod.dark_blue
+			('color_boman',(0,128,0)),	#	(0,128,0)		#libtcod.darker_green
+			('color_rook',(0,0,128)),	#	(0,0,128)		#libtcod.darker_blue
+			('color_axe_maniac',(128,0,0)),	#	 (128,0,0)		#libtcod.darker_red
+			('color_tridentor',(0,0, 255)),	#	(0,0, 255)		#libtcod.blue
+			('color_ninja',(0,0,0)),	#	(0,0,0)		#libtcod.black
+			('color_wizard',(95, 0, 128)),	#	(95, 0, 128)			#libtcod.darker_purple
+			('color_alarmer_idle',(0,0,191)),
+			('color_alarmer_suspicious',(255, 255, 255)),
+			('color_alarmer_alarmed',(128,0,0))
+		])
+
+		if colorScheme == 'lobbyTest':
+			newDictionary['color_dark_wall'] = (100,100,100)	#	(100,100,100)		#(0, 0, 100)
+			newDictionary['color_light_wall'] = (102, 28, 25)	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
+			newDictionary['color_dark_ground'] = (150,150,150)	#	(150,150,150)		#(50, 50, 150)
+			newDictionary['color_light_ground'] = (243, 195, 134)	#	(200, 180, 50)
+			newDictionary['color_light_ground_alt'] = (219, 126, 61)	#	(200, 180, 50)
+			newDictionary['default_altar_color'] = (230, 00, 230)
+			newDictionary['default_door_color'] = (102, 28, 25)
+			newDictionary['default_message_color'] = (230, 00, 230)
+			newDictionary['default_decoration_color'] =(200, 106, 41)	#	(2
+
+
+
+
+		# 'grand budapest hotel lobby palette apparently'
+		#  219, 126, 61    orangey
+		#  102, 28, 25		dark red?
+		# 253, 112, 114   pinky / light red?
+		#  243, 195, 134  some very neutral orangey beige
+	
+		# Commenting out a bunch of stuff:
+		# For now,not going to do the 'adjust for Value' stuff, because it's clear that Saturation is also important 
+		# and I should probably just be doing it by hand + checking with filters now I know a bit more about this stuff.
+		# Also, gona make it so a bunch of the fields we expect to stay  the same are pre-loaded, so the 
+		# sections for different color schemes don't get unnecessarily long.
+
+#		if colorScheme == 'default':
+#			# start with 4 values - the unadjusted rgb, then the desired capital V Value.
+#			# later we'll come back and turn this into adjust RGB values
+#			newDictionary = dict([	
+#			# Environment colors (walls +floors, altars, visible or not)
+#				('color_dark_wall',((vuw,vuw,vuw),vuw)),	#	(100,100,100)		#(0, 0, 100)
+#				('color_light_wall', ((vsw,vsw,vsw), vsw)),	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
+#				('color_dark_ground', ((vuf,vuf,vuf),vuf)),	#	(150,150,150)		#(50, 50, 150)
+#				('color_light_ground', ((vsf,vsf,vsf),vsf)),	#	(200, 180, 50)
+#				('color_fog_of_war', ((vfw,vfw,vfw),vfw)),	#	(0,0,0)			#libtcod.black
+#				('default_altar_color', ((vsw,vsw,vsw), vsw)),
+#				('default_message_color', ((vsw,vsw,vsw), vsw)),
+#				('default_decoration_color',((vuw,vuw,vuw), vuw)),	#	(250,230,50)		#(165,145,50)
+#				('water_background_color',((vuf,vuf,vuf), vuf)),	#	(100,100,250)
+#				('water_foreground_color', ((vsw,vsw,vsw),vsw)),	#	(25,25,250)
+#				('blood_background_color',((vuf,vuf,vuf),vuf)),	#	(200,0,0)
+#				('blood_foreground_color',((vsw,vsw,vsw),vsw)),	#	(150,0,0)
+#				# collectiable e.g. weapons and plants and keys
+#				('default_flower_color',((vsw,vsw,vsw),vsw)),	#(50,150,0)
+#				('default_weapon_color',((vsw,vsw,vsw),vsw)),	#(50,50,50) #libtcod.grey
+#				# enemies, including player
+#				('PLAYER_COLOR',((v_p,v_p,v_p),v_p)),	#(255, 255, 255)
+#				#color_sneaky_enemy
+#				#color_shortrange_enemy
+#				#color_midrange_enemy
+#				#color_longrange_enemy
+#				#color_big_boss
+#				('color_swordsman',((v_e,v_e,v_e),v_e)),	#	(0,0,191)		#libtcod.dark_blue
+#				('color_boman',((v_e,v_e,v_e),v_e)),	#	(0,128,0)		#libtcod.darker_green
+#				('color_rook',((v_e,v_e,v_e),v_e)),	#	(0,0,128)		#libtcod.darker_blue
+#				('color_axe_maniac',((v_e,v_e,v_e),v_e)),	#	 (128,0,0)		#libtcod.darker_red
+#				('color_tridentor',((v_e,v_e,v_e),v_e)),	#	(0,0, 255)		#libtcod.blue
+#				('color_ninja',((v_e,v_e,v_e),v_e)),	#	(0,0,0)		#libtcod.black
+#				('color_wizard',((v_e,v_e,v_e),v_e)),	#	(95, 0, 128)			#libtcod.darker_purple
+#				('color_alarmer_idle',((vsw,vsw,vsw),vsw)),
+#				('color_alarmer_suspicious',((v_p,v_p,v_p),v_p)),
+#				('color_alarmer_alarmed',((v_e,v_e,v_e),v_e))
+#			])
+#
+#		elif colorScheme == 'adjustedOriginal':
+#			# start with 4 values - the unadjusted rgb, then the desired capital V Value.
+#			# later we'll come back and turn this into adjust RGB values
+#			newDictionary = dict([	
+#			# Environment colors (walls +floors, altars, visible or not)
+#				('color_dark_wall',((100,100,100),vuw)),	#	(100,100,100)		#(0, 0, 100)
+#				('color_light_wall', ((130, 110, 50), vsw)),	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
+#				('color_dark_ground', ((150,150,150),vuf)),	#	(150,150,150)		#(50, 50, 150)
+#				('color_light_ground', ((200, 180, 100),vsf)),	#	(200, 180, 50)
+#				('color_fog_of_war', ((0,0,0),vfw)),	#	(0,0,0)			#libtcod.black
+#				('default_altar_color', ((130, 110, 50), vsw)),
+#				('default_message_color', ((130, 110, 50), vsw)),
+#				('default_decoration_color',((130, 110, 50), vuw+10)),	#	(250,230,50)		#(165,145,50)
+#				('water_background_color',((100,100,250), vuf+3)),	#	(100,100,250)
+#				('water_foreground_color', ((25,25,250),vsw+3)),	#	(25,25,250)
+#				('blood_background_color',((200,0,0),vuf-5)),	#	(200,0,0)
+#				('blood_foreground_color',((150,0,0),vsw-5)),	#	(150,0,0)
+#				# collectiable e.g. weapons and plants and keys
+#				('default_flower_color',((50,150,0),vsw)),	#(50,150,0)
+#				('default_weapon_color',((50,50,50),vsw)),	#(50,50,50) #libtcod.grey
+#				# enemies, including player
+#				('PLAYER_COLOR',((255, 255, 255),v_p)),	#(255, 255, 255)
+#				#color_sneaky_enemy
+#				#color_shortrange_enemy
+#				#color_midrange_enemy
+#				#color_longrange_enemy
+#				#color_big_boss
+#				('color_swordsman',((0,0,191),v_e)),	#	(0,0,191)		#libtcod.dark_blue
+##				('color_boman',((0,128,0),v_e)),	#	(0,128,0)		#libtcod.darker_green
+#				('color_rook',((0,0,128),v_e)),	#	(0,0,128)		#libtcod.darker_blue
+#				('color_axe_maniac',((128,0,0),v_e)),	#	 (128,0,0)		#libtcod.darker_red
+#				('color_tridentor',((0,0, 255),v_e)),	#	(0,0, 255)		#libtcod.blue
+#				('color_ninja',((0,0,0),v_e)),	#	(0,0,0)		#libtcod.black
+#				('color_wizard',((95, 0, 128),v_e)),	#	(95, 0, 128)			#libtcod.darker_purple
+#				('color_alarmer_idle',((0,0,191),vsw)),
+#				('color_alarmer_suspicious',((255, 255, 255),v_p)),
+#				('color_alarmer_alarmed',((128,0,0),v_e))
+#			])
+#
+#
+#		# Update colors to be value-adjusted
+#		for name in newDictionary:
+#			colorInfo = newDictionary[name]
+#			(oldRGB,val) = colorInfo
+#			newRGB = self.adjustForValue(oldRGB,val)
+#			newDictionary[name] = newRGB
+#
 		return newDictionary
 
 

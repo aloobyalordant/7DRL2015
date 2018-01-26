@@ -98,8 +98,9 @@ class Object_Name:
 
 class Level_Data:
 
-	def __init__(self, map, player_start_x, player_start_y,  object_data = [],  nearest_points_array = [[]], center_points = [], spawn_points = [], elevators = [], room_adjacencies = []):
+	def __init__(self, map, background_map, player_start_x, player_start_y,  object_data = [],  nearest_points_array = [[]], center_points = [], spawn_points = [], elevators = [], room_adjacencies = []):
 		self.map = map
+		self.background_map = background_map
 		self.object_data = object_data
 		self.player_start_x = player_start_x
 		self.player_start_y = player_start_y
@@ -250,6 +251,12 @@ class Level_Generator:
 		nearest_points_array  = [[ None
 			for y in range(max_map_height) ]
 				for x in range(max_map_width) ]		
+
+
+		#map to allow variation in background tiles
+		background_map = [[ 0
+			for y in range(max_map_height) ]
+				for x in range(max_map_width) ]
 	
 		rooms = []
 		num_rooms = 0
@@ -266,7 +273,7 @@ class Level_Generator:
 			#player_start_x = 12
 			#player_start_y = 12
 			
-			self.new_tutorial(object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			player_start_x = 14
 			player_start_y = 20
 			max_map_width = lev_set.max_map_width + 1
@@ -352,7 +359,7 @@ class Level_Generator:
 		# GOODNESS KNOWS WHAT THE OTHER CASES ARE FOR
 		elif lev_set.level_type == 'modern' or lev_set.level_type == 'classic':
 
-			self.fill_a_rectangle(map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
+			self.fill_a_rectangle(map, background_map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 			
 			#print("super duper length " + str(len(room_adjacencies)) + "but also " + str(len(elevators)))
 
@@ -587,7 +594,7 @@ class Level_Generator:
 		#self.append_segment(map, self.create_segment(), player_start_x, player_start_y, object_data)
 
 
-		return Level_Data(map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
+		return Level_Data(map, background_map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 
 			
 	#	process_nearest_center_points()
@@ -595,7 +602,7 @@ class Level_Generator:
 	#	calculate_nav_data()	
 
 
-	def create_room(self,room, map, center_points, nearest_points_array):
+	def create_room(self,room, map, center_points, nearest_points_array, background_map = None):
 		#global map, spawn_points, center_points, nearest_points_array
 
 
@@ -608,6 +615,18 @@ class Level_Generator:
 				map[x][y].blocked = False
 				map[x][y].block_sight = False
 				nearest_points_array[x][y] = (new_x, new_y)
+
+		if background_map is not None :		# put a nice carpet in the middle if it's a big room
+			if (room.x2 - room.x1 >4  and room.y2 - room.y1 >3) or  (room.x2 - room.x1 >3  and room.y2 - room.y1 >4):
+				for x in range(room.x1, room.x2+1):
+					for y in range(room.y1, room.y2+1):
+						background_map[x][y] = 2
+				for x in range(room.x1, room.x2+1):
+					background_map[x][room.y1] = 0
+					background_map[x][room.y2] = 0
+				for y in range(room.y1, room.y2+1):
+					background_map[room.x1][y] = 0
+					background_map[room.x2][y] = 0
 
 
 
@@ -1065,7 +1084,7 @@ class Level_Generator:
 
 
 
-	def append_segment(self, map, segment, x_offset, y_offset, object_data):
+	def append_segment(self, map, background_map, segment, x_offset, y_offset, object_data):
 		map_segment = segment.seg_map
 		for y in range (0, len(map_segment)):
 			for x in range (0, len(map_segment[y])):
@@ -1075,6 +1094,13 @@ class Level_Generator:
 				elif map_segment[y][x] == 1:
 					map[x + x_offset][y + y_offset].blocked = True
 					map[x + x_offset][y + y_offset].block_sight = True
+				else: 		#for now, other options are treated as empty space
+					map[x + x_offset][y + y_offset].blocked = False
+					map[x + x_offset][y + y_offset].block_sight = False
+				if map_segment[y][x] == 1:
+					background_map[x + x_offset][y + y_offset] = 0  # default to 'default color' for walls, just in case
+				else:
+					background_map[x + x_offset][y + y_offset] = map_segment[y][x]
 		for od in segment.seg_data:
 			object_data.append(Object_Datum(od.x + x_offset, od.y + y_offset, od.name, od.info, od.more_info))
 
@@ -1345,7 +1371,7 @@ class Level_Generator:
 
 
 	# method of creating rooms that is basically "try and pack rooms into a particular rectangular area until there's no room
-	def fill_a_rectangle(self, map, lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, adjacency):
+	def fill_a_rectangle(self, map, background_map,  lev_set, dungeon_level, object_data, rooms, nearest_points_array, center_points, spawn_points, elevators, adjacency):
 
 
 
@@ -1417,7 +1443,7 @@ class Level_Generator:
 			new_room = Rect(temp_new_room.x1+trim_left, temp_new_room.y1+trim_top, temp_new_room.x2-temp_new_room.x1+1-trim_left-trim_right, temp_new_room.y2-temp_new_room.y1+1-trim_top-trim_bottom)
 			#TODO: if room is close to the border, move it along.
 			#Put this new room into the map
-			self.create_room(new_room, map, center_points, nearest_points_array)
+			self.create_room(new_room, map, center_points, nearest_points_array, background_map = background_map)
 			rooms.append(new_room)
 			self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 		
@@ -1828,7 +1854,7 @@ class Level_Generator:
 		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
 
 
-	def new_tutorial(self, object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
+	def new_tutorial(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
 
 		# I think stuff is gonna get moved around a bunch, so here are some values you can adjust to move the whole thing
@@ -1881,11 +1907,11 @@ class Level_Generator:
 				[1,1,1,1,0,1,1,1,1],
 				[1,1,1,1,C,1,1,1,1],
 				[1,0,0,0,0,0,0,0,1],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
+				[0,0,2,0,0,0,2,0,0],
+				[0,0,2,0,0,0,2,0,0],
 				[0,0,0,0,D,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,1],
+				[0,2,0,0,0,0,2,0,0],
+				[1,0,2,2,2,2,0,0,1],
 				[1,1,1,1,1,1,1,1,1]]
 
 		#old_room = new_room
@@ -1893,7 +1919,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, self.create_segment(seg_map), 10 + rxofst, 0 + ryofst, object_data)
+		self.append_segment(map, background_map, self.create_segment(seg_map), 10 + rxofst, 0 + ryofst, object_data)
 #		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
 		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
@@ -1924,7 +1950,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
 #		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
 		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
@@ -1952,7 +1978,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
 #		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
 		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
@@ -1985,7 +2011,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, self.create_segment(seg_map), 28 + rxofst, 0 + ryofst, object_data)
+		self.append_segment(map, background_map, self.create_segment(seg_map), 28 + rxofst, 0 + ryofst, object_data)
 #		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
 		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
@@ -2017,7 +2043,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, self.create_segment(seg_map), 30 + rxofst, 9 + ryofst, object_data)
+		self.append_segment(map, background_map, self.create_segment(seg_map), 30 + rxofst, 9 + ryofst, object_data)
 #		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
 		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
 		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)

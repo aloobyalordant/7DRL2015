@@ -3307,7 +3307,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
+	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
 
 	lev_gen = Level_Generator()
 
@@ -3317,6 +3317,7 @@ def make_map():
 	number_alarmers = 0		# how many things in the level do stuff with the alarm? If this becomes 0, all alarms stuff
 
 	map = level_data.map
+	background_map = level_data.background_map
 	player.x = level_data.player_start_x
 	player.y = level_data.player_start_y
 	camera.x = player.x
@@ -3353,7 +3354,12 @@ def make_map():
 			if map[x][y].blocked:
 				bgColorColumnColor = color_light_wall
 			else:
-				bgColorColumnColor = color_light_ground
+				if background_map[x][y] == 0:
+					bgColorColumnColor = color_light_ground
+				elif background_map[x][y] == 2:
+					bgColorColumnColor = color_light_ground_alt
+				else:
+					bgColorColumnColor = color_light_ground
 				
 			bgColorArray[x].append(bgColorColumnColor)
 
@@ -3387,13 +3393,17 @@ def make_map():
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
 			objectsArray[od.x][od.y].append(strawman)
 		elif od.name == 'shrine':
+			#get altar color - gonna make it depend on the background of the tile it's on.
+			altar_color = color_light_ground_alt
+			if background_map[od.x][od.y] == 2:
+				altar_color = color_light_ground
 			num = randint( 0, 2) 
 			if num == 0:
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
+				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
 			elif num == 1:
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
+				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 			else: 
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
+				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
 			objectsArray[od.x][od.y].append(shrine)
 			shrine.send_to_back()
 		elif  od.name == 'security system':
@@ -3404,11 +3414,11 @@ def make_map():
 			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door'or od.name == 'easydoor':
 			if od.info == 'horizontal':
-				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
+				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
 			elif od.info == 'vertical':
-				door = Object(od.x, od.y, '+', 'door', default_altar_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
+				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
 			if od.name == 'easydoor':		# a door that doesn't stick!!
@@ -3425,7 +3435,10 @@ def make_map():
 			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
 			objectsArray[od.x][od.y].append(new_plant)
 		elif od.name == 'message':
-			floor_message = Object(od.x, od.y, '~', 'message', default_message_color, blocks=False, floor_message = Floor_Message(od.info))
+			message_color = color_light_ground_alt
+			if background_map[od.x][od.y] == 2:
+				message_color = color_light_ground
+			floor_message = Object(od.x, od.y, '~', 'message', message_color, blocks=False, floor_message = Floor_Message(od.info))
 			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 		elif od.name == 'decoration':
@@ -4280,7 +4293,7 @@ def restartynscreen():
 def render_all():
 
 	global fov_map, color_dark_wall, color_light_wall
-	global color_dark_ground, color_light_ground
+	global color_dark_ground, color_light_ground, color_light_ground_alt
 	global fov_recompute, bgColorArray
 
 	if fov_recompute:
@@ -4395,7 +4408,7 @@ def render_all():
 
 def create_GUI_panel():
 	global fov_map, color_dark_wall, color_light_wall
-	global color_dark_ground, color_light_ground
+	global color_dark_ground, color_light_ground, color_light_ground_alt
 	global fov_recompute, bgColorArray
 	global game_level_settings, dungeon_level
 	global controlHandler
@@ -4882,7 +4895,7 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
-	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_fog_of_war, default_altar_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
+	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
 	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
 	
@@ -4892,8 +4905,10 @@ def setColorScheme(colorScheme = 'default'):
 	color_light_wall = levelColors['color_light_wall']
 	color_dark_ground = levelColors['color_dark_ground']
 	color_light_ground = levelColors['color_light_ground']
+	color_light_ground_alt = levelColors['color_light_ground_alt']
 	color_fog_of_war = levelColors['color_fog_of_war']
 	default_altar_color = levelColors['default_altar_color']
+	default_door_color = levelColors['default_door_color']
 	default_message_color = levelColors['default_message_color']
 	default_decoration_color = levelColors['default_decoration_color']
 	water_background_color = levelColors['water_background_color']
@@ -4994,7 +5009,7 @@ def initialise_game():
 	#Initialise controls
 	controlHandler = ControlHandler("AZERTY-numpad")
 
-	colorHandler = ColorHandler('adjustedOriginal')
+	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
 	setColorScheme()
 
 
