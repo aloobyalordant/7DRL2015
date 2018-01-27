@@ -4,7 +4,7 @@ class ControlHandler:
 
 	def __init__(self, controlType = "QWERTY-numpad", customDictionary = None):
 		print("Setting controls with type " + controlType)
-		self.controlType = controlType	# options: "QWERTY-numpad"  "QWERTY-nopad" "AZERTY-numpad" "AZERTY-nopad" "custom"
+		self.controlType = str(controlType)	# options: "QWERTY-numpad"  "QWERTY-nopad" "AZERTY-numpad" "AZERTY-nopad" "custom"
 		if self.controlType == "custom":
 			self.controlDictionary = customDictionary	# maps keynames (and/or characters?) to command names
 		else:
@@ -55,11 +55,18 @@ class ControlHandler:
 		elif controlType == "AZERTY-nopad":
 			print("Setting AZERTY-nopad...")
 			# customisable controls	
-			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
+			newDictionary = dict([('a', "ATTCKUPLEFT"),('z', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('w',	"ATTCKDOWNLEFT"), ('q', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
 			('t', "MOVEUPLEFT"), ('y', "MOVEUP"), ('UP',"MOVEUP"),('u', "MOVEUPRIGHT"), ('j', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), (',', "MOVEDOWNRIGHT"), ('n', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('b', "MOVEDOWNLEFT"), ('g', "MOVELEFT"), ('LEFT', "MOVELEFT"),
 			('h', "STANDSTILL"), ('.', "STANDSTILL"),
 			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 
+		else:
+			print("Control scheme not recognised, setting QWERTY-numpad by default...")
+			# customisable controls	
+			newDictionary = dict([('q', "ATTCKUPLEFT"),('w', "ATTCKUP"),('e', "ATTCKUPRIGHT"),('d', "ATTCKRIGHT"),('c',"ATTCKDOWNRIGHT"),('x',"ATTCKDOWN"),('z',	"ATTCKDOWNLEFT"), ('a', "ATTCKLEFT"), ('s',"ATTCKDOWNALT"),
+			('KP7', "MOVEUPLEFT"), ('HOME', "MOVEUPLEFT"), ('KP8', "MOVEUP"), ('UP',"MOVEUP"),('KP9', "MOVEUPRIGHT"), ('PAGEUP', "MOVEUPRIGHT"), ('KP6', "MOVERIGHT"), ('RIGHT',"MOVERIGHT"), ('KP3', "MOVEDOWNRIGHT"), ('PAGEDOWN', "MOVEDOWNRIGHT"), ('KP2', "MOVEDOWN"), ('DOWN', "MOVEDOWN"), ('KP1', "MOVEDOWNLEFT"), ('KP4', "MOVELEFT"), ('LEFT', "MOVELEFT"),
+			('KP5', "STANDSTILL"), ('.', "STANDSTILL"),
+			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 		#TODO nopad versions
 		
 		# controls that are nae fixed.
@@ -93,7 +100,16 @@ class ControlHandler:
 		newDictionary = {}
 		# obvs only going to have one result, even if multiple keys do the same command. That's fine.
 		for k,v in self.controlDictionary.items():
-			newDictionary[v] = k
+
+			# if k begins with 'KP', replace it with the bit after
+			if len(k) == 3 and k[0:2] == 'KP':
+				newDictionary[v] =  k[2]
+			# actually try and make it so shorter keys get used where possible? ugh
+			elif v in newDictionary:
+				if len(k) < len(newDictionary[v]):
+					newDictionary[v] = k
+			else:
+				newDictionary[v] = k
 		return newDictionary
 
 	# reverse dictionary for controlDictionary, but finds a single character key if one is available, 

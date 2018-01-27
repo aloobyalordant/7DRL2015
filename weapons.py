@@ -1087,6 +1087,56 @@ class Weapon_Dagger:
 
 
 
+class Weapon_Unarmed:
+
+	def __init__(self):
+		self.name = 'unarmed'
+		self.command_list = ''
+		self.max_charge = 0
+		self.current_charge = 0
+		self.default_usage = 0
+		self.durability = 0
+		self.just_attacked = False
+		default_usage = self.default_usage
+	
+		self.command_items = []
+
+	
+	def do_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and usage <= self.current_charge and self.durability > 0:
+				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
+				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		return 0
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		return 0
+
+
+
+
+	def recharge(self, recharge_val = 1):
+		if self.just_attacked == False:
+			self.current_charge = self.current_charge + recharge_val
+		if self.current_charge > self.max_charge:
+			self.current_charge = self.max_charge
+		self.just_attacked = False
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
+
+
 
 ##############
 

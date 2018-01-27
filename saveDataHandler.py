@@ -95,9 +95,7 @@ class SaveDataHandler:
 	# DEFAULT VALUES GO HERE
 	def getDefaultControlData(self):
 		returnDictionary = {}
-		returnDictionary["FLD_TEST_1"] = "Hello this is a test string"
-		returnDictionary["FLD_TEST_2"] = "Hi! This is another test string"
-		returnDictionary["FLD_PLAY_COUNT"] = 0
+		returnDictionary["CONTROL_SCHEME"] = "QWERTY-numpad"
 		return returnDictionary
 
 	# Load data from save file, 
@@ -115,11 +113,15 @@ class SaveDataHandler:
 				colonLocation = line.find(":")
 				if colonLocation > -1:
 					fieldString = line[:colonLocation]
-					valueString = line[(colonLocation + 1):]
+					newlineLocation = line.find("\n")
+					if newlineLocation > colonLocation:
+						valueString = line[(colonLocation + 1):newlineLocation]
+					else: 
+						valueString = line[(colonLocation + 1):]
 					tempDictionary[fieldString] = valueString
 			file.close()
 		except:
-			print("No Test file found")
+			print("No Control file found")
 		return tempDictionary
 
 
@@ -138,15 +140,18 @@ class SaveDataHandler:
 		print("saving...")
 
 		for k,v in self.controlData.items():
-			desiredFieldName = "FLD_TEST_1"
+			desiredFieldName = "CONTROL_SCHEME"
 			if(k == desiredFieldName):
-				file.write(str(k) + ":" + str(v) + "\n")
-			desiredFieldName = "FLD_TEST_2"
-			if(k == desiredFieldName):
-				file.write(str(k) + ":" + str(v) + "\n")
-			desiredFieldName = "FLD_PLAY_COUNT"
-			if(k == desiredFieldName):
-				file.write(str(k) + ":" + str(v) + "\n")
+				file.write(str(k) + ":" + str(v))
+			#desiredFieldName = "FLD_TEST_1"
+			#if(k == desiredFieldName):
+			#	file.write(str(k) + ":" + str(v) + "\n")
+			#desiredFieldName = "FLD_TEST_2"
+			#if(k == desiredFieldName):
+			#	file.write(str(k) + ":" + str(v) + "\n")
+			#desiredFieldName = "FLD_PLAY_COUNT"
+			#if(k == desiredFieldName):
+			#	file.write(str(k) + ":" + str(v) + "\n")
 		file.close() 
 
 

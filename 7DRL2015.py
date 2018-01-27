@@ -7,7 +7,7 @@ import textwrap
 import random
 #import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
 from random import randint
-from weapons import Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
+from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
@@ -2595,7 +2595,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -2658,9 +2658,12 @@ def handle_keys(user_input_event):
 			# Update control scheme if we chose a new thing!
 			if control_num < len(controlHandler.controlOptionsArray):
 				(controlType, control_description) = controlHandler.controlOptionsArray[control_num]
-				controlHandler = ControlHandler(controlType)
+				control_scheme = controlType
+				controlHandler = ControlHandler(control_scheme)
+				saveControlScheme()
 				something_changed = True
 				game_state = 'playing'
+				return 'invalid-move'
 				
 
 	elif game_state == 'dead':
@@ -2695,7 +2698,10 @@ def handle_keys(user_input_event):
 			# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 			#drop_weapon(old_weapon)
 			weapon_found = True
-			message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name) 
+			if str(old_weapon.name) == "unarmed":
+				message('You pick up the ' + new_weapon.name + '.') 
+			else:
+				message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.') 
 		elif veekay != None:
 			game_state = 'playing'
 			message('Never mind.')
@@ -2872,7 +2878,10 @@ def handle_keys(user_input_event):
 					# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 					#drop_weapon(old_weapon)
 					weapon_found = True
-					message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name) 
+					if str(old_weapon.name) == "unarmed":
+						message('You pick up the ' + new_weapon.name + '.') 
+					else:
+						message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.') 
 				elif  len(weapons_found) > 1:
 					message_string = ('Pick up what? (')
 					count = 1
@@ -3628,7 +3637,10 @@ def process_player_attack(actionCommand):
 	#print('you pressed ' + str(key_char))
 
 	if player_weapon.durability <= 0:
-		message('Your ' +  str(player_weapon.name) + ' is broken!')
+		if player_weapon.name == 'unarmed':
+			message('You have no weapon!')
+		else:
+			message('Your ' +  str(player_weapon.name) + ' is broken!')
 		return 'invalid-move'
 	# check whether the weapon can do this kind of attack
 	# probably this should be a separate command in the weapons class, but that would mean repeating yet more code or cleaning up how the weapon code exists, and I am too lazy to do either right now
@@ -3637,7 +3649,10 @@ def process_player_attack(actionCommand):
 		if com == actionCommand:
 			command_recognised = True
 	if command_recognised == False:
-		message('You can\'t use a ' + str(player_weapon.name) + ' like that!', color_warning)
+		if player_weapon.name == 'unarmed':
+			message('You have no weapon!')
+		else:
+			message('You can\'t use a ' + str(player_weapon.name) + ' like that!', color_warning)
 		return 'invalid-move'
 		 
 
@@ -4097,6 +4112,10 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 
 
 def message(new_msg, color = default_text_color):
+
+	# Turn hashtag shortcuts into actual key commands
+	new_msg = translateCommands(new_msg)
+
 	#split the message if necessary, among multiple lines
 	new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
 
@@ -4107,6 +4126,42 @@ def message(new_msg, color = default_text_color):
 
 		#add the new line as a tuple, with the text and the color
 		game_msgs.append( (line, color) )
+
+
+# searches through a string for strings of the form '#COMMAND#, and replaces them with the result of looking up COMMAND in the control handler.
+def translateCommands(msg):
+	global controlHandler
+
+
+	searchForHashtags = True
+	while searchForHashtags == True:
+		# find the next command string, if one exists
+		firstHashtag = -1
+		nextHashtag = -1
+		firstHashtag = msg.find('#')
+		if firstHashtag == -1:
+			searchForHashtags = False
+		else:
+			nextHashtag = msg[firstHashtag+1:].find('#') + firstHashtag
+		if nextHashtag == -1:
+			searchForHashtags = False
+		else:
+			command_substring = msg[firstHashtag +1: nextHashtag+1]
+			# Look up the control string corresponding to this command
+			print ("Found hashtag " + command_substring)
+			replacement_string = "?"
+			if command_substring in controlHandler.controlLookup:
+				replacement_string = controlHandler.controlLookup[command_substring]
+			elif command_substring in controlHandler.menuDictionary:
+				replacement_string = controlHandler.menuDictionary[command_substring]
+		
+			# replace the command string with the control string, and then keep looking for hastags
+			new_msg = msg[:firstHashtag] + replacement_string + msg[nextHashtag+2:]
+			msg = new_msg
+			searchForHashtags = True
+	return msg
+	#controlLookup
+	#menuDictionary
 
 def pause_screen():
 	global test_save_message, gameSaveDataHandler, play_count
@@ -4474,17 +4529,27 @@ def create_GUI_panel():
 
 	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
 	command_display_list = []
-	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPLEFT"]))
-	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["ATTCKUP"]))
-	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPRIGHT"]))
-	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["ATTCKRIGHT"]))
-	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNRIGHT"]))
-	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["ATTCKDOWN"]))
-	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNLEFT"]))
-	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["ATTCKLEFT"]))
+	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPLEFT"],ATTCKUPLEFT))
+	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["ATTCKUP"],ATTCKUP))
+	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPRIGHT"],ATTCKUPRIGHT))
+	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["ATTCKRIGHT"],ATTCKRIGHT))
+	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNRIGHT"],ATTCKDOWNRIGHT))
+	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["ATTCKDOWN"],ATTCKDOWN))
+	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNLEFT"],ATTCKDOWNLEFT))
+	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["ATTCKLEFT"],ATTCKLEFT))
 
-	for(x_adjust, y_adjust, command_str) in  command_display_list:
-		panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
+	for(x_adjust, y_adjust, command_str, attck_str) in  command_display_list:
+		# only display the command if an attack exists for it? that's the idea anyway.
+		command_recognised = False
+		for (com, data, usage) in player_weapon.command_items:
+			if com == attck_str:
+				command_recognised = True
+		if command_recognised == True:
+			panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
+	# Commented out: could have a symbol to mean 'no attack available' here, 
+	# but I think that's a bad idea given various puntuation can get used as actual commands
+	#	else:
+	#		panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, '-', bg=None, fg=attack_panel_default_color)
 
 
 
@@ -4981,9 +5046,17 @@ def save_game():
 	gameSaveDataHandler.saveTestFileData()
 	gameSaveDataHandler.saveControlData()
 
+
+def saveControlScheme():
+	global gameSaveDataHandler, control_scheme
+	gameSaveDataHandler.updateControlDataValue("CONTROL_SCHEME", control_scheme)
+	gameSaveDataHandler.saveControlData()
+	
+
 def load_game():
 	global gameSaveDataHandler, play_count
 	global test_save_message
+	global control_scheme
 	#if not os.path.isfile('savegame.dat'):		#may have to add .db when building with cxfreeze, because reasons?
 	#	test_save_message = "woops, file not fou-ound!"
 	#else:	
@@ -4998,9 +5071,11 @@ def load_game():
 	gameSaveDataHandler.loadData()
 	testFileData = gameSaveDataHandler.getTestFileData()
 	play_count = int(testFileData["FLD_PLAY_COUNT"])
+	controlData = gameSaveDataHandler.getControlData()
+	control_scheme = controlData["CONTROL_SCHEME"]
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme
 	current_big_message = 'You weren\'t supposed to see this'
 
 
@@ -5008,7 +5083,7 @@ def initialise_game():
 	load_game()
 
 	#Initialise controls
-	controlHandler = ControlHandler("QWERTY-numpad")
+	controlHandler = ControlHandler(control_scheme)
 
 	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
 	setColorScheme()
@@ -5059,8 +5134,9 @@ def initialise_game():
 	#upgrade_array.append(another_upgrade)
 	
 	#WEAPON SELECT
-	player_weapon = Weapon_Sword()
-	# player_weapon = Weapon_Spear()
+	player_weapon = Weapon_Unarmed()
+	#player_weapon = Weapon_Sword()
+	#player_weapon = Weapon_Spear()
 	#player_weapon = Weapon_Staff()
 	#player_weapon = Weapon_Wierd_Staff()
 	#player_weapon = Weapon_Katana()
@@ -5085,8 +5161,20 @@ def initialise_game():
 	#a warm welcoming message!
 	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', color_energy)
 
-	# TODO i'm commenting this out without replacing! may be a mistake
-	#libtcod.console_set_default_foreground(con, default_text_color)
+	# Here is an annoying hack. One-off special check for floor messages just so we can check if there's one when the game starts.
+	objects_here = [obj for obj in objectsArray[player.x][player.y]
+			if obj is not player]
+	names = [obj.name for obj in objects_here if obj.floor_message is None and obj.name is not 'water' and obj.name is not 'decoration'  and obj.name is not 'blood']  #todo: get a better way of not including certain objects in this list
+	possible_commands = []
+	floor_message_found = False
+	floor_message_text = ''
+	for obj in objects_here:
+		if floor_message_found == False and obj.floor_message is not None:
+			floor_message_text = obj.floor_message.string
+			floor_message_found = True		
+	if floor_message_found == True:  
+		message('You see a message on the floor:')
+		message('\"' + floor_message_text + '\"', color_energy)
 
 
 	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
@@ -5491,7 +5579,7 @@ while not translated_console_is_window_closed():
 				floor_message_text = obj.floor_message.string
 				floor_message_found = True
 			
-		if floor_message_found == True and player.decider.decision is not None and player.decider.decision.move_decision is not None: # trying to make it so messages don't repeat themselves
+		if floor_message_found == True and player.decider.decision is not None and (player.decider.decision.move_decision is not None or player.decider.decision.jump_decision is not None): # trying to make it so messages don't repeat themselves
 			message('You see a message on the floor:')
 			message('\"' + floor_message_text + '\"', color_energy)
 
