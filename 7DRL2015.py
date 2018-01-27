@@ -259,7 +259,8 @@ def translated_console_is_window_closed():
 	return libtcod.event.is_window_closed()  # I THINK??
 
 def translated_console_set_fullscreen(fullscreen_val):
-	libtcod.set_fullscreen(fullscreen_val)
+	return
+	#libtcod.set_fullscreen(fullscreen_val)
 
 def translated_console_is_fullscreen():
 	return libtcod.get_fullscreen()
@@ -5007,7 +5008,7 @@ def initialise_game():
 	load_game()
 
 	#Initialise controls
-	controlHandler = ControlHandler("AZERTY-numpad")
+	controlHandler = ControlHandler("QWERTY-numpad")
 
 	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
 	setColorScheme()
