@@ -3807,7 +3807,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level
+	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon
 
 	# doing some test saving
 	save_game()
@@ -3828,6 +3828,17 @@ def next_level():
 	#upgrade_array.append(new_upgrade)
 
 	#message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
+
+
+	# if leaving the tutorial, reset the players health + energy, and give them a fresh sword
+	if dungeon_level == 0:
+		print ("leaving tutorial, resetting player stats")
+		player.fighter.hp = STARTING_ENERGY
+		player.fighter.wounds = 0
+		player_weapon = Weapon_Sword()
+		currency_count = 0
+		upgrade_array = []
+
 
 
 	dungeon_level += 1
@@ -5114,6 +5125,7 @@ def initialise_game():
 	decider_component = Decider()
 	player = Object(0, 0, '@', 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component)
 	camera = Location(player.x, player.y)
+
 
 	#TODO TEMP THINGUMMY: for right now we're creating a single special powerup thing, and ultimately this stuff needs to be in a proper array and all that
 	#upgrade_choice = randint( 0, 1)
