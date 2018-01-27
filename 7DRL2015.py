@@ -113,6 +113,8 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
+STARTING_CURRENCY = 2
+
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
 #color_dark_ground = libtcod.Color(50, 50, 150)
@@ -189,6 +191,16 @@ color_faded_energy = 		(vsf,vsf,vsf)	#	(0,0,255)
 color_warning = 		(v_p,v_p,v_p)	#	(255,127,0)
 color_big_alert = 		(v_p,v_p,v_p)	#(255,0,0)
 
+Color_Message_In_World=(v_p,v_p,v_p)		# e.g. messages on floor, deities or elevators talking to you
+Color_Menu_Choice=(v_p,v_p,v_p)			# when the player has to input an option from mutliple choices
+Color_Not_Allowed=(v_p,v_p,v_p)			# when a player action is invalid or prevented
+Color_Dangerous_Combat=(v_p,v_p,v_p)		# when bad things happen in combat, like dying or getting hit
+Color_Interesting_Combat=(v_p,v_p,v_p)		# notable combat stuff like enemies dying
+Color_Boring_Combat=(v_p,v_p,v_p)		# Run of the mill combat stuff. you hit an enemy. yawn
+Color_Interesting_In_World=(v_p,v_p,v_p)	# Events of note happening in the world. Like alarms going off
+Color_Boring_In_World=(v_p,v_p,v_p)		# everyday occurences like doors opening
+Color_Stat_Info=(v_p,v_p,v_p)			# info about not-in-the-world stuff like gaining energy
+Color_Personal_Action=(v_p,v_p,v_p)		# Things the player does that aren't combat "you pick up the sword" etc
 
 
 #sizes and coordinates relevant for the GUI
@@ -482,7 +494,7 @@ class Door:
 		#		if function is not None:
 		#			function(self.owner)
 
-		message('The door crashes down!', color_warning)
+		message('The door crashes down!', Color_Interesting_In_World)
 
 		door = self.owner
 		door.blocks = False
@@ -500,13 +512,13 @@ class Door:
 	def open(self):		#normal doors can't be closed after opening, Just one of those things
 		
 		if randint( 0, self.looseness-1) < 2 and not self.easy_open:		#opening unsuccesful
-			message('The door rattles.', default_text_color)
+			message('The door rattles.', Color_Boring_In_World)
 			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
 			self.looseness = self.looseness + 1		#increase chance of opening in future though
 			self.recently_rattled = True
 
 		else: 
-			message('The door opens', default_text_color)
+			message('The door opens', Color_Boring_In_World)
 
 			door = self.owner
 			door.blocks = False
@@ -568,7 +580,7 @@ class Flower:
 			monster.fighter.heal(1)
 			monster.fighter.cure_wounds(1)
 			self.state = 'trampled'
-			message(monster.name + ' healed by ' + self.name)
+			message(monster.name + ' healed by ' + self.name, Color_Interesting_In_World)
 			self.symbol = 'x'
 			
 
@@ -702,7 +714,7 @@ class Energy_Fighter:
 			if self.hp < 0:
 				self.wounds += (-self.hp)
 				self.hp = 0
-				message("OUCH! You take extra damage at low energy." )
+				message("OUCH! You take extra damage at low energy.", Color_Dangerous_Combat)
 			if self.wounds > self.max_hp:
 				self.wounds = self.max_hp
 
@@ -2281,12 +2293,12 @@ class BasicAttack:
 				if target.fighter is not None:
 					if self.attacker is not None:
 						if target is player:
-							message('The ' + self.attacker.name.capitalize() + ' hits!', color_big_alert)	
+							message('The ' + self.attacker.name.capitalize() + ' hits!', Color_Dangerous_Combat)	
 						elif self.attacker is player:
-							message('You hit the ' + target.name.capitalize() + '!')
+							message('You hit the ' + target.name.capitalize() + '!', Color_Boring_Combat)
 							player_hit_something = True	
 						else:
-							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!')
+							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!', Color_Interesting_Combat)
 					#add blood! maybe
 					#new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
 					#objectsArray[target.x][target.y].append(new_blood)
@@ -2699,12 +2711,12 @@ def handle_keys(user_input_event):
 			#drop_weapon(old_weapon)
 			weapon_found = True
 			if str(old_weapon.name) == "unarmed":
-				message('You pick up the ' + new_weapon.name + '.') 
+				message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 			else:
-				message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.') 
+				message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 		elif veekay != None:
 			game_state = 'playing'
-			message('Never mind.')
+			message('Never mind.', Color_Not_Allowed)
 			#keynum = key
 			#print str(libtcod.KEY_KP7)		# hang on... 41 is 7. So... 35 is 1, right? blah - 34
 			return 'invalid-move'
@@ -2721,16 +2733,16 @@ def handle_keys(user_input_event):
 				something_changed = True
 				currency_count = currency_count - upgrade_cost
 				upgrade_array.append(current_shrine.upgrade)
-				message('Yaaay '+ current_shrine.upgrade.name +'!', color_energy)
+				message('Yaaay '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
 				current_shrine.upgrade = None
 			else:
 				something_changed = True
-				message('You do not have enough favour!', color_big_alert)
+				message('You do not have enough favour!', Color_Not_Allowed)
 		elif key_char == 'n':
 			something_changed = True
-			message('You feel good about your decision to abstain from ' + current_shrine.upgrade.name + '. But in years to come, to start to wonder what could have been.')
+			message('You feel good about your decision to abstain from ' + current_shrine.upgrade.name + '. But in years to come, to start to wonder what could have been.', Color_Stat_Info)
 		else:
-			message('Never mind??')
+			message('Never mind??', Color_Not_Allowed)
 
 	elif player_action == 'jump_dialog':
 		actionCommand = controlHandler.getGameplayCommand(veekay, key_char)
@@ -2780,14 +2792,14 @@ def handle_keys(user_input_event):
 		elif veekay != 0:
 			game_state = 'playing'
 			# message('You stand paralyzed by indecision or maybe bad programming!.')	#TODO probably change this message
-			message('Never mind.')
+			message('Never mind.', Color_Not_Allowed)
 			return 'invalid-move'
 		else: 
 			return 'jump_dialog'
 		# check if there's a wall in the way before letting player jump
 		(dx,dy) = temp_jump_decision
 		if map[player.x + dx][player.y + dy].blocked:
-			message("There's a wall in the way!")
+			message("There's a wall in the way!", Color_Not_Allowed)
 			return 'invalid-move'
 		else:
 			player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
@@ -2828,7 +2840,7 @@ def handle_keys(user_input_event):
 			player.decider.set_decision(Decision(move_decision=Move_Decision(1,0)))
 		#elif veekay == 'KP5' or veekay == '.' or key_char == 'h':	
 		elif actionCommand == "STANDSTILL":
-			message('You stand perfectly still.')
+			message('You stand perfectly still.', Color_Personal_Action)
 			
 			# update the relevant upgrades, to do with standing still
 			for power_up in upgrade_array:
@@ -2859,13 +2871,13 @@ def handle_keys(user_input_event):
 						plants_found.append(object)
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0:
-					message('You snatch up the key.')
+					message('You snatch up the key.', Color_Personal_Action)
 					key_count = key_count + len(keys_found)
 					for ki in keys_found:
 						objectsArray[player.x][player.y].remove(ki)	
 				#similarly, favours take priority over weapons but after keys.
 				elif len(favours_found) > 0:
-					message('You humbly accept this favour.')
+					message('You humbly accept this favour.', Color_Personal_Action)
 					currency_count = currency_count + len(favours_found)
 					for fa in favours_found:
 						objectsArray[player.x][player.y].remove(fa)	
@@ -2879,9 +2891,9 @@ def handle_keys(user_input_event):
 					#drop_weapon(old_weapon)
 					weapon_found = True
 					if str(old_weapon.name) == "unarmed":
-						message('You pick up the ' + new_weapon.name + '.') 
+						message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 					else:
-						message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.') 
+						message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 				elif  len(weapons_found) > 1:
 					message_string = ('Pick up what? (')
 					count = 1
@@ -2890,17 +2902,17 @@ def handle_keys(user_input_event):
 							message_string = message_string + ( controlHandler.letterFromInt[count] + '. ' + weapon_item.name + ' ')
 						count += 1
 					message_string = message_string + ')'
-					message(message_string, color_warning)
+					message(message_string, Color_Menu_Choice)
 					return 'pickup_dialog'
 					#handle_keys()	# why do I get the feeling I am going to regret this
 				elif len(plants_found) >= 1:
 					for plant_object in plants_found:
 						if plant_object.plant.state == 'seed':
 								plant_object.plant.activate()
-								message('A sapling emerges as you poke the seed.')
+								message('A sapling emerges as you poke the seed.', Color_Interesting_In_World)
 				else:
 				#if weapon_found == False:
-					message('Nothing to pick up')
+					message('Nothing to pick up', Color_Not_Allowed)
 					return 'invalid-move'	
 
 
@@ -2910,11 +2922,11 @@ def handle_keys(user_input_event):
 				canJump = player.fighter.jump_available()
 				if canJump:
 					message_string = 'Jump in which direction?'
-					message(message_string, color_warning)
+					message(message_string, Color_Menu_Choice)
 					return 'jump_dialog'
 				else:
 					message_string = 'Your legs are too tired to jump.'
-					message(message_string, color_warning)
+					message(message_string, Color_Not_Allowed)
 					return 'invalid-move'
 
 			#attacky keys!
@@ -2949,20 +2961,20 @@ def handle_keys(user_input_event):
 							break
 					if shrine_here == True:
 						current_god = current_shrine.god
-						message('You close your eyes and focus your mind.')
+						message('You close your eyes and focus your mind.', Color_Personal_Action)
 						current_shrine.visit()
 
 						if current_shrine.upgrade is not None:
-							message('A small god appears before you.', color_warning)
+							message('A small god appears before you.', Color_Interesting_In_World)
 							message_string = '\"For a small display of faith, I will grant you the boon of ' + current_shrine.upgrade.name +'!\"'
-							message(message_string, color_energy)
+							message(message_string, Color_Message_In_World)
 							message_string = '\"' + current_shrine.upgrade.verbose_description +'\"'
-							message(message_string, color_energy)
+							message(message_string, Color_Message_In_World)
 							message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
-							message(message_string, color_warning)
+							message(message_string, Color_Menu_Choice)
 							return 'upgrade shop dialog'
 						else:
-							message('... but nothing happens.')
+							message('... but nothing happens.', Color_Boring_In_World)
 						#handle_keys()	# why do I get 
 
 						# Commenting out this deity interaction stuff now... very sad
@@ -3005,12 +3017,12 @@ def handle_keys(user_input_event):
 
 
 					else:
-						message('There is no shrine here.')
+						message('There is no shrine here.', Color_Not_Allowed)
 						return 'invalid-move'
 
 
 				elif key_char == 'l':
-					message('You think it\'s time to blow this scene.')
+					message('You think it\'s time to blow this scene.', Color_Personal_Action)
 					current_center = nearest_points_array[player.x][player.y]
 					if current_center is not None:
 						target_center = choose_adjacent_room(current_center,  previous_center = TEMP_player_previous_center)
@@ -3019,7 +3031,7 @@ def handle_keys(user_input_event):
 						player.x = point_x
 						player.y = point_y 
 					else:
-						message('However, you\'re not really sure where this scene is')
+						message('However, you\'re not really sure where this scene is', Color_Not_Allowed )
 
 				else:
 					return 'didnt-take-turn'
@@ -3638,9 +3650,9 @@ def process_player_attack(actionCommand):
 
 	if player_weapon.durability <= 0:
 		if player_weapon.name == 'unarmed':
-			message('You have no weapon!')
+			message('You have no weapon!', Color_Not_Allowed)
 		else:
-			message('Your ' +  str(player_weapon.name) + ' is broken!')
+			message('Your ' +  str(player_weapon.name) + ' is broken!', Color_Not_Allowed)
 		return 'invalid-move'
 	# check whether the weapon can do this kind of attack
 	# probably this should be a separate command in the weapons class, but that would mean repeating yet more code or cleaning up how the weapon code exists, and I am too lazy to do either right now
@@ -3650,9 +3662,9 @@ def process_player_attack(actionCommand):
 			command_recognised = True
 	if command_recognised == False:
 		if player_weapon.name == 'unarmed':
-			message('You have no weapon!')
+			message('You have no weapon!', Color_Not_Allowed)
 		else:
-			message('You can\'t use a ' + str(player_weapon.name) + ' like that!', color_warning)
+			message('You can\'t use a ' + str(player_weapon.name) + ' like that!', Color_Not_Allowed)
 		return 'invalid-move'
 		 
 
@@ -3694,13 +3706,13 @@ def process_player_attack(actionCommand):
 		#Note: this code might need to change in future if we decide to have other reasons for not being able to attack
 		elif can_attack == 'energy too low':
 			#message('Attack used up; can attack again in ' + str(player_weapon.default_usage - player_weapon.current_charge) + ' seconds.', libtcod.orange)
-			message('You are too tired to attack', color_warning)
+			message('You are too tired to attack', Color_Not_Allowed)
 			return 'invalid-move'
 		elif can_attack == 'in water':
-			message('You are too busy treading water to attack', color_warning)
+			message('You are too busy treading water to attack', Color_Not_Allowed)
 			return 'invalid-move'
 		else:
-			message('Error: cannot attack', color_warning)
+			message('Error: cannot attack', Color_Not_Allowed)
 			return 'invalid-move'
 
 def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
@@ -3725,8 +3737,8 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 def player_death(player):
 	#the game ended!
 	global game_state
-	message('You collapse to the floor...', color_big_alert)
-	message('Press R to restart, Q to quit')
+	message('You collapse to the floor...', Color_Dangerous_Combat)
+	message('Press R to restart, Q to quit', Color_Menu_Choice)
 	game_state = 'dead'
  
 	#for added effect, transform the player into a corpse!
@@ -3762,10 +3774,10 @@ def monster_death(monster):
 		if number_alarmers > 0:
 			if alarm_level > 0:
 				alarm_level += (-monster.alarmer.alarm_value + monster.alarmer.dead_alarm_value)
-				message('The alarms get a little quieter.')
+				message('The alarms get a little quieter.', Color_Interesting_In_World)
 		else:
 			alarm_level = 0
-			message('A sudden silence descends as the alarms stop.')
+			message('A sudden silence descends as the alarms stop.', Color_Interesting_In_World)
 
 		# Temp hack, probably: if thismonster is an alarmer (i.e. a security system), make it drop currency?
 
@@ -3775,7 +3787,7 @@ def monster_death(monster):
 
 
 	else:	
-		message(monster.name.capitalize() + ' is dead!', color_warning)
+		message(monster.name.capitalize() + ' is dead!', Color_Interesting_Combat)
 	monster.char = '%'
 	monster.color = default_weapon_color
 	monster.blocks = False
@@ -3836,7 +3848,7 @@ def next_level():
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
 		player_weapon = Weapon_Sword()
-		currency_count = 0
+		currency_count = STARTING_CURRENCY
 		upgrade_array = []
 
 
@@ -3845,33 +3857,33 @@ def next_level():
 	alarm_level = dungeon_level + 1
 	key_count = 0
 	time_level_started = game_time
-	message('You ascend to the next level!', color_big_alert)
+	message('You ascend to the next level!', Color_Stat_Info)
 	if favoured_by_healer == True:
-		message('You hear the voice of ' + god_healer.name)
-		message('\"Behold my child! Faith in me shall always be rewarded.\"', color_warning)
+		message('You hear the voice of ' + god_healer.name, Color_Interesting_In_World)
+		message('\"Behold my child! Faith in me shall always be rewarded.\"', Color_Message_In_World)
 		player.fighter.max_hp = player.fighter.max_hp + 1
 		player.fighter.cure_wounds(3)
 		player.fighter.fully_heal()
 		#player.fighter.heal(5)
-		message('You feel rejuvenated!')
+		message('You feel rejuvenated!', Color_Stat_Info)
 		favoured_by_healer = False
 
 	if favoured_by_destroyer == True:
-		message('You hear the voice of ' + god_destroyer.name)
-		message('\"Your destruction pleases me. I shall grant you a boon!\"', color_warning)
+		message('You hear the voice of ' + god_destroyer.name, Color_Interesting_In_World)
+		message('\"Your destruction pleases me. I shall grant you a boon!\"', Color_Message_In_World)
 		#player.fighter.fully_heal()
 		player.fighter.increase_strength(1)
-		message('You feel stronger!')
+		message('You feel stronger!', Color_Stat_Info)
 		favoured_by_destroyer = False
 
 	if favoured_by_deliverer == True:
-		message('You hear the voice of ' + god_deliverer.name)
-		message('\"Good job! Here\'s your reward. Have fun with it!\"', color_warning)
+		message('You hear the voice of ' + god_deliverer.name, Color_Interesting_In_World)
+		message('\"Good job! Here\'s your reward. Have fun with it!\"', Color_Message_In_World)
 		#player.fighter.increase_recharge_rate(1)
 		# make the player always have an increased max charge on their weapon
 		player.fighter.increase_max_charge(1)
 		player_weapon.max_charge = player_weapon.max_charge + 1
-		message('You feel faster!')
+		message('You feel faster!', Color_Stat_Info)
 		favoured_by_deliverer = False
 		tested_by_deliverer = False
 
@@ -4088,7 +4100,7 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 	dungeon_level = 0
 	alarm_level = 1
 	key_count = 0
-	currency_count = 0
+	currency_count = STARTING_CURRENCY
 	make_map()  #create a fresh new level!
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
@@ -4123,6 +4135,8 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 
 
 def message(new_msg, color = default_text_color):
+
+	print(str(color))
 
 	# Turn hashtag shortcuts into actual key commands
 	new_msg = translateCommands(new_msg)
@@ -4975,6 +4989,7 @@ def setColorScheme(colorScheme = 'default'):
 	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
 	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
+	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
 	
 	levelColors = colorHandler.levelColors
 	
@@ -5017,8 +5032,19 @@ def setColorScheme(colorScheme = 'default'):
 	default_text_color = menuColors['default_text_color']
 	color_energy = menuColors['color_energy']
 	color_faded_energy = menuColors['color_faded_energy']
-	color_warning = menuColors['color_warning']
-	color_big_alert = menuColors['color_big_alert']
+	color_warning = menuColors['Interesting_Combat']#['color_warning']
+	color_big_alert = menuColors['Dangerous_Combat']#['color_big_alert']
+
+	Color_Message_In_World = menuColors['Message_In_World']		# e.g. messages on floor, deities or elevators talking to you
+	Color_Menu_Choice = menuColors['Menu_Choice']		# when the player has to input an option from mutliple choices
+	Color_Not_Allowed = menuColors['Not_Allowed']		# when a player action is invalid or prevented
+	Color_Dangerous_Combat = menuColors['Dangerous_Combat']	# when bad things happen in combat, like dying or getting hit
+	Color_Interesting_Combat = menuColors['Interesting_Combat']		# notable combat stuff like enemies dying
+	Color_Boring_Combat = menuColors['Boring_Combat']		# Run of the mill combat stuff. you hit an enemy. yawn
+	Color_Interesting_In_World = menuColors['Interesting_In_World']	# Events of note happening in the world. Like alarms going off
+	Color_Boring_In_World = menuColors['Boring_In_World']		# everyday occurences like doors opening
+	Color_Stat_Info = menuColors['Stat_Info']			# info about not-in-the-world stuff like gaining energy
+	Color_Personal_Action = menuColors['Personal_Action']		# Things the player does that aren't combat "you pick up the sword" etc
 
 
 
@@ -5116,7 +5142,7 @@ def initialise_game():
 	tested_by_deliverer = False
 	favoured_by_deliverer = False
 	already_healed_this_level = False
-	currency_count = 2
+	currency_count = STARTING_CURRENCY
 	game_time = 1
 	
 	#create object representing the player
@@ -5171,7 +5197,7 @@ def initialise_game():
 	player_action = None
 	
 	#a warm welcoming message!
-	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', color_energy)
+	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', Color_Message_In_World)
 
 	# Here is an annoying hack. One-off special check for floor messages just so we can check if there's one when the game starts.
 	objects_here = [obj for obj in objectsArray[player.x][player.y]
@@ -5185,8 +5211,9 @@ def initialise_game():
 			floor_message_text = obj.floor_message.string
 			floor_message_found = True		
 	if floor_message_found == True:  
-		message('You see a message on the floor:')
-		message('\"' + floor_message_text + '\"', color_energy)
+		message('You see a message on the floor:', Color_Interesting_In_World)
+		message('\"' + floor_message_text + '\"', Color_Message_In_World)
+		print (str(Color_Interesting_In_World))
 
 
 	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
@@ -5475,7 +5502,7 @@ while not translated_console_is_window_closed():
 				if player.decider.decision.move_decision is not None:
 					md = player.decider.decision.move_decision
 					if map[player.x + md.dx][player.y + md.dy].blocked:
-						message ("You walk into a wall.")
+						message ("You walk into a wall.", Color_Personal_Action)
 					player.move(md.dx, md.dy)
 				elif player.decider.decision.jump_decision is not None:
 					jd = player.decider.decision.jump_decision
@@ -5496,10 +5523,10 @@ while not translated_console_is_window_closed():
 					somethingInWay = False
 					jumpee = None		#The thing you're jumping over...
 					if player.fighter.jump_available() == False:
-						message("Your legs are too tired to jump!")
+						message("Your legs are too tired to jump!", Color_Not_Allowed )
 					elif map[player.x + tempx][player.y + tempy].blocked:
 						somethingInWay = True
-						message("There's a wall in the way!!!")
+						message("There's a wall in the way!!!", Color_Not_Allowed )
 					else: 
 						#check for doors, and/or find the thing the player is jumping over.
 						for ob in objectsArray[player.x + tempx][player.y + tempy]:
@@ -5508,14 +5535,14 @@ while not translated_console_is_window_closed():
 							if ob.fighter:
 								jumpee = ob	
 						if somethingInWay == True:
-							message("There's a door in the way!")
+							message("There's a door in the way!", Color_Not_Allowed )
 					if somethingInWay == False:
 						if map[player.x + jd.dx][player.y + jd.dy].blocked:
-							message ("You leap gracefully into a wall.")
+							message ("You leap gracefully into a wall.", Color_Personal_Action)
 							player.move(tempx, tempy)
 						else:
 							if jumpee is not None:
-								message ("You leap over the " + jumpee.name + "\'s head!")
+								message ("You leap over the " + jumpee.name + "\'s head!", Color_Personal_Action)
 						player.fighter.make_jump()
 						player.move(jd.dx, jd.dy)
 						player_just_jumped = True
@@ -5592,14 +5619,14 @@ while not translated_console_is_window_closed():
 				floor_message_found = True
 			
 		if floor_message_found == True and player.decider.decision is not None and (player.decider.decision.move_decision is not None or player.decider.decision.jump_decision is not None): # trying to make it so messages don't repeat themselves
-			message('You see a message on the floor:')
-			message('\"' + floor_message_text + '\"', color_energy)
+			message('You see a message on the floor:', Color_Interesting_In_World)
+			message('\"' + floor_message_text + '\"', Color_Message_In_World)
 
 		if len(names) > 0:
 			names = ', '.join(names)
 			possible_commands = ', '.join(possible_commands)
 			temp_message = 'You see a ' + names + ' here (' + possible_commands + ').'
-			message(temp_message)
+			message(temp_message, Color_Boring_In_World)
 
 
 
@@ -5644,7 +5671,7 @@ while not translated_console_is_window_closed():
 					player_near_elevator = True
 					# if player not authorised, tell them so. Unless they've been spoken at by an elevator recently.
 					if time_since_last_elevator_message > 10 and not ele.player_authorised :
-						message("\"Access to the next floor is restricted by security. " + str(lev_set.keys_required) + " keys required.\"")
+						message("\"Access to the next floor is restricted by security. " + str(lev_set.keys_required) + " keys required.\"", Color_Message_In_World)
 						time_since_last_elevator_message = 0
 			for (x,y) in ele.door_points:
 				if player.x == x and player.y == y:
@@ -5682,7 +5709,7 @@ while not translated_console_is_window_closed():
 
 		#play a "ding" if the player can see elevator doors opening?
 		if player_can_see_elevator_opening:
-			message("Ding!")
+			message("Ding!", Color_Message_In_World)
 
 		# update elevators with whether the player is authorized - for now this is just based on whether there are security systems around.
 		# later this process will become a bit more complicated (and might be folded into Elevator.update)
@@ -5896,7 +5923,7 @@ while not translated_console_is_window_closed():
 										# deletion happens, because the attacks "cancel each other out"
 										deletionList.append(object)
 										deletionList.append(other_object)
-										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!')
+										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
 										if attacker is player or attackee is player:
 											player_clashed_something = True
 
@@ -5968,7 +5995,7 @@ while not translated_console_is_window_closed():
 		if number_hit_by_player > 1:
 			bonus = number_hit_by_player - 1
 			player.fighter.gain_energy(bonus)
-			message("Combo! +" + str(bonus) + " energy", color_energy)
+			message("Combo! +" + str(bonus) + " energy", Color_Stat_Info)
 	
 			
 
@@ -5982,10 +6009,10 @@ while not translated_console_is_window_closed():
 			else:
 				degredation = 1
 			if player_weapon.durability - degredation  <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > WEAPON_FAILURE_WARNING_PERIOD:
-				message("Your "  + player_weapon.name + " is close to breaking!", color_warning)
+				message("Your "  + player_weapon.name + " is close to breaking!", Color_Interesting_Combat)
 			player_weapon.durability -= degredation
 			if player_weapon.durability <= 0:
-				message("Your " + player_weapon.name + " breaks!", color_big_alert)
+				message("Your " + player_weapon.name + " breaks!", Color_Dangerous_Combat)
 		
 
 		# clean up stuff
@@ -6042,13 +6069,13 @@ while not translated_console_is_window_closed():
 							ob.color = ob.alarmer.idle_color
 						elif ob.alarmer.status == 'suspicious':
 							if ob.alarmer.prev_suspicious == False:
-								message('The ' + ob.name + ' is suspicious!', color_warning)		
+								message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
 								ob.color = ob.alarmer.suspicious_color
 
 						elif ob.alarmer.status == 'raising-alarm':
 							alarm_level += ob.alarmer.alarm_value
 							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-							message('The ' + ob.name + ' sounds a loud alarm!', color_big_alert)
+							message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
 							ob.color = ob.alarmer.alarmed_color
 						elif ob.alarmer.status == 'alarm-raised':
 							ob.color = ob.alarmer.alarmed_color	

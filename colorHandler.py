@@ -206,22 +206,70 @@ class ColorHandler:
 		#if colorScheme = 'default':
 			# start with 4 values - the unadjusted rgb, then the desired capital V Value.
 			# later we'll come back and turn this into adjust RGB values
+
+		print("color scheme is" + colorScheme)
+
+		# default (black and white?) values
 		newDictionary = dict([	
 			# text colors
-			('default_background_color',((vfw,vfw,vfw),vfw)),	#(0,0,0)
-			('default_text_color',((vsf,vsf,vsf),vsf)),	#(255,255,255)
-			('color_energy',((v_p,v_p,v_p),v_p)),	#(0,255,255)
-			('color_faded_energy',((vsf,vsf,vsf),vsf)),	#	(0,0,255)
-			('color_warning',((v_p,v_p,v_p),vsf)),	#	(255,127,0)
-			('color_big_alert',((v_p,v_p,v_p), v_p))	#(255,0,0)
+			('default_background_color',(vfw,vfw,vfw)),	#(0,0,0)
+			('default_text_color',(vsf,vsf,vsf)),	#(255,255,255)
+			('color_energy',(v_p,v_p,v_p)),	#(0,255,255)
+			('color_faded_energy',(vsf,vsf,vsf)),	#	(0,0,255)
+			('color_warning',(v_p,v_p,v_p)),	#	(255,127,0)
+			('color_big_alert',(v_p,v_p,v_p)),	#(255,0,0)
+			('Message_In_World',(v_p,0,v_p)),		# e.g. messages on floor, deities or elevators talking to you
+			('Menu_Choice',(v_p,v_p,v_p)),			# when the player has to input an option from mutliple choices
+			('Not_Allowed',(v_p,v_p,v_p)),			# when a player action is invalid or prevented
+			('Dangerous_Combat',(v_p,v_p,v_p)),		# when bad things happen in combat, like dying or getting hit
+			('Interesting_Combat',(v_p,v_p,v_p)),		# notable combat stuff like enemies dying
+			('Boring_Combat',(v_p,v_p,v_p)),		# Run of the mill combat stuff. you hit an enemy. yawn
+			('Interesting_In_World',(v_p,v_p,v_p)),		# Events of note happening in the world. Like alarms going off
+			('Boring_In_World',(v_p,v_p,v_p)),		# everyday occurences like doors opening
+			('Stat_Info',(v_p,v_p,v_p)),			# info about not-in-the-world stuff like gaining energy
+			('Personal_Action',(v_p,v_p,v_p))		# Things the player does that aren't combat "you pick up the sword" etc
 		])
 
-		# Update colors to be value-adjusted
-		for name in newDictionary:
-			colorInfo = newDictionary[name]
-			(oldRGB,val) = colorInfo
-			newRGB = self.adjustForValue(oldRGB,val)
-			newDictionary[name] = newRGB
+
+		# trying colors taken from Solarized  http://ethanschoonover.com/solarized
+		if colorScheme == 'lobbyTest':
+			print("yoooooo")
+			newDictionary['default_background_color']=(0,0,15)
+			newDictionary['color_energy']=(38,139,210)	
+			newDictionary['Message_In_World']=(38,139,210)		# e.g. messages on floor, deities or elevators talking to you
+			newDictionary['Menu_Choice']=(211,54,130)		# when the player has to input an option from mutliple choices
+			newDictionary['Not_Allowed']=(108,113,196)		# when a player action is invalid or prevented
+			newDictionary['Dangerous_Combat']=(220,50,47)		# when bad things happen in combat, like dying or getting hit
+			newDictionary['Interesting_Combat']=(203,75,22)		# notable combat stuff like enemies dying
+			newDictionary['Boring_Combat']=(253,246,227)		# Run of the mill combat stuff. you hit an enemy. yawn
+			newDictionary['Interesting_In_World']=(203,75,22)	# Events of note happening in the world. Like alarms going off
+			newDictionary['Boring_In_World']=(238,232,213)		# everyday occurences like doors opening
+			newDictionary['Stat_Info']=(42,161,152)		# info about not-in-the-world stuff like gaining energy
+			newDictionary['Personal_Action']=(191, 147, 10)		# (181,137,0)Things the player does that aren't combat "you pick up the sword" etc
+
+			
+		# Commenting out a bunch of stuff:
+		# For now,not going to do the 'adjust for Value' stuff, because it's clear that Saturation is also important 
+		# and I should probably just be doing it by hand + checking with filters now I know a bit more about this stuff.
+		# Also, gona make it so a bunch of the fields we expect to stay  the same are pre-loaded, so the 
+		# sections for different color schemes don't get unnecessarily long.
+
+	#	newDictionary = dict([	
+	#		# text colors
+	#		('default_background_color',((vfw,vfw,vfw),vfw)),	#(0,0,0)
+	#		('default_text_color',((vsf,vsf,vsf),vsf)),	#(255,255,255)
+	#		('color_energy',((v_p,v_p,v_p),v_p)),	#(0,255,255)
+	#		('color_faded_energy',((vsf,vsf,vsf),vsf)),	#	(0,0,255)
+	#		('color_warning',((v_p,v_p,v_p),vsf)),	#	(255,127,0)
+	#		('color_big_alert',((v_p,v_p,v_p), v_p))	#(255,0,0)
+	#	])
+
+	#	# Update colors to be value-adjusted
+	#	for name in newDictionary:
+	#		colorInfo = newDictionary[name]
+	#		(oldRGB,val) = colorInfo
+	#		newRGB = self.adjustForValue(oldRGB,val)
+	#		newDictionary[name] = newRGB
 
 		return newDictionary
 

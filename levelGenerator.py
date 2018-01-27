@@ -1892,7 +1892,7 @@ class Level_Generator:
 		#B = Object_Name('strawman', 'sai', 'w')
 		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
 		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
-		E = Object_Name('message', "Move to the weapon ahead of you and press PEEE to pick it up.")		
+		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")		
 		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
 		seg_map =      [[0,0,0,0,0,0,0,0,0],
 				[0,A,0,0,F,0,0,A,0],
