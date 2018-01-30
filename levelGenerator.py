@@ -663,7 +663,11 @@ class Level_Generator:
 
 
 	def add_security_system(self, map, lev_set, dungeon_level, object_data, security_room, drops_key):
-		(sec_x,sec_y) = security_room.center()
+		# new thing: place security system randomly rather than in center of room
+
+		sec_x = randint(security_room.x1, security_room.x2)
+		sec_y = randint(security_room.y1, security_room.y2)
+		#(sec_x,sec_y) = security_room.center()
 		if drops_key:
 			object_data.append(Object_Datum(sec_x,sec_y,'security system', 'drops-key'))
 		else: 

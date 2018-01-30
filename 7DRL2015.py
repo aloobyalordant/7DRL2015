@@ -912,7 +912,7 @@ class Decider:
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
-	def __init__(self, alarm_time = 3, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed):
+	def __init__(self, alarm_time = 2, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, assoc_fighter = None):
 		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
 		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
 		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
@@ -924,6 +924,7 @@ class Alarmer:
 		self.alarm_countdown = alarm_time
 		self.pre_alarm_countdown = pre_alarm_time
 		self.prev_suspicious = False
+		self.assoc_fighter = assoc_fighter
 		
 
 	def update(self, intruder_spotted):
@@ -948,6 +949,10 @@ class Alarmer:
 				if self.alarm_countdown <= 0:
 					self.status = 'raising-alarm'
 			elif self.status ==  'raising-alarm':
+				# add a bunch of health to the fighter associated with this alarmer??
+				if self.assoc_fighter is not None:
+					self.assoc_fighter.max_hp += 6
+					self.assoc_fighter.heal(6)
 				self.status = 'alarm-raised'
 			# if self.status = 'alarm-raised', don't do anything
 
@@ -2698,7 +2703,15 @@ def handle_keys(user_input_event):
 		if key_char in controlHandler.intFromLetter:
 			keynum = controlHandler.intFromLetter[key_char]
 			
+		# find list of objects that can be picked up
 		weapons_found = []
+		# can pick up from a larger radius if certain upgrade allow it
+		pickup_radius = 0
+		for power_up in upgrade_array:
+			if getattr(power_up, "increase_pickup_radius", None) is not None:
+				pickup_radiuspower_up.increase_pickup_radius()
+#		for dx in range(pickup_radius):
+#			if d== 0:
 		for object in objectsArray[player.x][player.y]:
 			if object.weapon == True: 
 				weapons_found.append(object)		
@@ -3300,10 +3313,10 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'security system':
 		# let's make a security system! It stays where it is and doesn't attack! In fact it's basically a strawman with more health.
-		strawman_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death,  attack_color =color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color =color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		alarmer_component = Alarmer()
+		alarmer_component = Alarmer(assoc_fighter = strawman_component)
 		monster = Object(x, y, 'O', 'security system', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
 
 
@@ -3769,10 +3782,12 @@ def monster_death(monster):
 	#if monster.name == 'security system':
 	if monster.alarmer is not None:
 		number_alarmers -= 1
-		message(monster.name.capitalize() + ' is destroyed!', color_warning)		
+		message(monster.name.capitalize() + ' is destroyed!', color_warning)
+		if monster.alarmer.status != 'alarm-raised':
+			message("Success! Defeated a " + monster.name.capitalize() + ' without triggering an alarm.', Color_Stat_Info)
 		#decrease the alarm level alittle bit! Unless that was the last one, in which case set it to 0
 		if number_alarmers > 0:
-			if alarm_level > 0:
+			if alarm_level > 0 and monster.alarmer.status == 'alarm-raised':
 				alarm_level += (-monster.alarmer.alarm_value + monster.alarmer.dead_alarm_value)
 				message('The alarms get a little quieter.', Color_Interesting_In_World)
 		else:
@@ -3929,17 +3944,21 @@ def next_level():
 
 # Figure out how often enemies should spawn, based on overall rate for this floor, and the alarm level.
 # Originally was just one divided by the other; now it's going to be something a bit more tierd, hopefully?
+# Update: might have been my fault for not making it visible to the player, but I  wasn't really feeling the tiered system.
+# Going back to 'faster with higher alarm'; 
+# I have some ideas about how to make it more exicitng to avoid alarms so am going to make alarm level more of a threat?
 def decide_spawn_time(enemy_spawn_rate,alarm_level):
+	return int(4*enemy_spawn_rate/alarm_level)
 
-	# spawn very rarely (i mean, ideally not at all but whatevs) if alarm level is 0.
-	if alarm_level == 0:
-		return 100 * enemy_spawn_rate
-	elif alarm_level <= 2:
-		return 2*enemy_spawn_rate
-	elif alarm_level <= 6:
-		return enemy_spawn_rate
-	else:
-		return int(4*enemy_spawn_rate/alarm_level)
+#	# spawn very rarely (i mean, ideally not at all but whatevs) if alarm level is 0.
+#	if alarm_level == 0:
+#		return 100 * enemy_spawn_rate
+#	elif alarm_level <= 2:
+#		return 2*enemy_spawn_rate
+#	elif alarm_level <= 6:
+#		return enemy_spawn_rate
+#	else:
+#		return int(4*enemy_spawn_rate/alarm_level)
 
 
 
@@ -6078,7 +6097,7 @@ while not translated_console_is_window_closed():
 							message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
 							ob.color = ob.alarmer.alarmed_color
 						elif ob.alarmer.status == 'alarm-raised':
-							ob.color = ob.alarmer.alarmed_color	
+							ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
 
 		# oh let's start creating enemies at random intervals? 

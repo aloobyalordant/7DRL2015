@@ -311,6 +311,11 @@ class FarReaching(PowerUp):
 	
 	def __init__(self):
 		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.", code='F.R')
+
+	# most of the work for this one is done in the main game file, ah well.
+	def increase_pickup_radius(self):
+		self.status = 'active'
+		return 1
 #
 
 
