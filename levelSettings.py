@@ -23,11 +23,11 @@ class Level_Settings:
 		# Level 0 is just strawmen! stationary strawmen, flailing strawmen, strawmen on wheels!
 		# and, suddenly for some reason, ninjas
 		enemy_probs = []
-		# enemy_probs.append(('strawman', 50))
+		enemy_probs.append(('strawman', 50))
 		# enemy_probs.append(('flailing strawman', 25))
-		enemy_probs.append(('stupid swordsman', 25))
+		#enemy_probs.append(('stupid swordsman', 25))
 		enemy_probs.append(('rook', 25))
-		enemy_probs.append(('strawman on wheels', 1))
+		#enemy_probs.append(('strawman on wheels', 1))
 		lev0 = Level_Setting(
 			max_map_width = 60,
 			max_map_height = 30,

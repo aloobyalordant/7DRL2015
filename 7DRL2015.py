@@ -544,7 +544,7 @@ class Door:
 
 #Let's make a bunch of flowers that grow and then replenish your health or whatever, sure.
 class Flower:
-	def __init__(self, flower_type = 'tulip', state = 'seed', bloom_timer = DEFAULT_BLOOM_TIME, name = 'seed', symbol = 'o'):
+	def __init__(self, flower_type = 'tulip', state = 'seed', bloom_timer = DEFAULT_BLOOM_TIME, name = 'fruit', symbol = 'o'):
 		self.flower_type = flower_type
 		self.state = state			# possible states: seed, growing, blooming, trampled. Maybe burnt, later?
 		self.bloom_timer = bloom_timer
@@ -912,7 +912,7 @@ class Decider:
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
-	def __init__(self, alarm_time = 2, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, assoc_fighter = None):
+	def __init__(self, alarm_time = 4, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, assoc_fighter = None):
 		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
 		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
 		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
@@ -956,11 +956,13 @@ class Alarmer:
 				self.status = 'alarm-raised'
 			# if self.status = 'alarm-raised', don't do anything
 
-		else:
+		else: 	# getting rid of the "false alarm, go to sleep" angle - think it's more interesting if the plater is incentivzed to move maybe.
+			
 			#if self.status =='idle', keep doing what you're doing
-			if self.status == 'suspicious' or self.status == 'pre-suspicious':
-				self.status = 'idle'	# false alarm, go back to sleep
-			elif self.status ==  'raising-alarm':
+		#	if self.status == 'suspicious' or self.status == 'pre-suspicious':
+		#		self.status = 'idle'	# false alarm, go back to sleep
+		#	elif self.status ==  'raising-alarm':
+			if self.status ==  'raising-alarm':
 				self.status = 'alarm-raised'
 			# if self.status == 'alarm-raised', keep being alarmed!
 		
@@ -1896,6 +1898,35 @@ class Rook_AI:
 		self.stunned_time = 2
 
 
+# A version of ROOK_AI that has no access to level navigation data!
+# For use in the tutorial, where currently no such navigation data exists
+class Stupid_Rook_AI(Rook_AI):
+
+	def decide(self):
+		#a basic monster takes its turn. If you can see it, it can see you
+		decider = self.owner
+		monster = decider.owner #yaaay
+		# only do thing (including weapon recharge? maybe not) if not stunned
+		if self.stunned_time <= 0:
+
+			#basically, attack the player if you can see them, and that's about it.
+			# if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+			if fov_map.fov[monster.x, monster.y]:
+				self.state == 'pursue-visible-target'
+				self.engagePlayer(monster, decider)
+
+
+
+	#		# Update various cooldowns and counters and such
+	#		if self.weapon:
+	#			self.weapon.recharge()
+	#		if self.ally_in_the_way_o_meter > 0:
+	#			self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter - 1
+	#		if self.blocked_by_door_o_meter > 0:
+	#			self.blocked_by_door_o_meter = self.blocked_by_door_o_meter - 1
+		if self.stunned_time > 0:
+			self.stunned_time = self.stunned_time - 1
+
 
 
 class Strawman_on_wheels_AI:
@@ -2303,7 +2334,7 @@ class BasicAttack:
 							message('You hit the ' + target.name.capitalize() + '!', Color_Boring_Combat)
 							player_hit_something = True	
 						else:
-							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!', Color_Interesting_Combat)
+							message('The ' + self.attacker.name.capitalize() + ' hits the ' + target.name.capitalize() + '!', Color_Boring_Combat)
 					#add blood! maybe
 					#new_blood = Object(target.x, target.y, '~', 'blood', blood_foreground_color, blocks = False, weapon = False, always_visible=False, currently_invisible = True)
 					#objectsArray[target.x][target.y].append(new_blood)
@@ -2559,33 +2590,38 @@ def distance_from_target(current_x, current_y, target_x = None, target_y = None,
 
 def AI_choose_adjacent_room(AI, allow_previous_room = False):
 	global nearest_points_array
-	monster = AI.owner.owner
-	current_center = nearest_points_array[monster.x][monster.y]
-	if allow_previous_room == True:
-		previous_center = None
-	else:
-		previous_center = AI.previous_center
-	return choose_adjacent_room(current_center, previous_center)
+	try:
+		monster = AI.owner.owner
+		current_center = nearest_points_array[monster.x][monster.y]
+		if allow_previous_room == True:
+			previous_center = None
+		else:
+			previous_center = AI.previous_center
+		return choose_adjacent_room(current_center, previous_center)
+	except TypeError:
+		return None
 
 def choose_adjacent_room(current_center = 0, previous_center = None, avoid_previous_room = True):
 	global room_adjacencies
 	#print "current room " + str(current_center) + " adjacencies " + str(room_adjacencies[current_center]) + ", previous " + str(previous_center)
-	candidate_set = room_adjacencies[current_center].copy()
-	if previous_center is not None and avoid_previous_room == True:
-		if previous_center in candidate_set:
-	#		print "removing previous..."
-			candidate_set.remove(previous_center)
+	try:
+		candidate_set = room_adjacencies[current_center].copy()
+		if previous_center is not None and avoid_previous_room == True:
+			if previous_center in candidate_set:
+		#		print "removing previous..."
+				candidate_set.remove(previous_center)	
 
-	#print "----- updated adjacencies " + str(candidate_set)
-	if len(candidate_set) == 0:
-		if previous_center is not None:
-			return previous_center
+		#print "----- updated adjacencies " + str(candidate_set)
+		if len(candidate_set) == 0:
+			if previous_center is not None:
+				return previous_center
+			else:
+				return current_center
 		else:
-			return current_center
-	else:
-		new_target = random.choice(tuple(candidate_set))	#returns arbitrary element from candidate_set
-		return new_target
-
+			new_target = random.choice(tuple(candidate_set))	#returns arbitrary element from candidate_set
+			return new_target
+	except IndexError:
+		return current_center
 
 def get_names_under_mouse():
 	global mouse
@@ -2746,14 +2782,14 @@ def handle_keys(user_input_event):
 				something_changed = True
 				currency_count = currency_count - upgrade_cost
 				upgrade_array.append(current_shrine.upgrade)
-				message('Yaaay '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
+				message('You recieve the gift of '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
 				current_shrine.upgrade = None
 			else:
 				something_changed = True
 				message('You do not have enough favour!', Color_Not_Allowed)
 		elif key_char == 'n':
 			something_changed = True
-			message('You feel good about your decision to abstain from ' + current_shrine.upgrade.name + '. But in years to come, to start to wonder what could have been.', Color_Stat_Info)
+			message('You decide to abstain from ' + current_shrine.upgrade.name + '.', Color_Stat_Info)
 		else:
 			message('Never mind??', Color_Not_Allowed)
 
@@ -2890,7 +2926,7 @@ def handle_keys(user_input_event):
 						objectsArray[player.x][player.y].remove(ki)	
 				#similarly, favours take priority over weapons but after keys.
 				elif len(favours_found) > 0:
-					message('You humbly accept this favour.', Color_Personal_Action)
+					message('You take the favour token.', Color_Personal_Action)
 					currency_count = currency_count + len(favours_found)
 					for fa in favours_found:
 						objectsArray[player.x][player.y].remove(fa)	
@@ -3183,18 +3219,24 @@ def place_objects(room):
 		num = randint(0,18)
 		if num == 0:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
+			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
+			shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
 		elif num == 1:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
+			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
+			shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
 		elif num == 2:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
+			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
+			shrine.shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
 
 
@@ -3253,6 +3295,13 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+
+#	elif name == 'stupid rook':
+#		#create a rook! That's a guy with a spear who only moves in four directions
+#		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
+#		ai_component = Stupid_Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
+#		decider_component = Decider(ai_component)
+#		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'nunchuck fanatic':
@@ -3434,11 +3483,15 @@ def make_map():
 				altar_color = color_light_ground
 			num = randint( 0, 2) 
 			if num == 0:
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
+				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
+				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
 			elif num == 1:
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
+				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
+				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 			else: 
-				shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
+				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
+				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
+			shrine.shrine.cost += dungeon_level - 2
 			objectsArray[od.x][od.y].append(shrine)
 			shrine.send_to_back()
 		elif  od.name == 'security system':
@@ -3808,7 +3861,7 @@ def monster_death(monster):
 	monster.blocks = False
 	monster.fighter = None
 	monster.decider = None
-	monster.name = 'remains of ' + monster.name
+	monster.name = 'dying ' + monster.name
 	monster.send_to_back()
 	garbage_list.append(monster)
 
@@ -3862,7 +3915,8 @@ def next_level():
 		print ("leaving tutorial, resetting player stats")
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
-		player_weapon = Weapon_Sword()
+		#player_weapon = Weapon_Sword()
+		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
 		upgrade_array = []
 

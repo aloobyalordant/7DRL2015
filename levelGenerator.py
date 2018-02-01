@@ -272,11 +272,30 @@ class Level_Generator:
 			#self.original_tutorial(object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			#player_start_x = 12
 			#player_start_y = 12
+
+			max_map_height = 100
+			max_map_width = 100
+			map_width = 100
+			map_height = 100
+			#fill map with "blocked" tiles
+			map = [[ Tile(True)
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]
+	
+			nearest_points_array  = [[ None
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]		
+
+
+			#map to allow variation in background tiles
+			background_map = [[ 0
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]
 			
 			self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
-			player_start_x = 14
-			player_start_y = 20
-			max_map_width = lev_set.max_map_width + 1
+			player_start_x = 11
+			player_start_y = 61
+			#max_map_width = lev_set.max_map_width + 1
 
 		elif lev_set.level_type == 'arena':
 
@@ -1885,187 +1904,525 @@ class Level_Generator:
 	#	#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
 
 
+		tut_rm_width = 8
+		tut_rm_height = 8
+
+		#new_room = Rect(tut_rm_width,tut_rm_height,7*tut_rm_width,8*tut_rm_height)
+		#self.create_room(new_room, map, center_points, nearest_points_array)
 
 
-
-
-		A = Object_Name('monster', 'strawman')
-		B = Object_Name('weapon', 'sword')
+		# Room 1. Welcome
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
-#		B = Object_Name('shrine', 'healer')	
-		#B = Object_Name('strawman', 'sai', 'w')
-		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
 		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
-		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")		
-		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
-		seg_map =      [[0,0,0,0,0,0,0,0,0],
-				[0,A,0,0,F,0,0,A,0],
-				[0,0,A,0,0,0,A,0,0],
-				[0,A,0,0,B,0,0,A,0],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,E,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[1,1,1,1,0,1,1,1,1],
-				[1,1,1,1,0,1,1,1,1],
-				[1,1,1,1,C,1,1,1,1],
-				[1,0,0,0,0,0,0,0,1],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,D,0,0,0,0],
-				[0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,1],
-				[1,1,1,1,1,1,1,1,1]]
+		E = Object_Name('monster', 'swordsman')
+		seg_map =      [[0,0,0,0,0,0,0,1],
+				[1,1,1,0,1,1,1,1],
+				[1,1,1,C,1,1,1,1],
+				[1,0,0,0,0,0,1,1],
+				[0,0,0,0,0,0,1,1],
+				[0,0,0,D,0,0,1,1],
+				[1,0,0,0,0,0,1,1],
+				[1,0,0,0,0,0,1,1]]
+		#seg_map = self.rotateSegment(seg_map)
 
 		#old_room = new_room
-		new_room = Rect(10 + rxofst,0 + ryofst,8,16)
-		self.create_room(new_room, map, center_points, nearest_points_array)
-		(new_x, new_y) = new_room.center()
+#		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
+#		(new_x, new_y) = new_room.center()
 #		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, background_map, self.create_segment(seg_map), 10 + rxofst, 0 + ryofst, object_data)
-#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,7*tut_rm_height, object_data)
 
 
-		A = Object_Name('strawman')
+		# Room 2. Pick up sword
+	#	A = Object_Name('monster', 'strawman')
+	#	B = Object_Name('weapon', 'sword')
+	#	E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")	
+	#	seg_map =      [[1,0,A,0,A,0,1,1],
+	#			[1,1,0,0,0,1,1,1],
+	#			[1,1,0,0,0,1,0,1],
+	#			[1,1,0,B,0,1,0,1],
+	#			[1,1,0,0,0,1,0,1],
+	#			[1,1,0,E,0,1,0,1],
+	#			[1,1,0,0,0,1,0,1],
+	#			[1,1,1,0,1,1,1,1]]
+	#	self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,6*tut_rm_height, object_data)
+
+
+		# Room 2+3. Attack enemies
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect( tut_rm_width,6*tut_rm_height,tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		A = Object_Name('monster', 'strawman')	
+		F = Object_Name('message', "Move next to an enemy and attack them! (#ATTCKUPLEFT#, #ATTCKUP#, #ATTCKUPRIGHT#, #ATTCKRIGHT#, #ATTCKDOWNRIGHT#, #ATTCKDOWN#, #ATTCKDOWNLEFT#, #ATTCKLEFT#)")
+		B = Object_Name('weapon', 'sword')
+		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")	
+		seg_map =      [[0,0,0,0,0,0,0,1],
+				[0,0,A,0,A,0,0,1],
+				[0,0,0,0,0,0,0,1],
+				[0,A,0,F,0,A,0,1],
+				[0,0,0,B,0,0,0,1],
+				[0,A,0,E,0,A,0,1],
+				[0,0,0,0,0,0,0,1],
+				[0,0,A,0,A,0,0,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,6*tut_rm_height, object_data)
+
+
+		# Room 4. Note about energy
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect( tut_rm_width,5*tut_rm_height,tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		A = Object_Name('monster', 'strawman')	
+		F = Object_Name('message', "Attacking uses up energy! If you are low on energy, walk around or stand still (#STANDSTILL#) to recharge.")
+		seg_map =      [[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,0,0,0,1,1,1,1],
+				[0,0,F,0,1,1,0,0],
+				[1,0,0,0,1,1,1,1],
+				[1,1,0,1,1,1,1,1]]
+		seg_map = self.rotateSegment(seg_map)
+		seg_map = self.rotateSegment(seg_map)
+		seg_map = self.rotateSegment(seg_map)
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,5*tut_rm_height, object_data)
+
+
+		# Room 5. Don't get hit.
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(2*tut_rm_width,5*tut_rm_height,tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
 		B = Object_Name('strawman', 'sai', 'ATTCKLEFT')
 		C = Object_Name('strawman', 'sai', 'ATTCKUP')
-#		B = Object_Name('shrine', 'healer')	
-		#B = Object_Name('strawman', 'sai', 'w')
-		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
-		D = Object_Name('message', "'Lesson 2. The secret of all combat is this: Hit your enemy without your enemy hitting you!'")
-		E = Object_Name('message', "Move to the weapon ahead of you and press PEEE to pick it up.")		
-		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
-		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
-				[1,1,1,0,0,0,0,0,0,0,1],
-				[A,0,0,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,C,0,0,0,1],
-				[1,1,1,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,C,0,0,1],
-				[1,1,1,D,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,0,B,0,0],
-				[1,1,1,0,0,0,0,0,0,0,1],
-				[1,1,1,1,1,1,1,1,1,1,1]]
+		F = Object_Name('message', "The secret of all combat is this: Hit your enemy without your enemy hitting you!")
+		seg_map =      [[0,0,0,0,0,0,0,1],
+				[0,0,0,B,0,0,0,1],
+				[0,0,0,0,0,0,C,1],
+				[0,0,C,0,B,0,0,1],
+				[0,0,0,0,0,0,0,1],
+				[F,0,0,0,0,0,0,1],
+				[0,0,C,0,0,B,0,0],
+				[0,0,0,0,0,0,0,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 2*tut_rm_width,5*tut_rm_height, object_data)
 
-		#old_room = new_room
-		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+
+		# Room 6. Move diagonally
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(3*tut_rm_width,5*tut_rm_height,tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		(new_x, new_y) = new_room.center()
-#		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
-#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+		B = Object_Name('strawman', 'sai', 'ATTCKLEFT')
+		C = Object_Name('strawman', 'sai', 'ATTCKUP')
+		F = Object_Name('message', "Don't forget you can move (and attack) diagonally.")
+		seg_map =      [[1,1,1,1,1,1,0,0],
+				[1,1,1,1,1,0,0,1],
+				[1,1,1,1,0,0,1,1],
+				[1,1,1,0,0,1,1,1],
+				[1,1,0,0,1,1,1,1],
+				[1,0,0,1,1,0,1,1],
+				[F,0,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,5*tut_rm_height, object_data)
 
-		rxofst = rxofst + 11
 
+		# Room 7. Moving enemies
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(3*tut_rm_width,3*tut_rm_height,tut_rm_width,2*tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
 		A = Object_Name('monster', 'strawman on wheels')
-#		B = Object_Name('shrine', 'healer')	
-		#B = Object_Name('strawman', 'sai', 'w')
-		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
-		D = Object_Name('message', "Lesson 3. Do not strike at where your enemy is! Strike at where your enemy is going to be!")
-		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
-				[1,1,1,0,0,0,0,0,0,0,1],
-				[1,0,0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,A,0,0,0,0,A,1],
-				[1,0,0,0,0,0,0,0,0,0,1],
-				[1,0,0,0,0,A,0,A,0,0,1],
-				[1,1,1,A,0,0,0,0,0,0,1],
-				[0,D,0,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,0,0,0,1],
-				[1,1,1,1,1,1,1,1,1,1,1]]
+		F = Object_Name('message', "Do not strike at where your enemy is! Strike at where your enemy is going to be!")
+		seg_map =      [[1,1,1,1,1,1,1,1],
+				[0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,A,0,0,0],
+				[1,0,0,0,0,0,A,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,A,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,1,1,1],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,A,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,A,0,0,0,0],
+				[1,0,0,0,0,0,F,0],
+				[1,0,0,0,0,0,0,0]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,3*tut_rm_height, object_data)
 
-		#old_room = new_room
-		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+
+		# Room 8. THE GAUNTLET
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(tut_rm_width,3*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		(new_x, new_y) = new_room.center()
-#		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
-#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
-
-
-	
-
-		# "The Gauntlet"
-		A = Object_Name('strawman')
+		F = Object_Name('message', "Be not afraid to run into the place your enemy has just struck.")
 		B = Object_Name('strawman', 'spear', 'ATTCKLEFT')
 		C = Object_Name('strawman', 'spear', 'ATTCKUP')
 		D = Object_Name('strawman', 'spear', 'ATTCKDOWN')
 		E = Object_Name('strawman', 'spear', 'ATTCKRIGHT')
-#		B = Object_Name('shrine', 'healer')	
-		#B = Object_Name('strawman', 'sai', 'w')
-		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
-		F = Object_Name('message', "Lesson 3. Be not afraid to run into the place your enemy has just struck.")
-		seg_map =      [[1,1,1,1,D,1,D,1,D,1,1,1,1],
-				[1,1,1,1,0,1,0,1,0,1,1,1,1],
-				[0,F,0,0,0,0,0,0,0,0,0,B,0],
-				[1,1,1,1,1,1,1,1,1,0,1,1,1],
-				[1,1,1,1,1,1,1,1,1,0,0,B,1],
-				[1,1,1,1,1,0,0,0,0,0,1,1,1],
-				[1,1,1,1,1,0,1,0,1,0,1,1,1],
-				[1,1,1,1,1,0,1,C,1,C,1,1,1],
-				[1,1,1,1,1,0,1,1,1,1,1,1,1]]
+		seg_map =      [[E,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
+				[1,1,0,0,B,1,1,1,1,1,1,1,0,F,0,1],
+				[1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,1],
+				[E,0,0,1,1,1,1,1,1,1,1,1,1,0,1,1],
+				[1,1,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
+				[1,1,0,1,1,0,1,1,1,1,1,1,1,0,1,1],
+				[E,0,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
+				[1,1,1,0,1,0,0,B,1,1,1,1,1,0,1,1],
+				[1,1,1,C,1,0,1,1,1,1,1,1,1,0,0,B],
+				[1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1],
+				[1,1,1,1,1,0,0,B,D,1,D,E,0,0,1,1],
+				[1,1,1,1,1,1,0,1,0,1,0,1,1,0,1,1],
+				[1,1,1,1,E,0,0,0,0,0,0,0,0,0,1,1],
+				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,3*tut_rm_height, object_data)
 
-		#old_room = new_room
-		new_room = Rect(28 + rxofst,0 + ryofst,8,9)
+
+		# Room 9 + 10. Fruit and jumping
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(tut_rm_width,tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		(new_x, new_y) = new_room.center()
-#		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, background_map, self.create_segment(seg_map), 28 + rxofst, 0 + ryofst, object_data)
-#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
-
-
-
-		# JUMPING ROOM!
-		A = Object_Name('strawman')
+		F = Object_Name('message', "Taken wounds in battle? We recommend: fresh fruit.")
+		G = Object_Name('message', "Whether face with obstacles or enemies, sometimes the only thing to do is Jump (#JUMP#).")
 		W = Object_Name('water')
 		B = Object_Name('plant')
-		D = Object_Name('message', "Lesson 4. JUMP! (Press SPACEY BAR)")
-		E = Object_Name('message', "Jumping and attacking use up ENERGY. Getting hit on extra energy is super bad. Try to avoid it.")
-		F = Object_Name('message', "The rest is up to you. Good luck!")
-#		B = Object_Name('shrine', 'healer')	
-		#B = Object_Name('strawman', 'sai', 'w')
-		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
-		seg_map =      [[1,1,1,B,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,0],
-				[1,1,1,0,0,B,0,0,W,0,0,0,W,0,0,0,F],
-				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,0],
-				[1,1,1,0,0,0,0,D,W,0,0,0,A,0,E,0,1],
-				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,1],
-				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
-				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
-				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
+				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
+				[1,0,0,0,0,0,W,W,0,0,0,W,W,0,0,0],
+				[1,0,0,0,0,0,W,W,W,0,0,W,W,0,0,0],
+				[1,0,0,0,B,0,0,W,W,0,W,W,0,0,0,0],
+				[1,0,B,0,0,0,0,0,W,W,W,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,W,W,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,G,W,0,0,0,0,0,0,0],
+				[1,0,0,0,B,0,0,W,W,0,0,0,0,0,0,0],
+				[1,0,B,0,0,0,0,W,W,0,0,0,0,0,0,0],
+				[1,0,0,0,0,B,0,0,W,W,0,0,0,0,0,0],
+				[1,0,0,F,0,0,0,0,W,W,W,0,0,0,0,0],
+				[1,0,0,0,B,0,0,0,0,W,W,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,W,W,0,0,0,0,0],
+				[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,tut_rm_height, object_data)
 
-		#old_room = new_room
-		new_room = Rect(30 + rxofst,9 + ryofst,17,9)
+
+
+		# Room 11. Warning: swordsman
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(3*tut_rm_width,2*tut_rm_height,tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		(new_x, new_y) = new_room.center()
-#		(prev_x, prev_y) = old_room.center()
-		self.append_segment(map, background_map, self.create_segment(seg_map), 30 + rxofst, 9 + ryofst, object_data)
-#		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
-		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
-		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+		C = Object_Name('door', 'vertical')
+		F = Object_Name('message', "Be warned! Ahead lies your first true foe.")
+		G = Object_Name('message', "Remember your lessons. Avoid their attacks. Let them walk into yours. And good luck.")
+		seg_map =      [[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,1],
+				[0,0,F,0,0,G,0,C],
+				[1,0,0,0,0,0,0,1],
+				[1,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,2*tut_rm_height, object_data)
+
+
+	
+		# Room 12. Swordsman battle
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(4*tut_rm_width, 2*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		C = Object_Name('monster', 'swordsman')
+		W = Object_Name('water')
+		F = Object_Name('message', "Your next enemy has extended reach! But they forgot the instructions about attacking diagonally.")
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,W,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,W,W,W,0,0],
+				[0,0,0,0,0,0,0,0,0,0,W,W,W,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,W,W,W,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,W,W,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,C,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,F,0,0,0,0,0,0,0],
+				[1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 2*tut_rm_height, object_data)
+
+		# Room 13. Rook battle
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(4*tut_rm_width, 4*tut_rm_height,2*tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		R = Object_Name('monster', 'rook')
+		W = Object_Name('water')
+		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
+		F = Object_Name('message', "Your next enemy has extended reach! But they forgot the instructions about attacking diagonally.")
+		seg_map =      [[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,R,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,1,0,1,1,1,1,1,C,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 4*tut_rm_height, object_data)
+
+
+		# Room 14. Rook battle
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(4*tut_rm_width, 5*tut_rm_height,2*tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		R = Object_Name('monster', 'rook')
+		C = Object_Name('monster', 'swordsman')
+		W = Object_Name('water')
+		F = Object_Name('message', "But of course, we can't always take our enemies on one at a time. Sometimes, we get taken by surprise.")
+		seg_map =      [[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
+				[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0],
+				[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0],
+				[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0],
+				[1,0,R,0,0,1,0,0,0,0,0,1,C,0,0,0],
+				[1,0,0,0,0,0,0,0,F,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 5*tut_rm_height, object_data)
+
+
+		# Room 15. Sneaking on security
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(4*tut_rm_width, 6*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		C = Object_Name('security system', 'drops-key')
+		W = Object_Name('water')
+		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
+		G = Object_Name('message', "Sometimes though,you can't help but get spotted. The security system will defend itself, but defeat it and the alarms will get a bit quieter.")
+		B = Object_Name('plant')
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,0,F,0,0,0],
+				[0,0,G,0,0,0,0,1,0,0,1,0,1,1,1,1],
+				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
+				[1,0,0,0,B,0,0,1,0,0,1,0,0,0,0,1],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,B,0,0,1,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,1,C,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+				[1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 6*tut_rm_height, object_data)
 
 
 
+		# Room 16. Wailing on security
+		# makea new room and thereby update nearest_points_array hopefully
+		new_room = Rect(2*tut_rm_width, 6*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		C = Object_Name('security system', 'drops-key')
+		W = Object_Name('water')
+		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
+		G = Object_Name('message', "THIS ROOM IS UNDER CONSTRUCTION. Please pretend that enemies are rushing out of the elevators as you scramble to destroy the security systems.")
+		H = Object_Name('message', "When you have aquired enough keys, you will be able to use the elevators to leave the level.")
+		B = Object_Name('plant')
+		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,0,W,0,0,0,0,0,0,W],
+				[1,0,0,0,0,0,0,0,W,W,0,0,0,C,W,W],
+				[1,0,0,0,0,0,0,0,0,W,0,0,0,W,W,0],
+				[1,0,0,0,0,B,0,0,0,W,W,W,W,W,0,0],
+				[1,0,0,0,0,0,0,0,0,0,W,W,W,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,W,W,0,G,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,B,0,0,0,0,0,B,0,0],
+				[1,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,B,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,B,0,0,0,0,0,0,0,C,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,H,0,0,0,0,0,0,0,H,0,0,0],
+				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+		self.append_segment(map, background_map, self.create_segment(seg_map), 2*tut_rm_width, 6*tut_rm_height, object_data)
 
-		#finally... add some elevators??
+
+#		A = Object_Name('monster', 'strawman')
+#		B = Object_Name('weapon', 'sword')
+#		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
+##		B = Object_Name('shrine', 'healer')	
+#		#B = Object_Name('strawman', 'sai', 'w')
+#		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+#		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
+#		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")		
+#		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
+#		seg_map =      [[0,0,0,0,0,0,0,0,0],
+#				[0,A,0,0,F,0,0,A,0],
+#				[0,0,A,0,0,0,A,0,0],
+#				[0,A,0,0,B,0,0,A,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[0,0,0,0,E,0,0,0,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[1,1,1,1,0,1,1,1,1],
+#				[1,1,1,1,0,1,1,1,1],
+#				[1,1,1,1,C,1,1,1,1],
+#				[1,0,0,0,0,0,0,0,1],
+#				[0,0,0,0,0,0,0,0,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[0,0,0,0,D,0,0,0,0],
+#				[0,0,0,0,0,0,0,0,0],
+#				[1,0,0,0,0,0,0,0,1],
+#				[1,1,1,1,1,1,1,1,1]]
+#		#seg_map = self.rotateSegment(seg_map)
+#
+#		#old_room = new_room
+#		new_room = Rect(10 + rxofst,0 + ryofst,8,16)
+#		self.create_room(new_room, map, center_points, nearest_points_array)
+#		(new_x, new_y) = new_room.center()
+##		(prev_x, prev_y) = old_room.center()
+#		self.append_segment(map, background_map, self.create_segment(seg_map), 10 + rxofst, 0 + ryofst, object_data)
+##		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+#		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+#		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+#
+#
+#		A = Object_Name('strawman')
+#		B = Object_Name('strawman', 'sai', 'ATTCKLEFT')
+#		C = Object_Name('strawman', 'sai', 'ATTCKUP')
+##		B = Object_Name('shrine', 'healer')	
+#		#B = Object_Name('strawman', 'sai', 'w')
+#		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+#		D = Object_Name('message', "'Lesson 2. The secret of all combat is this: Hit your enemy without your enemy hitting you!'")
+#		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")		
+#		F = Object_Name('message', "Move next to an enemy and press SEVERAL LETTERS to attack.")
+#		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
+#				[1,1,1,0,0,0,0,0,0,0,1],
+#				[A,0,0,0,0,0,0,0,0,0,1],
+#				[1,1,1,0,0,0,C,0,0,0,1],
+#				[1,1,1,0,0,0,0,0,0,0,1],
+#				[1,1,1,0,0,0,0,C,0,0,1],
+#				[1,1,1,D,0,0,0,0,0,0,1],
+#				[1,1,1,0,0,0,0,0,B,0,0],
+#				[1,1,1,0,0,0,0,0,0,0,1],
+#				[1,1,1,1,1,1,1,1,1,1,1]]
+#
+#		#old_room = new_room
+#		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+#		self.create_room(new_room, map, center_points, nearest_points_array)
+#		(new_x, new_y) = new_room.center()
+##		(prev_x, prev_y) = old_room.center()
+#		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+##		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+#		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+#		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+#
+#		rxofst = rxofst + 11
+#
+#		A = Object_Name('monster', 'strawman on wheels')
+##		B = Object_Name('shrine', 'healer')	
+#		#B = Object_Name('strawman', 'sai', 'w')
+#		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')
+#		D = Object_Name('message', "Lesson 3. Do not strike at where your enemy is! Strike at where your enemy is going to be!")
+#		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1],
+#				[1,1,1,0,0,0,0,0,0,0,1],
+#				[1,0,0,0,0,0,0,0,0,0,0],
+#				[1,0,0,0,A,0,0,0,0,A,1],
+#				[1,0,0,0,0,0,0,0,0,0,1],
+#				[1,0,0,0,0,A,0,A,0,0,1],
+#				[1,1,1,A,0,0,0,0,0,0,1],
+#				[0,D,0,0,0,0,0,0,0,0,1],
+#				[1,1,1,0,0,0,0,0,0,0,1],
+#				[1,1,1,1,1,1,1,1,1,1,1]]
+#
+#		#old_room = new_room
+#		new_room = Rect(19 + rxofst,0 + ryofst,8,10)
+#		self.create_room(new_room, map, center_points, nearest_points_array)
+#		(new_x, new_y) = new_room.center()
+##		(prev_x, prev_y) = old_room.center()
+#		self.append_segment(map, background_map, self.create_segment(seg_map), 19 + rxofst, 0 + ryofst, object_data)
+##		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+#		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+#		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+#
+#
+#	
+#
+#		# "The Gauntlet"
+#		A = Object_Name('strawman')
+#		B = Object_Name('strawman', 'spear', 'ATTCKLEFT')
+#		C = Object_Name('strawman', 'spear', 'ATTCKUP')
+#		D = Object_Name('strawman', 'spear', 'ATTCKDOWN')
+#		E = Object_Name('strawman', 'spear', 'ATTCKRIGHT')
+##		B = Object_Name('shrine', 'healer')	
+#		#B = Object_Name('strawman', 'sai', 'w')
+#		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
+#		F = Object_Name('message', "Lesson 3. Be not afraid to run into the place your enemy has just struck.")
+#		seg_map =      [[1,1,1,1,D,1,D,1,D,1,1,1,1],
+#				[1,1,1,1,0,1,0,1,0,1,1,1,1],
+#				[0,F,0,0,0,0,0,0,0,0,0,B,0],
+#				[1,1,1,1,1,1,1,1,1,0,1,1,1],
+#				[1,1,1,1,1,1,1,1,1,0,0,B,1],
+#				[1,1,1,1,1,0,0,0,0,0,1,1,1],
+#				[1,1,1,1,1,0,1,0,1,0,1,1,1],
+#				[1,1,1,1,1,0,1,C,1,C,1,1,1],
+#				[1,1,1,1,1,0,1,1,1,1,1,1,1]]
+#
+#		#old_room = new_room
+#		new_room = Rect(28 + rxofst,0 + ryofst,8,9)
+#		self.create_room(new_room, map, center_points, nearest_points_array)
+#		(new_x, new_y) = new_room.center()
+##		(prev_x, prev_y) = old_room.center()
+#		self.append_segment(map, background_map, self.create_segment(seg_map), 28 + rxofst, 0 + ryofst, object_data)
+##		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+#		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+#		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+#
+#
+#
+#		# JUMPING ROOM!
+#		A = Object_Name('strawman')
+#		W = Object_Name('water')
+#		B = Object_Name('plant')
+#		D = Object_Name('message', "Lesson 4. JUMP! (Press SPACEY BAR)")
+#		E = Object_Name('message', "Jumping and attacking use up ENERGY. Getting hit on extra energy is super bad. Try to avoid it.")
+#		F = Object_Name('message', "The rest is up to you. Good luck!")
+##		B = Object_Name('shrine', 'healer')	
+#		#B = Object_Name('strawman', 'sai', 'w')
+#		#M = Object_Name('message', 'Good lord it\'s some sort of message on the floor!!!')	
+#		seg_map =      [[1,1,1,B,1,1,1,1,1,1,1,1,1,1,1,1,1],
+#				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,0],
+#				[1,1,1,0,0,B,0,0,W,0,0,0,W,0,0,0,F],
+#				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,0],
+#				[1,1,1,0,0,0,0,D,W,0,0,0,A,0,E,0,1],
+#				[1,1,1,0,0,0,0,0,W,0,0,0,A,0,0,0,1],
+#				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
+#				[1,1,1,0,0,0,0,0,W,0,0,0,W,0,0,0,1],
+#				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+#
+#		#old_room = new_room
+#		new_room = Rect(30 + rxofst,9 + ryofst,17,9)
+#		self.create_room(new_room, map, center_points, nearest_points_array)
+#		(new_x, new_y) = new_room.center()
+##		(prev_x, prev_y) = old_room.center()
+#		self.append_segment(map, background_map, self.create_segment(seg_map), 30 + rxofst, 9 + ryofst, object_data)
+##		self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points, narrow = True)
+#		#object_data.append(Object_Datum(new_x, new_y,'weapon', 'sai'))
+#		#self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points, narrow = True)
+#
+#
+#
+#
+#		#finally... add some elevators??
 		#print 'adding elevators...'
-		elev1 = Rect(-5 + rxofst, 13 + ryofst, 5, 4)
-		elev2 = Rect(44 + rxofst, 9 + ryofst, 5, 4)
+		elev1 = Rect(tut_rm_width-3,7*tut_rm_height+4, 5, 4)
+		elev2 = Rect(2*tut_rm_width+3, 8*tut_rm_height-2, 4, 5)
+		elev3 = Rect(3*tut_rm_width+3, 8*tut_rm_height-2, 4, 5)
 		rooms.append(elev1)
-		rooms.append(elev2)
+		#rooms.append(elev2)
 
 		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
-		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
-
-		
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up')
+		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up')
 		# . Move
 		# .   Moving diagonally
 		# . Pick up weapon 
@@ -2088,3 +2445,20 @@ class Level_Generator:
 
 		# . you need keys to get out of the level
 		# "This sentry will sound an alarm if it sees you for too long! And it is hard to kill. But killing it will reduce the alarm. And sometimes it has keys.
+
+
+	def rotateSegment(self, seg_map):
+		segHeight = len(seg_map)
+		segWidth = len(seg_map[0])
+	
+		new_map = [[ 0
+			for y in range(segHeight) ]
+				for x in range(segWidth) ]
+		for y in range (0, segHeight):
+			for x in range (0, segWidth):
+				new_map[x][y] = seg_map[segHeight-1-y][x]
+		return new_map
+
+
+
+

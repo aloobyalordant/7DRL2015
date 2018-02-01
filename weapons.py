@@ -1547,7 +1547,7 @@ class Weapon_Nunchuck:
 	
 		self.command_items = []
 		
-		command = 'a'
+		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,1,1,0],
 				  [0,0,0,0,0],
@@ -1561,7 +1561,7 @@ class Weapon_Nunchuck:
 
 
 
-		command = 'b'
+		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,1,0],
 				  [0,0,0,1,0],
@@ -1574,7 +1574,7 @@ class Weapon_Nunchuck:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'c'
+		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,1,0],
@@ -1587,7 +1587,7 @@ class Weapon_Nunchuck:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'd'
+		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1601,7 +1601,7 @@ class Weapon_Nunchuck:
 
 
 
-		command = 'e'
+		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0],
@@ -1617,7 +1617,7 @@ class Weapon_Nunchuck:
 
 
 
-		command = 'f'
+		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,1,0,0,0],
@@ -1632,7 +1632,7 @@ class Weapon_Nunchuck:
 
 
 
-		command = 'g'
+		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,1,0,0,0],
@@ -1645,7 +1645,7 @@ class Weapon_Nunchuck:
 		self.command_items.append((command, abstract_attack_data, default_usage))
 
 
-		command = 'h'
+		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,0,0],
 				  [0,0,0,0,0],
@@ -1894,7 +1894,7 @@ class Weapon_Nunchuck:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				#choice = libtcod.random_get_int(0, 0, len(self.command_items)-1)
-				choice = randint(0, 0, len(self.command_items)-1)
+				choice = randint(0, len(self.command_items)-1)
 				(com, data, usage) = self.command_items[choice]
 				if self.durability > 0:
 					self.just_attacked = True
