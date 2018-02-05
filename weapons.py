@@ -1147,12 +1147,13 @@ class Weapon_Sai:
 	def __init__(self):
 		self.name = 'sai'
 		self.command_list = 'acdeqswxz'
-		self.max_charge = 10
+		self.max_charge = 1
 		self.current_charge = 1
 		self.default_usage = 1
 		self.durability = 50
 		self.just_attacked = False
 		default_usage = self.default_usage
+
 	
 		self.command_items = []
 		

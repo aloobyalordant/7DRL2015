@@ -78,6 +78,7 @@ class ColorHandler:
 			('color_rook',(0,0,128)),	#	(0,0,128)		#libtcod.darker_blue
 			('color_axe_maniac',(128,0,0)),	#	 (128,0,0)		#libtcod.darker_red
 			('color_tridentor',(0,0, 255)),	#	(0,0, 255)		#libtcod.blue
+			('color_rogue',(0,64, 0)),	
 			('color_ninja',(0,0,0)),	#	(0,0,0)		#libtcod.black
 			('color_wizard',(95, 0, 128)),	#	(95, 0, 128)			#libtcod.darker_purple
 			('color_alarmer_idle',(0,0,191)),

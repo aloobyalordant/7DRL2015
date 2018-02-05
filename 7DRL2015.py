@@ -352,7 +352,7 @@ class Object:
 
 		#if True:	# temporary hack to test enemy naviation
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
-		# if (libtcod.map_is_in_fov(fov_map, self.x, self.y) or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
+
 			#set the color and then draw the character that represents this object at its position
 		#	libtcod.console_set_default_foreground(con, self.color)
 		#	libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod_BKGND_NONE)
@@ -1284,10 +1284,90 @@ class Boman_AI(BasicMonster):
 
 
 
+class Rogue_AI(BasicMonster):
+
+	# Rogue AI  uses Sai. Often attacks at a distance in hopes the player will walk into their attacks.
+	# So there is some overlap with ninjas and tridentors at the moment.
+	# Sadyl does not do anything particularly roguey at present
+
+	def engagePlayer(self, monster, decider):
+		
+		#get data for where player is
+#		abstract_attack_data = None
+		xdiff = player.x - monster.x
+		ydiff = player.y - monster.y
+		xdiffabs = xdiff
+		if xdiff < 0:
+			xdiffabs = -xdiff
+		ydiffabs = ydiff
+		if ydiff < 0:
+			ydiffabs = -ydiff 
+
+		
+		# If the player is one or two steps from me, either do a specified attack, or retreat if I have no charge 
+		if xdiffabs <=2 and ydiffabs <= 2:  # or self.weapon.current_charge < self.weapon.default_usage
+			#if near to the player, and I have charge, then attack!
+			if self.weapon.current_charge >= self.weapon.default_usage:
+				attack_command = 0
+				#if the player has charge, try and hit the square where they're standing (because it's likely they'll stay still and attack me)
+				# Do one of these attacks, based on where player is (try and hit them square on if they are next to you,
+				# hit to either side of straight on if they are 1 step away on a cardinal axis, 
+				# hit towards them if the are diagonally one step away
+
+				num =  randint( 0, 1)
+				if num == 0:
+					rQr = oWo
+					rWr = oEo
+					rEr = oDo
+					rDr = oCo
+					rCr = oXo
+					rXr = oZo
+					rZr = oAo
+					rAr = oQo
+				else:
+					rQr = oAo
+					rWr = oQo
+					rEr = oWo
+					rDr = oEo
+					rCr = oDo
+					rXr = oCo
+					rZr = oXo
+					rAr = oZo
+				attack_array = [[rQr,oWo,oWo,oWo,rEr],
+						[oAo,rQr,rWr,rEr,oDo],
+						[oAo,rAr, 0 ,rDr,oDo],
+						[oAo,rZr,rXr,rCr,oDo],
+						[rZr,oXo,oXo,oXo,rCr]]
+				attack_command = attack_array[ydiff+2][xdiff+2]
+
+				#carry out attack
+				if attack_command != 0:
+					abstract_attack_data = self.weapon.do_attack(attack_command)
+						
+				if abstract_attack_data is not None:
+					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+
+			# can't attack but the player is next to you? then step back
+			# commented out for now - too tricksy / annoying for what is basically meant to be an upgrade to the basic mook
+			#elif xdiffabs <=1 and ydiffabs <= 1:
+			#
+			#	(dx,dy) = Run_Away_From_Visible_Player(monster.x, monster.y)
+			#	decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+			# otherwise, close the distance to player 
+			elif monster.distance_to(player) > 1: 
+				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+		# otherwise, walk towards the player if possible.
+		else:
+
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+	
+
+
 class Tridentor_AI(BasicMonster):
-
-
-
 
 
 	# Tridentor AI is bit more predictable than the BasicMonster AI would be (doesn't randomly choose between the 3 options that would fit),
@@ -3343,6 +3423,14 @@ def create_monster(x,y, name, guard_duty = False):
 		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
+	elif name == 'rogue':
+		#create a guy with an axe!
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_rogue, faded_attack_color = color_rogue)
+		ai_component = Rogue_AI(weapon = Weapon_Sai(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'K', 'rogue', color_rogue, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
 
 	elif name == 'hammer sister':
 		#create a lady with a hammer!
@@ -4073,8 +4161,8 @@ def next_level():
 		print ("leaving tutorial, resetting player stats")
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
-		#player_weapon = Weapon_Sword()
-		player_weapon = Weapon_Sai()
+		player_weapon = Weapon_Sword()
+		#player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
 		upgrade_array = []
@@ -4237,7 +4325,7 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 	elif name == 'spear':
 		new_weapon =  Weapon_Spear()
 	elif name == 'sai':
-		new_weapon =  Weapon_Sai_Alt()
+		new_weapon =  Weapon_Sai()
 	elif name == 'nunchaku':
 		new_weapon =  Weapon_Nunchuck()
 	elif name == 'axe':
@@ -4661,7 +4749,6 @@ def render_all():
 				x = xOff + x_offset + ACTION_SCREEN_X
 				if x in range(MAP_WIDTH):
 					#visible = True # temporary hack to test enemy navigation
-					# visible = libtcod.map_is_in_fov(fov_map, x, y)
 					visible = fov_map.fov[x, y]
 					wall = map[x][y].blocked 	#block_sight
 					
@@ -5268,7 +5355,7 @@ def clear_onscreen_objects():
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
 	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
-	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
+	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
 	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
 	
@@ -5300,6 +5387,7 @@ def setColorScheme(colorScheme = 'default'):
 	color_rook = levelColors['color_rook']
 	color_axe_maniac = levelColors['color_axe_maniac']
 	color_tridentor = levelColors['color_tridentor']
+	color_rogue = levelColors['color_rogue']
 	color_ninja = levelColors['color_ninja']
 	color_wizard = levelColors['color_wizard']
 	color_alarmer_idle = levelColors['color_alarmer_idle']
@@ -6139,6 +6227,13 @@ while not translated_console_is_window_closed():
 				ob.plant.update()
 				ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
 				ob.char = ob.plant.symbol
+
+		# LET'S MAKE SOME THINGS LEAVE A BLOOD TRAIL? FOR 'FUN'??
+		# Actually I don't like it. Might be a thing to try if you have a more open level and a need to 'track' something?
+		#	if ob.fighter is not None:
+		#		if ob.fighter.hp == 1 and ob.fighter.max_hp > 1 and ob.fighter.bleeds:
+		#			#blood splashing around, yaay
+		#			bgColorArray[ob.x][ob.y] = mergeColors(bgColorArray[ob.x][ob.y], blood_background_color, 0.2)	
 
 #		#UPDATE THE ALARMERS
 #		print ("UPDATING ALARMERS")

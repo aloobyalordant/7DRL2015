@@ -1,5 +1,6 @@
 import tdl as libtcod
 #import libtcodpy as libtcod
+import random
 
 MAP_WIDTH = 80
 MAP_HEIGHT = 30
@@ -70,7 +71,8 @@ class Level_Settings:
 		enemy_probs = []
 		enemy_probs.append(('swordsman', 50))
 	#	enemy_probs.append(('tridentor', 50))
-		enemy_probs.append(('rook', 30))		#TEMP TAKING OUT ROOKS
+		enemy_probs.append(('rook', 30))		
+		enemy_probs.append(('rogue', 50))
 	#	enemy_probs.append(('nunchuck fanatic', 50))
 	#	enemy_probs.append(('ninja', 5))
 		levsr = Level_Setting(
@@ -93,7 +95,8 @@ class Level_Settings:
 		enemy_probs = []
 		enemy_probs.append(('swordsman', 50))
 		enemy_probs.append(('boman', 50))
-		enemy_probs.append(('rook', 50))
+		enemy_probs.append(('rook', 50))	
+		enemy_probs.append(('rogue', 50))
 	#	enemy_probs.append(('flailing strawman', 50))
 		enemy_probs.append(('ninja', 5))
 		lev1 = Level_Setting(
