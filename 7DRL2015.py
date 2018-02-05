@@ -18,8 +18,6 @@ from colorHandler import ColorHandler
 
 SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
-CAMERA_FOCUS_WIDTH = 8
-CAMERA_FOCUS_HEIGHT = 8
 
 LIMIT_FPS = 20
 
@@ -203,13 +201,20 @@ Color_Stat_Info=(v_p,v_p,v_p)			# info about not-in-the-world stuff like gaining
 Color_Personal_Action=(v_p,v_p,v_p)		# Things the player does that aren't combat "you pick up the sword" etc
 
 
-#sizes and coordinates relevant for the GUI
+#sizes and coordinates relevant for the GUI and action screen
 BAR_WIDTH = 20
 PANEL_HEIGHT = 9
 #MESSAGE_PANEL_HEIGHT = 4
 MESSAGE_PANEL_HEIGHT = 30
 MESSAGE_PANEL_WIDTH = 25
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
+ACTION_SCREEN_WIDTH = SCREEN_WIDTH - MESSAGE_PANEL_WIDTH
+ACTION_SCREEN_HEIGHT = SCREEN_HEIGHT - PANEL_HEIGHT
+ACTION_SCREEN_X = MESSAGE_PANEL_WIDTH
+ACTION_SCREEN_Y = 0
+
+CAMERA_FOCUS_WIDTH = 8
+CAMERA_FOCUS_HEIGHT = 8
 
 MSG_X = BAR_WIDTH + 2
 #MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
@@ -2396,6 +2401,9 @@ class BasicAttack:
 
 def process_nearest_center_points():
 	global center_points, nearest_points_array
+	
+	print("PROCESSING NEAREST CENTER POINTS")
+
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			if  nearest_points_array[x][y] is not None:
@@ -3195,6 +3203,7 @@ def place_objects(room):
 
 			monster = create_monster(x,y,name)
 			objectsArray[x][y].append(monster)
+			worldEntitiesList.append(monster)
 
 	# on first level, in in 2 chance of a weapon appearing in a room I guess
 	if dungeon_level == 0:
@@ -3391,7 +3400,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray
+	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList
 
 	lev_gen = Level_Generator()
 
@@ -3417,6 +3426,7 @@ def make_map():
 
 	#TODO NOTE: think we can initalise objectsarray here.
 	objectsArray = []
+	print("DOING STUFF WITH MAKE MAP")
 	for x in range(MAP_WIDTH):
 		objectsRowArray = []
 		objectsArray.append(objectsRowArray)
@@ -3426,11 +3436,15 @@ def make_map():
 			objectsArray[x].append(objectsColumnArray)
 #			objectsArray[x][y] = []
 
+	worldAttackList = []	## a list of attacks in the world (these are also stored in objectArray)
+	worldEntitiesList = []	## list of non-attack objects that have to get updated / do things, e.g. deciders. (also stored in objectArray)
+
 	process_nearest_center_points()
 	initialize_nav_data()
 	#calculate_nav_data()
 
 	bgColorArray = []
+	print("DOING MORE STUFF WITH MAKE MAP")
 	for x in range(MAP_WIDTH):
 		bgColorRowArray = []
 		bgColorArray.append(bgColorRowArray)
@@ -3468,7 +3482,8 @@ def make_map():
 			weapon.send_to_back()
 		elif od.name == 'monster' or od.name == 'boss':		# maybe these cases will be treated differently in future
 			monster = create_monster(od.x,od.y, od.info, guard_duty = True)
-			objectsArray[od.x][od.y].append(monster)	
+			objectsArray[od.x][od.y].append(monster)
+			worldEntitiesList.append(monster)
 			# Hackiest of all hacks - make the tutorial rook drop a key
 			if dungeon_level == 0:
 				if od.info == 'security system':
@@ -3476,6 +3491,7 @@ def make_map():
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
 			objectsArray[od.x][od.y].append(strawman)
+			worldEntitiesList.append(strawman)
 		elif od.name == 'shrine':
 			#get altar color - gonna make it depend on the background of the tile it's on.
 			altar_color = color_light_ground_alt
@@ -3498,17 +3514,20 @@ def make_map():
 			monster = create_monster(od.x,od.y, 'security system', guard_duty = True)
 			if od.info == 'drops-key':
 				monster.drops_key = True
-			objectsArray[od.x][od.y].append(monster)	
+			objectsArray[od.x][od.y].append(monster)
+			worldEntitiesList.append(monster)
 			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door'or od.name == 'easydoor':
 			if od.info == 'horizontal':
 				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
+				worldEntitiesList.append(door)
 			elif od.info == 'vertical':
 				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
+				worldEntitiesList.append(door)
 			if od.name == 'easydoor':		# a door that doesn't stick!!
 				door.door.easy_open = True
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
@@ -3522,6 +3541,7 @@ def make_map():
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
 			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
 			objectsArray[od.x][od.y].append(new_plant)
+			worldEntitiesList.append(new_plant)
 		elif od.name == 'message':
 			message_color = color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
@@ -3543,12 +3563,14 @@ def make_map():
 			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True) 
 			map[ele_door.x][ele_door.y].block_sight = True			
 			objectsArray[ele_door.x][ele_door.y].append(door)
+			worldEntitiesList.append(door)
 			ele.special_door_list.append(door)
 
 
 
 	#at the end, put objects in the right display order?
 
+	print("DOING YET MORE STUFF WITH MAKE MAP")
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			reorder_objects(x,y)
@@ -3558,19 +3580,80 @@ def make_map():
 
 
 def initialize_nav_data():
-	global map, center_points, nav_data, nav_data_changed
+	global map, center_points, nav_data, nav_data_changed, distance_between_center_points, room_adjacencies
 
+	print ("INTIALIZING NAV DATA")
 
 	big_M = MAP_HEIGHT * MAP_WIDTH
 	NUMBER_POINTS = len(center_points)
+
+	# nav data gives distance of each point from each room center
 	nav_data = [[[ big_M
 		for p  in range(NUMBER_POINTS)]
 			for y in range(MAP_HEIGHT) ]
 				for x in range(MAP_WIDTH)]
 
+	# distance_between_center_points gives distance of each room center from each room center 
+	distance_between_center_points = [[ big_M
+		for p  in range(NUMBER_POINTS)]
+			for q in range(NUMBER_POINTS) ]
+
+
 	for n in range(NUMBER_POINTS):
+		# each center point is distance 0 from itself
 		(x,y) = center_points[n]
 		nav_data[x][y][n] = 0
+		distance_between_center_points[n][n] = 0
+		# we assume the distance between center points is the sum ? of their x distance and y distance
+		#print(room_adjacencies)
+		if len(room_adjacencies) > n:
+			for m in room_adjacencies[n]:
+				(other_x, other_y) = center_points[m]
+				distance_between_center_points[n][m] = math.fabs(x - other_x) + math.fabs(y - other_y)
+
+	# Now update distance_between_center_points until we have (a rough estimate of) the distance between each pair of center points
+	max_number_of_loops = NUMBER_POINTS*NUMBER_POINTS
+	anything_changed = False
+	for r in range(max_number_of_loops):
+		for p in range(NUMBER_POINTS):
+			for n in range(NUMBER_POINTS):
+				if len(room_adjacencies) > n:
+					for m in room_adjacencies[n]:
+						if distance_between_center_points[n][p] > distance_between_center_points[n][m] + distance_between_center_points[m][p]:
+							distance_between_center_points[n][p] = distance_between_center_points[n][m] + distance_between_center_points[m][p]
+							anything_changed = True
+		if anything_changed:
+			anything_changed = False
+		else:
+			break
+
+
+	# Now estimate distances of all points from centers, based on distances between center points
+	for p  in range(len(center_points)):
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				# get co-ords of nearest center
+				center_num = nearest_points_array[x][y]
+				if center_num is not None:
+					(cen_x, cen_y) = center_points[center_num]
+					nav_data[x][y][p] = 	distance_between_center_points[center_num][p] 	+ max(math.fabs(x - cen_x), math.fabs(y - cen_y))
+
+
+	# update distances of points from centers, based on current estimated distances from adjacent centers.
+	for p  in range(len(center_points)):
+		for y in range(MAP_HEIGHT):
+			for x in range(MAP_WIDTH):
+				center_num = nearest_points_array[x][y]
+				# get co-ords of nearest center
+				if map[x][y].blocked == False and  center_num is not None:
+					current_best = nav_data[x][y][p]	# our current best guess for distance of (x,y) from center p
+					if len(room_adjacencies) > center_num:
+						for m in room_adjacencies[center_num]:
+							temp_dist = nav_data[x][y][m] + distance_between_center_points[m][p] 
+							if temp_dist < current_best:
+								current_best = temp_dist
+					nav_data[x][y][p] = current_best
+		
 
 	nav_data_changed = True
 
@@ -3581,7 +3664,7 @@ def update_nav_data():
 
 #def calculate_nav_data():
 	# come up with a nav data thing that calculates the distances to a bunch of checkpoints!
-	global map, center_points, nav_data, nav_data_changed
+	global map, center_points, nav_data, nav_data_changed, room_adjacencies
 
 #	# nav data is 3d array
 #	# for x \in [MAP_WIDTH[, y \in [MAP_HEIGHT], p in [Number of center points].
@@ -3600,46 +3683,102 @@ def update_nav_data():
 
 	# only do anything if we have reason to belief the nav data needs updating
 	if nav_data_changed:
+		
+		print ("UPDATING NAVE DATA")
+
+		# new plan.. 
+
 		anything_changed = False
+
+
+		# new plan: we only calculate distances to center points of adjacent rooms.
+		# then we kind of bolt other data on later.
 		#for r in range(MAP_HEIGHT*MAP_WIDTH*NUMBER_POINTS):
 		for r in range(max_nav_data_loops):#horse
-			for p  in range(len(center_points)):
-				for y in range(MAP_HEIGHT):
-					for x in range(MAP_WIDTH):
-						if map[x][y].blocked == False:
-							if x > 0:
-								if nav_data[x-1][y][p] + 1 < nav_data[x][y][p] and map[x-1][y].blocked == False:
-									nav_data[x][y][p] = nav_data[x-1][y][p] + 1
-									anything_changed = True
-							if x < MAP_WIDTH-1:
-								if nav_data[x+1][y][p] + 1 < nav_data[x][y][p] and map[x+1][y].blocked == False:
-									nav_data[x][y][p] = nav_data[x+1][y][p] + 1
-									anything_changed = True
-							if y > 0:
-								if nav_data[x][y-1][p] + 1 < nav_data[x][y][p] and map[x][y-1].blocked == False:
-									nav_data[x][y][p] = nav_data[x][y-1][p] + 1
-									anything_changed = True
-							if y < MAP_HEIGHT-1:
-								if nav_data[x][y+1][p] + 1 < nav_data[x][y][p] and map[x][y+1].blocked == False:
-									nav_data[x][y][p] = nav_data[x][y+1][p] + 1
-									anything_changed = True
+			for y in range(MAP_HEIGHT):
+				for x in range(MAP_WIDTH):
+					if map[x][y].blocked == False:
+						center_num = nearest_points_array[x][y]
+						# get co-ords of nearest center
+						if map[x][y].blocked == False and  center_num is not None:
+							if len(room_adjacencies) > center_num:
+								center_list = list(room_adjacencies[center_num])
+								center_list.append(center_num)
+								for p in center_list:	# only figure outadjcencies for these
+									if x > 0:
+										if nav_data[x-1][y][p] + 1 < nav_data[x][y][p] and map[x-1][y].blocked == False:
+											nav_data[x][y][p] = nav_data[x-1][y][p] + 1
+											anything_changed = True
+									if x < MAP_WIDTH-1:
+										if nav_data[x+1][y][p] + 1 < nav_data[x][y][p] and map[x+1][y].blocked == False:
+											nav_data[x][y][p] = nav_data[x+1][y][p] + 1
+											anything_changed = True
+									if y > 0:
+										if nav_data[x][y-1][p] + 1 < nav_data[x][y][p] and map[x][y-1].blocked == False:
+											nav_data[x][y][p] = nav_data[x][y-1][p] + 1
+											anything_changed = True
+									if y < MAP_HEIGHT-1:
+										if nav_data[x][y+1][p] + 1 < nav_data[x][y][p] and map[x][y+1].blocked == False:
+											nav_data[x][y][p] = nav_data[x][y+1][p] + 1
+											anything_changed = True
 		
-							if x > 0 and y > 0:
-								if nav_data[x-1][y-1][p] + 1 < nav_data[x][y][p] and map[x-1][y-1].blocked == False:
-									nav_data[x][y][p] = nav_data[x-1][y-1][p] + 1
-									anything_changed = True
-							if x < MAP_WIDTH-1 and y > 0:
-								if nav_data[x+1][y-1][p] + 1 < nav_data[x][y][p] and map[x+1][y-1].blocked == False:
-									nav_data[x][y][p] = nav_data[x+1][y-1][p] + 1
-									anything_changed = True
-							if x > 0 and y < MAP_HEIGHT-1:
-								if nav_data[x-1][y+1][p] + 1 < nav_data[x][y][p] and map[x-1][y+1].blocked == False:
-									nav_data[x][y][p] = nav_data[x-1][y+1][p] + 1
-									anything_changed = True
-							if x < MAP_WIDTH-1 and y < MAP_HEIGHT-1:
-								if nav_data[x+1][y+1][p] + 1 < nav_data[x][y][p] and map[x+1][y+1].blocked == False:
-									nav_data[x][y][p] = nav_data[x+1][y+1][p] + 1
-									anything_changed = True
+									if x > 0 and y > 0:
+										if nav_data[x-1][y-1][p] + 1 < nav_data[x][y][p] and map[x-1][y-1].blocked == False:
+											nav_data[x][y][p] = nav_data[x-1][y-1][p] + 1
+											anything_changed = True
+									if x < MAP_WIDTH-1 and y > 0:
+										if nav_data[x+1][y-1][p] + 1 < nav_data[x][y][p] and map[x+1][y-1].blocked == False:
+											nav_data[x][y][p] = nav_data[x+1][y-1][p] + 1
+											anything_changed = True
+									if x > 0 and y < MAP_HEIGHT-1:
+										if nav_data[x-1][y+1][p] + 1 < nav_data[x][y][p] and map[x-1][y+1].blocked == False:
+											nav_data[x][y][p] = nav_data[x-1][y+1][p] + 1
+											anything_changed = True
+									if x < MAP_WIDTH-1 and y < MAP_HEIGHT-1:
+										if nav_data[x+1][y+1][p] + 1 < nav_data[x][y][p] and map[x+1][y+1].blocked == False:
+											nav_data[x][y][p] = nav_data[x+1][y+1][p] + 1
+											anything_changed = True
+
+#
+#		#for r in range(MAP_HEIGHT*MAP_WIDTH*NUMBER_POINTS):
+#		for r in range(max_nav_data_loops):#horse
+#			for p  in range(len(center_points)):
+#				for y in range(MAP_HEIGHT):
+#					for x in range(MAP_WIDTH):
+#						if map[x][y].blocked == False:
+#							if x > 0:
+#								if nav_data[x-1][y][p] + 1 < nav_data[x][y][p] and map[x-1][y].blocked == False:
+#									nav_data[x][y][p] = nav_data[x-1][y][p] + 1
+#									anything_changed = True
+#							if x < MAP_WIDTH-1:
+#								if nav_data[x+1][y][p] + 1 < nav_data[x][y][p] and map[x+1][y].blocked == False:
+#									nav_data[x][y][p] = nav_data[x+1][y][p] + 1
+#									anything_changed = True
+#							if y > 0:
+#								if nav_data[x][y-1][p] + 1 < nav_data[x][y][p] and map[x][y-1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x][y-1][p] + 1
+#									anything_changed = True
+#							if y < MAP_HEIGHT-1:
+#								if nav_data[x][y+1][p] + 1 < nav_data[x][y][p] and map[x][y+1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x][y+1][p] + 1
+#									anything_changed = True
+#		
+#							if x > 0 and y > 0:
+#								if nav_data[x-1][y-1][p] + 1 < nav_data[x][y][p] and map[x-1][y-1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x-1][y-1][p] + 1
+#									anything_changed = True
+#							if x < MAP_WIDTH-1 and y > 0:
+#								if nav_data[x+1][y-1][p] + 1 < nav_data[x][y][p] and map[x+1][y-1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x+1][y-1][p] + 1
+#									anything_changed = True
+#							if x > 0 and y < MAP_HEIGHT-1:
+#								if nav_data[x-1][y+1][p] + 1 < nav_data[x][y][p] and map[x-1][y+1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x-1][y+1][p] + 1
+#									anything_changed = True
+#							if x < MAP_WIDTH-1 and y < MAP_HEIGHT-1:
+#								if nav_data[x+1][y+1][p] + 1 < nav_data[x][y][p] and map[x+1][y+1].blocked == False:
+#									nav_data[x][y][p] = nav_data[x+1][y+1][p] + 1
+#									anything_changed = True
 			if anything_changed:
 				anything_changed = False		#check it again!
 			else: 
@@ -3647,8 +3786,27 @@ def update_nav_data():
 				nav_data_changed = False		
 				#print( 'nav data finished after ' + str(r) + ' iterations')
 				break
+
+
 	
-	# okay, I think that concludes calculating the distance to things? Let's see.
+	
+		# okay, I think that concludes calculating the distance to things? Let's see.
+		# actually wait let's then do this again:
+		# update distances of points from centers, based on current estimated distances from adjacent centers.
+		for p  in range(len(center_points)):
+			for y in range(MAP_HEIGHT):
+				for x in range(MAP_WIDTH):
+					center_num = nearest_points_array[x][y]
+					# get co-ords of nearest center
+					if map[x][y].blocked == False and  center_num is not None:
+						current_best = nav_data[x][y][p]	# our current best guess for distance of (x,y) from 	center p
+						if len(room_adjacencies) > center_num:
+							for m in room_adjacencies[center_num]:
+								temp_dist = nav_data[x][y][m] + distance_between_center_points[m][p] 
+								if temp_dist < current_best:
+									current_best = temp_dist
+						nav_data[x][y][p] = current_best
+	#nav_data_changed = False		# temp hack, will probably break things
 	
 	
 def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, care_about_fighters = False, generally_ignore_fighters = False):
@@ -3916,6 +4074,7 @@ def next_level():
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
 		#player_weapon = Weapon_Sword()
+		player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
 		upgrade_array = []
@@ -3963,6 +4122,7 @@ def next_level():
 	#objects = []
 	make_map()
 	objectsArray[player.x][player.y].append(player)
+	worldEntitiesList.append(player)
 	print( 'heyo (' + str(player.x) + ',' + str(player.y))	
 
    	#make_map()  #create a fresh new level!
@@ -3970,16 +4130,32 @@ def next_level():
 							# Think it's enough to move this to after make_map(), and then use player's x and y
 							# well... there might be an issue of initialising arrays as well...
 
-	for y in range(SCREEN_HEIGHT):
-		for x in range(SCREEN_WIDTH):
+
+	x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
+	y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
+	for yOff in range(ACTION_SCREEN_HEIGHT):
+		y = yOff + y_offset
+		for xOff in range(ACTION_SCREEN_WIDTH):
+			x = xOff + x_offset + ACTION_SCREEN_X
 			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
-				#map[x][y].explored = False
 				translated_console_set_char_background(con, x, y, color_big_alert, color_big_alert)
-				#print "blah (" + str(x) + "," + str(y) + ")" 
 			else:
-				map[x][y].explored = False
-				translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
-				#print "bloo (" + str(x) + "," + str(y) + ")" 
+				if y in range(MAP_HEIGHT) and x in range(MAP_WIDTH):
+					map[x][y].explored = False
+					translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
+
+#	for y in range(SCREEN_HEIGHT):
+#		for x in range(SCREEN_WIDTH):
+#			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
+#				#map[x][y].explored = False
+#				translated_console_set_char_background(con, x, y, color_big_alert, color_big_alert)
+#				#print "blah (" + str(x) + "," + str(y) + ")" 
+#			else:
+#				map[x][y].explored = False
+#				translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
+#				#print "bloo (" + str(x) + "," + str(y) + ")" 
+
+
 	initialize_fov()
 
 
@@ -4026,6 +4202,8 @@ def beat_game():
 def initialize_fov():
 	global fov_recompute, fov_map
 	fov_recompute = True
+
+	print ("INITIALISING FOV")
 
 	#create the FOV map, according to the generated map
 	#fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
@@ -4175,6 +4353,7 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 	key_count = 0
 	currency_count = STARTING_CURRENCY
 	make_map()  #create a fresh new level!
+	print("DOING RESTQRT GQME")
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
 			map[x][y].explored = False
@@ -4462,88 +4641,104 @@ def render_all():
 	#y_offset = camera.y-SCREEN_HEIGHT/2
 	y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
 
-	for y in range(SCREEN_HEIGHT):
-		for x in range(SCREEN_WIDTH):
-	#		libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
-			con.draw_char(x, y, None, fg=None, bg=color_fog_of_war)
+	#for y in range(SCREEN_HEIGHT):
+	#	for x in range(SCREEN_WIDTH):
+	##		libtcod.console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
+	#		con.draw_char(x, y, None, fg=None, bg=color_fog_of_war)
+
+	for y in range(ACTION_SCREEN_HEIGHT):
+		for x in range(ACTION_SCREEN_WIDTH):
+			con.draw_char(x + ACTION_SCREEN_X, y, None, fg=None, bg=color_fog_of_war)
 
 	#go through all tiles, and set their background color according to the FOV
-	for y in range(MAP_HEIGHT):
-		for x in range(MAP_WIDTH):
-			#visible = True # temporary hack to test enemy navigation
-			# visible = libtcod.map_is_in_fov(fov_map, x, y)
-			visible = fov_map.fov[x, y]
-			wall = map[x][y].blocked 	#block_sight
-			
-			#if False:
-			if not visible:
-				#if it's not visible right now, the player can only see it if it's explored	
-				if map[x][y].explored:
-				#if True: 	#temp making walls and such visible to check enemy behaviour
-					#it's out of the player's FOV
-					if wall:
-						con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_wall)
-						# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod_BKGND_SET)
+#	print("'fixed':	 UPDATING BACKGROUNDS AS PART OF RENDER_ALL")
+	#for y in range(MAP_HEIGHT):
+	#	for x in range(MAP_WIDTH):
+	for yOff in range(ACTION_SCREEN_HEIGHT):
+		y = yOff + y_offset
+		if y in range(MAP_HEIGHT):
+			for xOff in range(ACTION_SCREEN_WIDTH):
+				x = xOff + x_offset + ACTION_SCREEN_X
+				if x in range(MAP_WIDTH):
+					#visible = True # temporary hack to test enemy navigation
+					# visible = libtcod.map_is_in_fov(fov_map, x, y)
+					visible = fov_map.fov[x, y]
+					wall = map[x][y].blocked 	#block_sight
+					
+					#if False:
+					if not visible:
+						#if it's not visible right now, the player can only see it if it's explored	
+						if map[x][y].explored:
+						#if True: 	#temp making walls and such visible to check enemy behaviour
+							#it's out of the player's FOV
+							if wall:
+								con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_wall)
+								# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_wall, libtcod_BKGND_SET)
+							else:
+								con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_ground)
+								# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_ground, libtcod_BKGND_SET)
+						else: 					
+							con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_fog_of_war)
+							#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod_BKGND_SET)
 					else:
-						con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_ground)
-						# libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_dark_ground, libtcod_BKGND_SET)
-				else: 					
-					con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_fog_of_war)
-					#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_fog_of_war, libtcod_BKGND_SET)
-			else:
-				#todo update based on some desired background colors
-				#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_BKGND_SET)		
-				con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =bgColorArray[x][y])
-			
-
-	#			if wall:
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_BKGND_SET  )
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod_BKGND_SET  )
-	#			else:
-	#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod_BKGND_SET )
+						#todo update based on some desired background colors
+						#libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_	BKGND_SET)		
+						con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =bgColorArray[x][y])
 				
-				map[x][y].explored = True
+	
+			#			if wall:
+			#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, bgColorArray[x][y], libtcod_BKGND_SET  )
+			#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_wall, libtcod_BKGND_SET  )
+			#			else:
+			#				libtcod.console_set_char_background(con, x - x_offset, y - y_offset, color_light_ground, libtcod_BKGND_SET )
+					
+						map[x][y].explored = True
 
 
 	# do some background type stuff based, on whether someone has just been attacked.
+#	print("'fixed':	 MORE UPDATING BACKGROUNDS AS PART OF RENDER_ALL")
 
-	for y in range(MAP_HEIGHT):
-		for x in range(MAP_WIDTH):
-			for object in objectsArray[x][y]:
-				#if libtcod.map_is_in_fov(fov_map, x, y) == True:
-				if fov_map.fov[x, y] == True:
-					if object.name == 'water':
-						#libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
-						con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
-					if object.name == 'blood':
-						# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod_BKGND_SET )
-						con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
-					# ok but if there's attacks draw those instead
-					for other_object in objectsArray[x][y]:
-						if object is not other_object:
-							if object.attack is not None and other_object.fighter is not None:
-								# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
-								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
+	for yOff in range(ACTION_SCREEN_HEIGHT):
+		y = yOff + y_offset
+		if y in range(MAP_HEIGHT):
+			for xOff in range(ACTION_SCREEN_WIDTH):
+				x = xOff + x_offset + ACTION_SCREEN_X
+				if x in range(MAP_WIDTH):
+					for object in objectsArray[x][y]:
+						#if libtcod.map_is_in_fov(fov_map, x, y) == True:
+						if fov_map.fov[x, y] == True:
+							if object.name == 'water':
+								#libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
+								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
+							if object.name == 'blood':
+								# libtcod.console_set_char_background(con, object.x - x_offset, object.y - 	y_offset, blood_background_color, libtcod_BKGND_SET )
+								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
+							# ok but if there's attacks draw those instead
+							for other_object in objectsArray[x][y]:
+								if object is not other_object:
+									if object.attack is not None and other_object.fighter is not None:
+										# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
+										con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
 
-				# DRAW ALL THE THINGS
-				object.draw()
+						# DRAW ALL THE THINGS
+						object.draw()
 
-#	for object in objects:
-#		if libtcod.map_is_in_fov(fov_map, object.x, object.y) == True:
-#			for other_object in objects:
-#				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
-#					if object.attack is not None and other_object.fighter is not None:
-#						libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
-#			if object.name == 'water':
-#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
-#			if object.name == 'blood':
-#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod_BKGND_SET )
-#
-#	for object in objects:
-#		#if object != player:
-#		object.draw()
-#	#player.draw()
-#	
+		#	for object in objects:
+		#		if libtcod.map_is_in_fov(fov_map, object.x, object.y) == True:
+		#			for other_object in objects:
+		#				if object is not other_object and object.x == other_object.x and object.y == other_object.y:
+		#					if object.attack is not None and other_object.fighter is not None:
+		#						libtcod.console_set_char_background(con, object.x - x_offset, object.y - 	y_offset, object.attack.faded_color, libtcod_BKGND_SET )
+		#			if object.name == 'water':
+		#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
+		#			if object.name == 'blood':
+		#				libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, blood_background_color, libtcod_BKGND_SET )
+		#
+		#	for object in objects:
+		#		#if object != player:
+		#		object.draw()
+		#	#player.draw()
+		#	
 
 
 	player.send_to_front()			
@@ -5056,6 +5251,19 @@ def reorder_objects(x,y):		#TODO REJIGGER THIS SO IT TAKES A SINGLE X,Y CO-OORD 
 		index = index + 1 
 	# Well; let's see if this works..
 
+def clear_onscreen_objects():
+	global objectsArray, camera
+	x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
+	y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
+	for yOff in range(ACTION_SCREEN_HEIGHT):
+		y = yOff + y_offset
+		if y in range(MAP_HEIGHT):
+			for xOff in range(ACTION_SCREEN_WIDTH):
+				x = xOff + x_offset + ACTION_SCREEN_X
+				if x in range(MAP_WIDTH):
+					for object in objectsArray[x][y]:
+						object.clear()
+
 
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
@@ -5256,6 +5464,7 @@ def initialise_game():
 	#objects = []
 	make_map()
 	objectsArray[player.x][player.y].append(player)	
+	worldEntitiesList.append(player)
 	print('howdy (' + str(player.x) + ',' + str(player.y))
 	for object in objectsArray[player.x][player.y]:
 		print(object.name)
@@ -5394,11 +5603,12 @@ while not translated_console_is_window_closed():
 	#for object in objects:
 	#	object.clear()
 
-	for y in range(MAP_HEIGHT):
-		for x in range(MAP_WIDTH):
-			for object in objectsArray[x][y]:
-				object.clear()
-
+#	print ("'fixed'  CLEARING OBJECTS")
+#	for y in range(MAP_HEIGHT):
+#		for x in range(MAP_WIDTH):
+#			for object in objectsArray[x][y]:
+#				object.clear()
+	clear_onscreen_objects()
 	#get player decisions and handle keys and exit game if needed
 	
 	#trying to adapt the code from the tdl tutorial to this game. Let's see how much stuff this breaks:
@@ -5495,28 +5705,56 @@ while not translated_console_is_window_closed():
 		# delete attacks from the past?! This is a fix because attacks seem to be hanging around longer than I'd like, may cause problems further down the line...
 		#deletionList = []
 
-		
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				
-				deletionList = []
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					if object.attack:
-						object.attack.fade()
-						if object.attack.existing == False:
-							deletionList.append(object)
-				# deleting attacks that have happened
-				for object in objectsArray[x][y]:
-					object.clear()
-				for object in deletionList:
-					objectsArray[object.x][object.y].remove(object)
+
+	#	print ("DELETING ATTACJS")		
+	#	for y in range(MAP_HEIGHT):
+	#		for x in range(MAP_WIDTH):
+	#			
+	#			deletionList = []
+	#			for object in objectsArray[x][y]:
+	#	#for object in objects:
+	#				if object.attack:
+	#					object.attack.fade()
+	#					if object.attack.existing == False:
+	#						deletionList.append(object)
+	#			# deleting attacks that have happened
+	#			for object in objectsArray[x][y]:
+	#				object.clear()
+	#			for object in deletionList:
+	#				objectsArray[object.x][object.y].remove(object)
+
+
+#		print ("'fixed'  DELETING ATTACJS")
+		deletionList = []
+		for object in worldAttackList:
+			if object.attack:
+				object.attack.fade()
+				if object.attack.existing == False:
+					deletionList.append(object)
+		for object in deletionList:
+			x = object.x
+			y = object.y
+			# deleting attacks that have happened
+			for other_object in objectsArray[x][y]:
+				other_object.clear()
+			objectsArray[x][y].remove(object)
+			if object in worldAttackList:
+				worldAttackList.remove(object)
 
 			#let monsters take their decisions
 	#	for object in objects:
-				for object in objectsArray[x][y]:
-					if object.decider:
-						object.decider.decide()
+#		print ("'fixed'  DOING DECISIONS")		
+		#for y in range(MAP_HEIGHT):
+		#	for x in range(MAP_WIDTH):
+		#		for object in objectsArray[x][y]:
+		#			if object.decider:
+		#				object.decider.decide()
+
+		for object in worldEntitiesList:
+			if object.decider:
+				object.decider.decide()
+
+		
 
 
 		#now everyone has decided things, things can happen
@@ -5538,35 +5776,66 @@ while not translated_console_is_window_closed():
 		potential_open_list = []
 
 
+#		print ("'fixed'  DECIDING ABOUT PUNCH TARGETS")		
+		for object in worldEntitiesList:
+			if object.decider:
+				x = object.x
+				y = object.y
+				if object.decider.decision is not None:
+					if object.decider.decision.move_decision is not None:
+						md = object.decider.decision.move_decision
+						if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
+							target_x = object.x + md.dx
+							target_y = object.y + md.dy	
+							for victim in objectsArray[target_x][target_y]:
+								# try to punch if there's a fighter in this square
+								if victim.fighter:
+									# the following code checks that the victim isn't actually Attacking the puncher	
+									valid_target = True
+									if victim.decider.decision and victim.decider.decision.attack_decision:
+										victim_attacks = victim.decider.decision.attack_decision.attack_list
+										for vic_attack in victim_attacks:
+											if vic_attack.x == object.x and vic_attack.y == object.y:
+												valid_target = False
+									if valid_target == True:
+										potential_punch_list.append((object, victim))
+								#try to open if there's a (non-elevator) door in this square
+								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
+									potential_open_list.append((object, victim))
+									#print str(victim.name)
 
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					if object.decider:
-						if object.decider.decision is not None:
-							if object.decider.decision.move_decision is not None:
-								md = object.decider.decision.move_decision
-								if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
-									target_x = object.x + md.dx
-									target_y = object.y + md.dy	
-									for victim in objectsArray[target_x][target_y]:
-										# try to punch if there's a fighter in this square
-										if victim.fighter:
-											# the following code checks that the victim isn't actually Attacking the puncher	
-											valid_target = True
-											if victim.decider.decision and victim.decider.decision.attack_decision:
-												victim_attacks = victim.decider.decision.attack_decision.attack_list
-												for vic_attack in victim_attacks:
-													if vic_attack.x == object.x and vic_attack.y == object.y:
-														valid_target = False
-											if valid_target == True:
-												potential_punch_list.append((object, victim))
-										#try to open if there's a (non-elevator) door in this square
-										if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
-											potential_open_list.append((object, victim))
-											#print str(victim.name)
 								
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#		#for object in objects:
+#					if object.decider:
+#						if object.decider.decision is not None:
+#							if object.decider.decision.move_decision is not None:
+#								md = object.decider.decision.move_decision
+#								if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
+#									target_x = object.x + md.dx
+#									target_y = object.y + md.dy	
+#									for victim in objectsArray[target_x][target_y]:
+#										# try to punch if there's a fighter in this square
+#										if victim.fighter:
+#											# the following code checks that the victim isn't actually Attacking the puncher	
+#											valid_target = True
+#											if victim.decider.decision and victim.decider.decision.attack_decision:
+#												victim_attacks = victim.decider.decision.attack_decision.attack_list
+#												for vic_attack in victim_attacks:
+#													if vic_attack.x == object.x and vic_attack.y == object.y:
+#														valid_target = False
+#											if valid_target == True:
+#												potential_punch_list.append((object, victim))
+#										#try to open if there's a (non-elevator) door in this square
+#										if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
+#											potential_open_list.append((object, victim))
+#											#print str(victim.name)
+
+
+
+
 
 		# firstly movement happens
 		# player always moves first
@@ -5632,15 +5901,24 @@ while not translated_console_is_window_closed():
 	 	# move other objects.
 		# first, make a list of objects to move (because naively going through objectsArray and moving everything at each grid reference can lead to objects getting moved multiple times
 		
+#		print ("'FIXED'  GETTING LIST OF MOVERS")
 		mover_list = []
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-#		for object in objects:
-					if object.decider and object is not player:
-						if object.decider.decision is not None:
-							if object.decider.decision.move_decision is not None:
-								mover_list.append(object)
+		for object in worldEntitiesList:
+			if object.decider and object is not player:
+				if object.decider.decision is not None:
+					if object.decider.decision.move_decision is not None:
+						mover_list.append(object)
+
+
+#		mover_list = []
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+##		for object in objects:
+#					if object.decider and object is not player:
+#						if object.decider.decision is not None:
+#							if object.decider.decision.move_decision is not None:
+#								mover_list.append(object)
 
 
 		for object in mover_list:
@@ -5711,11 +5989,15 @@ while not translated_console_is_window_closed():
 				fov_recompute = True
 
 
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					object.clear()
+#		print ('fixed'  "CLEARING OBJECTS AGAIN")
+		#for y in range(MAP_HEIGHT):
+		#	for x in range(MAP_WIDTH):
+		#		for object in objectsArray[x][y]:
+		##for object in objects:
+		#			object.clear()
+		clear_onscreen_objects()
+
+
 		translated_console_set_default_foreground(con, default_text_color)
 		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
 		#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
@@ -5790,12 +6072,21 @@ while not translated_console_is_window_closed():
 		if lev_set.boss is not None:
 			level_complete = True
 			#check for bosses?
-			for y in range(MAP_HEIGHT):
-				for x in range(MAP_WIDTH):
-					for object in objectsArray[x][y]:
-		#for object in objects:
-						if object.name == lev_set.boss:
-							level_complete = False
+			print ("CHECKING FOR BOSSES")
+			for object in worldEntitiesList:
+				#for object in objects:
+				if object.name == lev_set.boss:
+					level_complete = False
+
+
+#			print ("CHECKING FOR BOSSES")
+#			for y in range(MAP_HEIGHT):
+#				for x in range(MAP_WIDTH):
+#					for object in objectsArray[x][y]:
+#		#for object in objects:
+#						if object.name == lev_set.boss:
+#							level_complete = False
+
 		#elif number_security_systems <= 0:
 		#	level_complete = True
 		elif lev_set.keys_required <= key_count:
@@ -5828,30 +6119,52 @@ while not translated_console_is_window_closed():
 
 		spotted = False
 
+		#UPDATE THE ALARMERS AND OTHER THINGS
+#		print ("'fixed' UPDATING ALARMERS AND OTHER THINGS")
+		for ob in worldEntitiesList:
 		#UPDATE THE ALARMERS
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for ob in objectsArray[x][y]:
-		#for object in objects:
-	#	for ob in objects:
-					if ob.alarmer is not None:
-						#if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
-						if fov_map.fov[ob.x, ob.y]:	
-							# print('a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status))
-							ob.alarmer.update(True)
-							spotted = True
-						else: 
-							ob.alarmer.update(False)
+			if ob.alarmer is not None:
+				if fov_map.fov[ob.x, ob.y]:	
+					ob.alarmer.update(True)
+					spotted = True
+				else: 
+					ob.alarmer.update(False)
 
 		#UPDATE THE DOORS
-					if ob.door is not None:
-						ob.door.update()
+			if ob.door is not None:
+				ob.door.update()
 
 		#UPDATE THE PLANTS
-					if ob.plant is not None:
-						ob.plant.update()
-						ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
-						ob.char = ob.plant.symbol
+			if ob.plant is not None:
+				ob.plant.update()
+				ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
+				ob.char = ob.plant.symbol
+
+#		#UPDATE THE ALARMERS
+#		print ("UPDATING ALARMERS")
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for ob in objectsArray[x][y]:
+#		#for object in objects:
+#	#	for ob in objects:
+#					if ob.alarmer is not None:
+#						#if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
+#						if fov_map.fov[ob.x, ob.y]:	
+#							# print('a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status))
+#							ob.alarmer.update(True)
+#							spotted = True
+#						else: 
+#							ob.alarmer.update(False)
+#
+#		#UPDATE THE DOORS
+#					if ob.door is not None:
+#						ob.door.update()
+#
+#		#UPDATE THE PLANTS
+#					if ob.plant is not None:
+#						ob.plant.update()
+#						ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
+#						ob.char = ob.plant.symbol
 
 
 		#UPDATE THE UPGRADES THAT AFFECT PLAYER STATS ONCE AND THEN STOP; I'M NOT SURE WHERE ELSE TO PUT THIS	
@@ -5868,20 +6181,39 @@ while not translated_console_is_window_closed():
 
 		# now create attacks!
 		deletionList = []
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					if object.decider:
-						if object.decider.decision is not None:
-							if object.decider.decision.attack_decision is not None:
-								attack_list = object.decider.decision.attack_decision.attack_list
-								for attack in attack_list:
-									try:
-										objectsArray[attack.x][attack.y].append(attack)	
-										attack.send_to_front()
-									except IndexError:		#todo: check that this is the right thing to catch...
-										print('')
+#		print ("'fixed'  CREATING ATTAKS")
+		for object in worldEntitiesList:
+			if object.decider:
+				if object.decider.decision is not None:
+					if object.decider.decision.attack_decision is not None:
+						attack_list = object.decider.decision.attack_decision.attack_list
+						for attack in attack_list:
+							try:
+								objectsArray[attack.x][attack.y].append(attack)	
+								worldAttackList.append(attack)
+								attack.send_to_front()
+							except IndexError:		#todo: check that this is the right thing to catch...
+								print('')
+
+
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#		#for object in objects:
+#					if object.decider:
+#						if object.decider.decision is not None:
+#							if object.decider.decision.attack_decision is not None:
+#								attack_list = object.decider.decision.attack_decision.attack_list
+#								for attack in attack_list:
+#									try:
+#										objectsArray[attack.x][attack.y].append(attack)	
+#										worldAttackList.append(attack)
+#										attack.send_to_front()
+#									except IndexError:		#todo: check that this is the right thing to catch...
+#										print('')
+
+
+
 
 		player_just_attacked = False
 		if player.decider.decision is not None:
@@ -5894,11 +6226,13 @@ while not translated_console_is_window_closed():
 		#	print('the player just attacked!')
 
 		# draw things with the attacks!
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					object.clear()
+#		print("'FIXED'  MORE OBJECT CLEARING, WHICH I GUESS HAS SOMETHING TO DO WITH DRAWING")
+		#for y in range(MAP_HEIGHT):
+		#	for x in range(MAP_WIDTH):
+		#		for object in objectsArray[x][y]:
+		##for object in objects:
+		#			object.clear()
+		clear_onscreen_objects()
 		translated_console_set_default_foreground(con, default_text_color)
 
 		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
@@ -5915,12 +6249,18 @@ while not translated_console_is_window_closed():
 
 		deletionList = []
 #		for object in objects:
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-					if object.attack:
-						if object.attack.existing == False:
-							deletionList.append(object)
+#		print("'fixed' DELETING ATTACKS, AGAIN?")
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#					if object.attack:
+#						if object.attack.existing == False:
+#							deletionList.append(object)		print ("DELETING ATTACJS")
+		for object in worldAttackList:
+			if object.attack:
+				if object.attack.existing == False:
+					deletionList.append(object)
+
 		
 
 
@@ -5928,19 +6268,35 @@ while not translated_console_is_window_closed():
 		# check if the player is getting 'hit' (whether or not the attack gets deflected)
 
 		all_player_attacks_on_target = True		# thing to test whether all player attacks hit
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-		#for object in objects:
-					if object.attack:
-						attackee = object.attack.find_attackee()
-						if attackee == player:
-							player_got_hit = True
-						elif object.attack.attacker == player:
-							if attackee is not None:
-								number_hit_by_player += 1
-							else:
-								all_player_attacks_on_target = False
+		#print("'fied' CHECKING IF PLAYER GOT HIT")
+		for object in worldAttackList:
+			if object.attack:
+				x = object.x
+				y = object.y
+				attackee = object.attack.find_attackee()
+				if attackee == player:
+					player_got_hit = True
+				elif object.attack.attacker == player:
+					if attackee is not None:
+						number_hit_by_player += 1
+					else:
+						all_player_attacks_on_target = False
+
+
+
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#		#for object in objects:
+#					if object.attack:
+#						attackee = object.attack.find_attackee()
+#						if attackee == player:
+#							player_got_hit = True
+#						elif object.attack.attacker == player:
+#							if attackee is not None:
+#								number_hit_by_player += 1
+#							else:
+#								all_player_attacks_on_target = False
 		# Update relevant upgrades
 		for power_up in upgrade_array:
 			if getattr(power_up, "update_based_on_player_accuracy", None) is not None:
@@ -5977,73 +6333,121 @@ while not translated_console_is_window_closed():
 #													player_clashed_something = True
 
 
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-					if object.attack:
-						#determine the attacker and attackee in this scenario
-						attacker = object.attack.attacker
-						attackee = object.attack.find_attackee()
-						#now, is the attackee also attacking the attacker?	
-						for other_object in objectsArray[attacker.x][attacker.y]:
-							if other_object.attack:	#so attacker is  definitely being attacked by something...
-								other_attacker = other_object.attack.attacker
-								if other_attacker == attackee:	# then attacker IS being attacked by attackee!
-									# so now we have two fighters attacking each other
-									#check to make sure same pair of attacks don't get noted twice:
-									if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
-										#clashing_pairs_list.append((object, other_object))
-										# deletion happens, because the attacks "cancel each other out"
-										deletionList.append(object)
-										deletionList.append(other_object)
-										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
-										if attacker is player or attackee is player:
-											player_clashed_something = True
+#		print("'fixed' PROCESSING ATTACK CLASHES")
+
+		for object in worldAttackList:
+			x = object.x
+			y = object.y
+			if object.attack:
+				#determine the attacker and attackee in this scenario
+				attacker = object.attack.attacker
+				attackee = object.attack.find_attackee()
+				#now, is the attackee also attacking the attacker?	
+				for other_object in objectsArray[attacker.x][attacker.y]:
+					if other_object.attack:	#so attacker is  definitely being attacked by something...
+						other_attacker = other_object.attack.attacker
+						if other_attacker == attackee:	# then attacker IS being attacked by attackee!
+							# so now we have two fighters attacking each other
+							#check to make sure same pair of attacks don't get noted twice:
+							if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
+								#clashing_pairs_list.append((object, other_object))
+								# deletion happens, because the attacks "cancel each other out"
+								deletionList.append(object)
+								deletionList.append(other_object)
+								message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
+								if attacker is player or attackee is player:
+									player_clashed_something = True
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#					if object.attack:
+#						#determine the attacker and attackee in this scenario
+#						attacker = object.attack.attacker
+#						attackee = object.attack.find_attackee()
+#						#now, is the attackee also attacking the attacker?	
+#						for other_object in objectsArray[attacker.x][attacker.y]:
+#							if other_object.attack:	#so attacker is  definitely being attacked by something...
+#								other_attacker = other_object.attack.attacker
+#								if other_attacker == attackee:	# then attacker IS being attacked by attackee!
+#									# so now we have two fighters attacking each other
+#									#check to make sure same pair of attacks don't get noted twice:
+#									if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
+#										#clashing_pairs_list.append((object, other_object))
+#										# deletion happens, because the attacks "cancel each other out"
+#										deletionList.append(object)
+#										deletionList.append(other_object)
+#										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
+#										if attacker is player or attackee is player:
+#											player_clashed_something = True
 
 
 		#for object in objects:
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-					object.clear()
+	#	print ("'fixed'  YET MORE OBJECT CLEARING")
+		#for y in range(MAP_HEIGHT):
+		#	for x in range(MAP_WIDTH):
+		#		for object in objectsArray[x][y]:
+		#			object.clear()
+		clear_onscreen_objects()
 		for object in deletionList:
 			try:
 				objectsArray[object.x][object.y].remove(object)
 			except ValueError:
 				print('object already removed from lissssssst')
+			if object in worldAttackList:
+				worldAttackList.remove(object)
 		deletionList = []
 
 		## regular old attacks just happening
 		#deletionList = []
 #		for object in objects:
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-					if object.attack:
-						# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
-						for power_up in upgrade_array:
-							if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
-								power_up.affect_strength_of_individual_attack(player, object)
-						object.attack.inflict_damage()
-						object.attack.fade()
-						# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
-		#				if object.attack.existing == False:
-		#					deletionList.append(object)
-						reorder_objects(x,y) 
+#		print ("'fixed'  YMAKING ATTACKS HAPPEN")
+		for object in worldAttackList:
+			x = object.x
+			y = object.y
+			if object.attack:
+				# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
+				for power_up in upgrade_array:
+					if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
+						power_up.affect_strength_of_individual_attack(player, object)
+				object.attack.inflict_damage()
+				object.attack.fade()
+				# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
+#				if object.attack.existing == False:
+#					deletionList.append(object)
+				reorder_objects(x,y) 
+
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for object in objectsArray[x][y]:
+#					if object.attack:
+#						# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
+#						for power_up in upgrade_array:
+#							if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
+#								power_up.affect_strength_of_individual_attack(player, object)
+#						object.attack.inflict_damage()
+#						object.attack.fade()
+#						# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
+#		#				if object.attack.existing == False:
+#		#					deletionList.append(object)
+#						reorder_objects(x,y) 
 				
 
 		# deleting attacks that have happened
 #		for object in objects:
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for object in objectsArray[x][y]:
-					object.clear()
+#		print ("'fixed' DELETING HAPPENED ATTACKS")
+		#for y in range(MAP_HEIGHT):
+		#	for x in range(MAP_WIDTH):
+		#		for object in objectsArray[x][y]:
+		#			object.clear()
+		clear_onscreen_objects()
 		for object in deletionList:
 			#here's a lazy hack for some things being in list twice i guess
 			try:
 				objectsArray[object.x][object.y].remove(object)
 			except ValueError:
 				print('object already removed from list')
+			if object in worldAttackList:
+				worldAttackList.remove(object)
 
 		#recharge player attack charge. this probably shouldn't go here ultimately
 		#if player_recharge_time > 0:
@@ -6094,64 +6498,92 @@ while not translated_console_is_window_closed():
 		
 		#refresh decisions!
 		#for object in objects:
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				water_here = False
-	
-				for object in objectsArray[x][y]:
-					if object.name == 'water':
+ #		print("'fixed'  REFRESHING DECISIONS")
+		for object in worldEntitiesList:
+			if object.decider:
+				x = object.x
+				y = object.y
+				#check for water here
+				water_here = False	
+				for other_object in objectsArray[object.x][object.y]:
+					if other_object.name == 'water':
 						water_here = True
-
-				for object in objectsArray[x][y]:
-					if object.decider:	
-						object.decider.refresh()
-					if object.fighter:
-						object.fighter.in_water = water_here
+				object.decider.refresh()
+				if object.fighter:
+					object.fighter.in_water = water_here
 
 
-#		# Temporary hack: update a thing saying whether the player is in water.
-#		
-#		player_in_water = False
-#		for ob in objectsArray[player.x][player.y]:
-#			if ob.name == 'water':
-#				print('sploosh')
-#				player_in_water = True
-#				break
-#		player.fighter.in_water = player_in_water
 
-		
-		#   .  .  .  . .  u   U
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				water_here = False
+#	
+#				for object in objectsArray[x][y]:
+#					if object.name == 'water':
+#						water_here = True
+#
+#				for object in objectsArray[x][y]:
+#					if object.decider:	
+#						object.decider.refresh()
+#					if object.fighter:
+#						object.fighter.in_water = water_here
+
+
 		
 
 
 		# Now do alarm soundings! and other alarmer-based stuff
 #		for ob in objects:
 
-		for y in range(MAP_HEIGHT):
-			for x in range(MAP_WIDTH):
-				for ob in objectsArray[x][y]:
-					if ob.alarmer is not None:
-						#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+#		print ("'fixed' UPDATING ALARMERS")	
+		for ob in worldEntitiesList:
+			if ob.alarmer is not None:
+				#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+				# first, update the alarmer
+		
+				#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+				# next, do things depending on the alarmer's state
+				if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
+					ob.color = ob.alarmer.idle_color
+				elif ob.alarmer.status == 'suspicious':
+					if ob.alarmer.prev_suspicious == False:
+						message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
+						ob.color = ob.alarmer.suspicious_color
+				elif ob.alarmer.status == 'raising-alarm':
+					alarm_level += ob.alarmer.alarm_value
+					spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
+					message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
+					ob.color = ob.alarmer.alarmed_color
+				elif ob.alarmer.status == 'alarm-raised':
+					ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
-						# first, update the alarmer
-				
-						#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+#		for y in range(MAP_HEIGHT):
+#			for x in range(MAP_WIDTH):
+#				for ob in objectsArray[x][y]:
+#					if ob.alarmer is not None:
+#						#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+#
+#						# first, update the alarmer
+#				
+#						#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+#
+#						# next, do things depending on the alarmer's state
+#						if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
+#							ob.color = ob.alarmer.idle_color
+#						elif ob.alarmer.status == 'suspicious':
+#							if ob.alarmer.prev_suspicious == False:
+#								message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
+#								ob.color = ob.alarmer.suspicious_color
+#
+#						elif ob.alarmer.status == 'raising-alarm':
+#							alarm_level += ob.alarmer.alarm_value
+#							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
+#							message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
+#							ob.color = ob.alarmer.alarmed_color
+#						elif ob.alarmer.status == 'alarm-raised':
+#							ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
-						# next, do things depending on the alarmer's state
-						if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
-							ob.color = ob.alarmer.idle_color
-						elif ob.alarmer.status == 'suspicious':
-							if ob.alarmer.prev_suspicious == False:
-								message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
-								ob.color = ob.alarmer.suspicious_color
 
-						elif ob.alarmer.status == 'raising-alarm':
-							alarm_level += ob.alarmer.alarm_value
-							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-							message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
-							ob.color = ob.alarmer.alarmed_color
-						elif ob.alarmer.status == 'alarm-raised':
-							ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
 
 		# oh let's start creating enemies at random intervals? 
@@ -6174,11 +6606,17 @@ while not translated_console_is_window_closed():
 				#check for bosses?
 #				for object in objects:
 
-				for y in range(MAP_HEIGHT):
-					for x in range(MAP_WIDTH):
-						for object in objectsArray[x][y]:
-							if object.name == lev_set.boss:
-								level_complete = False
+#				print ("'fixed' CHECKING FOR BOSS AGAIN")
+				for object in worldEntitiesList:
+					if object.name == lev_set.boss:
+						level_complete = False
+
+#				print ("CHECKING FOR BOSS AGAIN")
+#				for y in range(MAP_HEIGHT):
+#					for x in range(MAP_WIDTH):
+#						for object in objectsArray[x][y]:
+#							if object.name == lev_set.boss:
+#								level_complete = False
 			#elif number_security_systems <= 0:
 			#	level_complete = True
 			elif lev_set.keys_required <= key_count:
@@ -6188,11 +6626,19 @@ while not translated_console_is_window_closed():
 			total_monsters = 0
 #			for object in objects:
 
-			for y in range(MAP_HEIGHT):
-				for x in range(MAP_WIDTH):
-					for object in objectsArray[x][y]:
-						if object.fighter is not None:
-							total_monsters = total_monsters + 1
+#			print ("'fixed' COUNTING MONSTERS")
+			for object in worldEntitiesList:
+				if object.fighter is not None:
+					total_monsters = total_monsters + 1
+
+
+#			print ("COUNTING MONSTERS")
+#			for y in range(MAP_HEIGHT):
+#				for x in range(MAP_WIDTH):
+#					for object in objectsArray[x][y]:
+#						if object.fighter is not None:
+#							total_monsters = total_monsters + 1
+
 
 			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
 			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
@@ -6224,6 +6670,7 @@ while not translated_console_is_window_closed():
 #								print('tick' + str(x) + ',' + str(y) + ' ' + name)
 								monster = create_monster(x,y, name)
 								objectsArray[x][y].append(monster)
+								worldEntitiesList.append(monster)
 								break
 							else:
 								num -= prob
@@ -6279,11 +6726,12 @@ while not translated_console_is_window_closed():
 	# I guess let's draw things once more?	
 #	for object in objects:
 
-	for y in range(MAP_HEIGHT):
-		for x in range(MAP_WIDTH):
-			for object in objectsArray[x][y]:
-				object.clear()
-
+#	print ("'fixed'  ONE MORE CLEAR/DRAW FOR THE ROAD")
+	#for y in range(MAP_HEIGHT):
+	#	for x in range(MAP_WIDTH):
+	#		for object in objectsArray[x][y]:
+	#			object.clear()
+	clear_onscreen_objects()
 # 	TODO; I'm commenting this out without replacing it, might cause huge issues!
 #	libtcod.console_set_default_foreground(con, default_text_color)
 	

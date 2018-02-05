@@ -1158,6 +1158,187 @@ class Weapon_Sai:
 		
 		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKUPLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+	
+	def do_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and usage <= self.current_charge and self.durability > 0:
+				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
+				return data
+#		return generic_do_attack(command, self.command_items, self.current_charge, self.durability)
+
+	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_attack(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
+
+	# return the how much charge / energy a given attack will use.
+	def get_usage_cost(self, command):
+		for (com, data, usage) in self.command_items:
+			if com == command:
+				return usage
+		print('attack not found, returning cost 0')
+		return 0
+
+	# return the how much charge / energy a given attack will use.
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.command_items[0]
+		return usage
+
+
+
+
+	def recharge(self, recharge_val = 1):
+		if self.just_attacked == False:
+			self.current_charge = self.current_charge + recharge_val
+		if self.current_charge > self.max_charge:
+			self.current_charge = self.max_charge
+		self.just_attacked = False
+#		generic_recharge(self.current_charge, self.max_charge, recharge_val)
+
+
+
+class Weapon_Sai_Alt:
+
+	def __init__(self):
+		self.name = 'sai'
+		self.command_list = 'acdeqswxz'
+		self.max_charge = 10
+		self.current_charge = 1
+		self.default_usage = 1
+		self.durability = 50
+		self.just_attacked = False
+		default_usage = self.default_usage
+	
+		self.command_items = []
+		
+		command = ATTCKUP
+		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [1,1,0,1,1],
 				  [0,0,0,0,0],
@@ -1336,7 +1517,9 @@ class Weapon_Sai:
 
 #############
 
-class Weapon_Sai_Alt:
+#############
+
+class Weapon_Sai_Alt_Alt:
 
 	def __init__(self):
 		self.name = 'sai'
@@ -1478,7 +1661,7 @@ class Weapon_Sai_Alt:
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,0,0,0],
 				  [0,0,0,0,0],
-				  [0,0,0,0,0],
+				  [0,0,0,1,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
