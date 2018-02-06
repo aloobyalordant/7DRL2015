@@ -1,6 +1,7 @@
 import tdl as libtcod
 #import libtcodpy as libtcod
 import random
+from random import randint
 
 MAP_WIDTH = 80
 MAP_HEIGHT = 30
@@ -67,14 +68,24 @@ class Level_Settings:
 	#	for i in range (0, 10):
 	#		self.bigArray.append(levtest)
 
+
+		# randomly decide that out of Bomen, Rooks and Rogues, one of them will appear in level 1, and the other 2 will appear in level 2
+		num =  randint( 0, 2)
+		if num == 0:
+			enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
+			enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
+		elif num == 0:
+			enemyprobs1 = [('swordsman', 50), ('boman', 50)]
+			enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
+		else:
+			enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+			enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
+
 		# A level with small rooms and few enemies
-		enemy_probs = []
-		enemy_probs.append(('swordsman', 50))
-	#	enemy_probs.append(('tridentor', 50))
-		enemy_probs.append(('rook', 30))		
-		enemy_probs.append(('rogue', 50))
-	#	enemy_probs.append(('nunchuck fanatic', 50))
-	#	enemy_probs.append(('ninja', 5))
+		#enemy_probs = []
+		#enemy_probs.append(('swordsman', 50))	
+		#enemy_probs.append(('rogue', 50))
+		enemy_probs = enemyprobs1
 		levsr = Level_Setting(
 			max_rooms = 12,
 			room_max_size = 7,
@@ -82,29 +93,26 @@ class Level_Settings:
 			max_map_height = 20,
 			max_map_width = 40,
 			max_room_monsters = 1,
-			#enemy_spawn_rate = 100,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
 			number_sec_systems = len(self.bigArray),
 			keys_required = len(self.bigArray),
-			initial_alarm_level = 0	#len(self.bigArray)
+			initial_alarm_level = 0	
 			)
 		self.bigArray.append(levsr)
 		
 		# Level 2 has swordsmen, which are your basic mooks? And bomen.
-		enemy_probs = []
-		enemy_probs.append(('swordsman', 50))
-		enemy_probs.append(('boman', 50))
-		enemy_probs.append(('rook', 50))	
-		enemy_probs.append(('rogue', 50))
-	#	enemy_probs.append(('flailing strawman', 50))
+		#enemy_probs = []
+		#enemy_probs.append(('swordsman', 50))
+		#enemy_probs.append(('boman', 50))
+		#enemy_probs.append(('rook', 50))
+		enemy_probs = enemyprobs2	
 		enemy_probs.append(('ninja', 5))
 		lev1 = Level_Setting(
 			max_rooms = 8,
 			room_max_size = 12,	#20,
 			room_min_size = 4,	#15,
 			max_room_monsters = 1,
-			#enemy_spawn_rate = 30,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
 			number_sec_systems = len(self.bigArray),
