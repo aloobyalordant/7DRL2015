@@ -1297,76 +1297,135 @@ class Rogue_AI(BasicMonster):
 		xdiff = player.x - monster.x
 		ydiff = player.y - monster.y
 		xdiffabs = xdiff
+		ydiffabs = ydiff
+		xunit = 1
+		yunit = 1
 		if xdiff < 0:
 			xdiffabs = -xdiff
-		ydiffabs = ydiff
+			xunit = -1
 		if ydiff < 0:
 			ydiffabs = -ydiff 
-
-		
-		# If the player is one or two steps from me, either do a specified attack, or retreat if I have no charge 
-		if xdiffabs <=2 and ydiffabs <= 2:  # or self.weapon.current_charge < self.weapon.default_usage
-			#if near to the player, and I have charge, then attack!
-			if self.weapon.current_charge >= self.weapon.default_usage:
-				attack_command = 0
-				#if the player has charge, try and hit the square where they're standing (because it's likely they'll stay still and attack me)
-				# Do one of these attacks, based on where player is (try and hit them square on if they are next to you,
-				# hit to either side of straight on if they are 1 step away on a cardinal axis, 
-				# hit towards them if the are diagonally one step away
-
-				num =  randint( 0, 1)
-				if num == 0:
-					rQr = oWo
-					rWr = oEo
-					rEr = oDo
-					rDr = oCo
-					rCr = oXo
-					rXr = oZo
-					rZr = oAo
-					rAr = oQo
-				else:
-					rQr = oAo
-					rWr = oQo
-					rEr = oWo
-					rDr = oEo
-					rCr = oDo
-					rXr = oCo
-					rZr = oXo
-					rAr = oZo
-				attack_array = [[rQr,oWo,oWo,oWo,rEr],
-						[oAo,rQr,rWr,rEr,oDo],
-						[oAo,rAr, 0 ,rDr,oDo],
-						[oAo,rZr,rXr,rCr,oDo],
-						[rZr,oXo,oXo,oXo,rCr]]
-				attack_command = attack_array[ydiff+2][xdiff+2]
-
-				#carry out attack
-				if attack_command != 0:
-					abstract_attack_data = self.weapon.do_attack(attack_command)
-						
-				if abstract_attack_data is not None:
-					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
-
-			# can't attack but the player is next to you? then step back
-			# commented out for now - too tricksy / annoying for what is basically meant to be an upgrade to the basic mook
-			#elif xdiffabs <=1 and ydiffabs <= 1:
-			#
-			#	(dx,dy) = Run_Away_From_Visible_Player(monster.x, monster.y)
-			#	decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-
-			# otherwise, close the distance to player 
-			elif monster.distance_to(player) > 1: 
-				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
-				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-		# otherwise, walk towards the player if possible.
-		else:
-
-			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
-			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			yunit = -1
 	
 
+		dx = None
+		dy = None
 
+
+		# Otherwise, do a left or right attack, depending on where the player is.
+
+		# If x distance from player is more than 2, walk horizontally towards player.
+		if xdiffabs > 2:
+			dx = xunit
+			dy = 0
+		# If x co_ord is equal to that of the player, move left or right! We don't want to be vertically in line with the player.
+		elif xdiffabs == 0:
+			num =  randint( 0, 1)
+			if num == 0:
+				dx = xunit
+				dy = 0
+			else:
+				dx = -xunit
+				dy = 0
+		# Otherwise, if the y distance is less than that of the player, walk vertically towards the player.
+		elif ydiffabs > 2:
+			dx = 0
+			dy = yunit
+
+		# try and do the movement preferences above, if you picked one.
+		if dx is not None and dy is not None:
+			# if you want to move but the preferred option is blocked, just move towards player
+			if is_blocked(monster.x + dx,monster.y + dy):
+				(ddx,ddy) =  Move_Towards_Visible_Player(monster.x, monster.y)
+				dx = ddx
+				dy = ddy
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+		# in this case you decided not to move. So you must want to attack!
+		else:
+
+			# by default, don't move. But try and do an attack as described below.
+			decider.decision = Decision(move_decision=Move_Decision(0,0))
+
+			# If the player is one or two steps from me, do one of the following attacks
+			if xdiffabs <=2 and ydiffabs <= 2: 
+				#if near to the player, and I have charge, then attack!
+				if self.weapon.current_charge >= self.weapon.default_usage:
+					attack_command = 0
+
+					# attack to left if player is on left, or right if player on right.
+					# otherwise, shouldn't normally be in this situation, but again attack up or down.
+					# But maybe actually do a direct attack on player if  they are next to you? hmm.
+
+					num =  randint( 0, 1)
+					if num == 0:
+						rQr = oWo
+						rWr = oEo
+						rEr = oDo
+						rDr = oCo
+						rCr = oXo
+						rXr = oZo
+						rZr = oAo
+						rAr = oQo
+					else:
+						rQr = oAo
+						rWr = oQo
+						rEr = oWo
+						rDr = oEo
+						rCr = oDo
+						rXr = oCo
+						rZr = oXo
+						rAr = oZo
+					attack_array = [[oAo,oAo,oWo,oDo,oDo],
+							[oAo,oAo,rWr,oDo,oDo],
+							[oAo,rAr, 0 ,rDr,oDo],
+							[oAo,oAo,rXr,oDo,oDo],
+							[oAo,oAo,oXo,oDo,oDo]]
+					attack_command = attack_array[ydiff+2][xdiff+2]
+
+
+		#			num =  randint( 0, 1)
+		#			if num == 0:
+		#				rQr = oWo
+		#				rWr = oEo
+		#				rEr = oDo
+		#				rDr = oCo
+		#				rCr = oXo
+		#				rXr = oZo
+		#				rZr = oAo
+		#				rAr = oQo
+		#			else:
+		#				rQr = oAo
+		#				rWr = oQo
+		#				rEr = oWo
+		#				rDr = oEo
+		#				rCr = oDo
+		#				rXr = oCo
+		#				rZr = oXo
+		#				rAr = oZo
+		#			attack_array = [[rQr,oWo,oWo,oWo,rEr],
+		#					[oAo,rQr,rWr,rEr,oDo],
+		#					[oAo,rAr, 0 ,rDr,oDo],
+		#					[oAo,rZr,rXr,rCr,oDo],
+		#					[rZr,oXo,oXo,oXo,rCr]]
+		#			attack_command = attack_array[ydiff+2][xdiff+2]
+	
+					#carry out attack
+					if attack_command != 0:
+						abstract_attack_data = self.weapon.do_attack(attack_command)
+							
+					if abstract_attack_data is not None:
+						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)		
+						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+
+
+#	
+#				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+#				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+		
+	
+	
 class Tridentor_AI(BasicMonster):
 
 
