@@ -25,7 +25,7 @@ class WallHugger(PowerUp):
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has 3 wall segments on one side
-	def update_on_player_attack_choice(self, player, objectsArray, map):
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
 		# global player, objectsArray, map    #I feel I should be able to do this instead of passing them to method, but... no?
 		against_wall = False
 		try:
@@ -92,7 +92,7 @@ class NeptunesBlessing(PowerUp):
 
 	#TODO: 
 	# Activates if there is water on the player's square or hoirzontally/vertically adjacent
-	def update_on_player_attack_choice(self, player, objectsArray, map):
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
 
 		# global player, objectsArray, map    #I feel I should be able to do this instead of passing them to method, but... no?
 		near_water = False
@@ -168,87 +168,100 @@ class Amphibious(PowerUp):
 class PersonalSpace(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when not next to any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S')
+		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when more than 2 spaces from any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S')
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has no walls or doors on any adjacent space (including diagonally)
+	# Update: now has to be 2 spaces in any direction (was OP before)
 	# TODO actuzlly do this (currently it's just the wallhugger code)
-	def update_on_player_attack_choice(self, player, objectsArray, map):
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
 		# global player, objectsArray, map    #I feel I should be able to do this instead of passing them to method, but... no?
 		lots_of_space = True
 
-		try: 
-			if map[player.x-1][player.y].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x-1][player.y]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x+1][player.y].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x+1][player.y]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x][player.y-1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x][player.y-1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x][player.y+1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x][player.y+1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
+		try:
+			for dx in range (-2,2+1):			#ergh
+				for dy in range(-2,2+1):
+					if map[player.x+dx][player.y+dy].blocked:
+						lots_of_space = False
+					for object in objectsArray[player.x+dx][player.y+dy]:
+						if object.blocks and object.door is not None:
+							lots_of_space = False
 		except IndexError:
 			print('')
 
 
-		try: 
-			if map[player.x-1][player.y+1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x-1][player.y+1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x+1][player.y-1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x+1][player.y-1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x+1][player.y+1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x+1][player.y+1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
-
-		try: 
-			if map[player.x-1][player.y-1].blocked:
-				lots_of_space = False
-			for object in objectsArray[player.x-1][player.y-1]:
-				if object.blocks and object.door is not None:
-					lots_of_space = False
-		except IndexError:
-			print('')
+	#	try: 
+	#		if map[player.x-1][player.y].blocked:
+	#			lots_of_space = False
+	#		for object in objectsArray[player.x-1][player.y]:
+	#			if object.blocks and object.door is not None:
+	#				lots_of_space = False
+	#	except IndexError:
+	#		print('')
+	#
+	#	try: 
+	#		if map[player.x+1][player.y].blocked:
+	#			lots_of_space = False
+	#		for object in objectsArray[player.x+1][player.y]:
+	#			if object.blocks and object.door is not None:
+	#				lots_of_space = False
+	#	except IndexError:
+	#		print('')
+#
+#		try: 
+#			if map[player.x][player.y-1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x][player.y-1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
+#
+#		try: 
+#			if map[player.x][player.y+1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x][player.y+1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
+#
+#
+#		try: 
+#			if map[player.x-1][player.y+1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x-1][player.y+1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
+#
+#		try: 
+#			if map[player.x+1][player.y-1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x+1][player.y-1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
+#
+#		try: 
+#			if map[player.x+1][player.y+1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x+1][player.y+1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
+#
+#		try: 
+#			if map[player.x-1][player.y-1].blocked:
+#				lots_of_space = False
+#			for object in objectsArray[player.x-1][player.y-1]:
+#				if object.blocks and object.door is not None:
+#					lots_of_space = False
+#		except IndexError:
+#			print('')
 
 
 		if lots_of_space:
@@ -320,6 +333,56 @@ class FarReaching(PowerUp):
 #
 
 
+class ScrapingTheBarrel(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Scraping the Barrel", tech_description = "+1 strength when weapon is on 10 durability or less", verbose_description = "Get extra power from a weapon that's close to breaking.", code='StB')
+
+	# Activates if player weapon is on 10 or less durability
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
+
+		if player_weapon.durability <= 10:
+			self.activated = True
+		else:
+			self.activated = False
+
+
+	def affect_strength_at_attack_choice(self):
+		if self.activated:
+			self.activated = False			# probably a good safety tip is to always reset activated status
+			print("+1 strength from " + str(self.name))
+			self.status = 'active'
+			return 1
+		else:
+			return 0
+
+
+# TODO: might need to change this if I get round to having variable durability on weapons?
+class NewWeaponSmell(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "New Weapon Smell", tech_description = "+1 strength when weapon is on 50 durability or more", verbose_description = "As the wise know, shiny new things are always the best.", code='NWS')
+
+	# Activates if player weapon is on 10 or less durability
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
+
+		if player_weapon.durability >= 50:
+			self.activated = True
+		else:
+			self.activated = False
+
+
+	def affect_strength_at_attack_choice(self):
+		if self.activated:
+			self.activated = False			# probably a good safety tip is to always reset activated status
+			print("+1 strength from " + str(self.name))
+			self.status = 'active'
+			return 1
+		else:
+			return 0
+
+
+
 def Get_Random_Upgrade():
 	# create list of possible upgrades
 	upgrade_list = []
@@ -331,11 +394,16 @@ def Get_Random_Upgrade():
 	upgrade_list.append(Perfectionist())
 	upgrade_list.append(Leapfrog())
 	upgrade_list.append(FarReaching())
+	upgrade_list.append(ScrapingTheBarrel())
+	upgrade_list.append(NewWeaponSmell())
 
 	# return a random upgrade from list
 	# choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
 	choice = randint( 0, len(upgrade_list)-1)
 	return upgrade_list[choice]
 	#return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
+	#return PersonalSpace()					#return this particular thing, for testing purposes
 
+def Get_Test_Upgrade():
+	return NewWeaponSmell()					#return this particular thing, for testing purposes	
 

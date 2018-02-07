@@ -2082,7 +2082,7 @@ class Level_Generator:
 		new_room = Rect(tut_rm_width,tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		F = Object_Name('message', "Taken wounds in battle? We recommend: fresh fruit.")
-		G = Object_Name('message', "Whether face with obstacles or enemies, sometimes the only thing to do is Jump (#JUMP#).")
+		G = Object_Name('message', "Whether faced with obstacles or enemies, sometimes the only thing to do is Jump (#JUMP#).")
 		W = Object_Name('water')
 		B = Object_Name('plant')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],

@@ -11,7 +11,7 @@ from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, We
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade, Get_Test_Upgrade
 from saveDataHandler import SaveDataHandler #, SaveDatum
 from controlHandler import ControlHandler
 from colorHandler import ColorHandler
@@ -4054,7 +4054,7 @@ def process_player_attack(actionCommand):
 			# todo: this probably doesn't go here ultimately
 			for power_up in upgrade_array:
 				if getattr(power_up, "update_on_player_attack_choice", None) is not None:
-					power_up.update_on_player_attack_choice(player, objectsArray, map)
+					power_up.update_on_player_attack_choice(player, objectsArray, map, player_weapon)
 
 			# get extra strength from the relevant upgrades
 			for power_up in upgrade_array:
@@ -4192,7 +4192,7 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon
+	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array
 
 	# doing some test saving
 	save_game()
@@ -4208,9 +4208,6 @@ def next_level():
 
 
 
-	# give player ane wrandom upgrade?
-	#new_upgrade = Get_Random_Upgrade()
-	#upgrade_array.append(new_upgrade)
 
 	#message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
 
@@ -4225,6 +4222,10 @@ def next_level():
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
 		upgrade_array = []
+	
+		# give player a test upgrade?
+		#new_upgrade = Get_Test_Upgrade()
+		#upgrade_array.append(new_upgrade)
 
 
 
@@ -5177,7 +5178,7 @@ def create_GUI_panel():
 	translated_console_print_ex(panel, level_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Time:   ' + str(game_time))
 	translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Level:  ' + str(dungeon_level))
+	'Floor:  ' + str(dungeon_level))
 	translated_console_print_ex(panel, level_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT,
 	'Alarm:  ' + str(alarm_level))
 	translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
@@ -5626,7 +5627,7 @@ def initialise_game():
 	player_action = None
 	
 	#a warm welcoming message!
-	message('Welcome! Use arrows or 1-9 to move, qweasdzxc to attack, p to pick up a new weapon. Go right for a tutorial, or step into the elevator on your left to go to Level 1.', Color_Message_In_World)
+	message('Welcome! Use #MOVEUPLEFT#, #MOVEUP#, #MOVEUPRIGHT#, #MOVERIGHT#, #MOVEDOWNRIGHT#, #MOVEDOWN#, #MOVEDOWNLEFT#, #MOVELEFT# to move, #ATTCKUPLEFT#, #ATTCKUP#, #ATTCKUPRIGHT#, #ATTCKRIGHT#, #ATTCKDOWNRIGHT#, #ATTCKDOWN#, #ATTCKDOWNLEFT#, #ATTCKLEFT# to attack, #PICKUP# to pick up a new weapon. Press #PAUSE# to access the pause menu, including control options. Go up for a tutorial, or step into the elevator on your left to go to Floor 1.', Color_Message_In_World)
 
 	# Here is an annoying hack. One-off special check for floor messages just so we can check if there's one when the game starts.
 	objects_here = [obj for obj in objectsArray[player.x][player.y]
