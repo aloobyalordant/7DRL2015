@@ -25,7 +25,8 @@ class Level_Settings:
 		# Level 0 is just strawmen! stationary strawmen, flailing strawmen, strawmen on wheels!
 		# and, suddenly for some reason, ninjas
 		enemy_probs = []
-		enemy_probs.append(('strawman', 50))
+		#enemy_probs.append(('strawman', 50))
+		enemy_probs.append(('swordsman', 50))
 		# enemy_probs.append(('flailing strawman', 25))
 		#enemy_probs.append(('stupid swordsman', 25))
 		enemy_probs.append(('rook', 25))
@@ -36,6 +37,7 @@ class Level_Settings:
 			max_rooms = 5,
 			level_type = 'classic',
 			max_room_monsters = 3,
+			enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE/2,
 			enemy_probabilities = enemy_probs,
 			keys_required = len(self.bigArray),
 			initial_alarm_level = 0)

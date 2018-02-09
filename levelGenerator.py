@@ -315,18 +315,18 @@ class Level_Generator:
 			rooms.append(elev2)
 			rooms.append(elev3)
 			rooms.append(elev4)
-			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
-			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
-			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
-			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
+			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
+			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left', background_map)
+			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left', background_map)
+			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
 	
 			for r in range((max_map_width-11-7-1)/8):
 				elevtop = Rect((8*r)+9,1,4,5)
 				rooms.append(elevtop)
-				self.create_elevator(elevtop, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Down')
+				self.create_elevator(elevtop, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Down', background_map)
 				elevbot = Rect((8*r)+9, max_map_height -6,4,5)
 				rooms.append(elevbot)
-				self.create_elevator(elevbot, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up')
+				self.create_elevator(elevbot, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up', background_map)
 
 			
 
@@ -485,10 +485,10 @@ class Level_Generator:
 			elev2 = Rect(max_map_width-5, 5, 4, 4)
 			elev3 = Rect(max_map_width-5, max_map_height -5, 4, 4)
 			elev4 = Rect(5, max_map_height - 5, 4, 4)
-			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
-			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
-			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
-			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, elevators, object_data)
+			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
 			(new_x, new_y) = elev1.center()
 			num = randint(0, num_norm_rooms-1)
 			(prev_x, prev_y) = rooms[num].center()
@@ -1038,7 +1038,7 @@ class Level_Generator:
 	
 
 
-	def create_elevator(self, elevator, map, spawn_points, center_points, nearest_points_array, object_data, elevators, elevator_type = 'Small-Elevator-Right'):
+	def create_elevator(self, elevator, map, spawn_points, center_points, nearest_points_array, object_data, elevators, elevator_type = 'Small-Elevator-Right', background_map = None):
 		# like creating a room, but with a spawn point!
 		#global map, spawn_points, center_points, nearest_points_array
 
@@ -1059,24 +1059,24 @@ class Level_Generator:
 		#spawn_points = []	
 		local_spawn_points = []
 		if elevator_type == 'Small-Elevator-Left':
-			seg_map =      [[0,0,1,1,1],
-					[0,0,3,4,4],
-					[0,0,3,4,4],
-					[0,0,1,1,1]]
+			seg_map =      [[5,5,1,1,1],
+					[5,0,3,4,4],
+					[5,0,3,4,4],
+					[5,5,1,1,1]]
 		elif elevator_type == 'Small-Elevator-Right':
-			seg_map =      [[1,1,1,0,0],
-					[4,4,3,0,0],
-					[4,4,3,0,0],
-					[1,1,1,0,0]]
+			seg_map =      [[1,1,1,5,5],
+					[4,4,3,0,5],
+					[4,4,3,0,5],
+					[1,1,1,5,5]]
 		elif elevator_type == 'Small-Elevator-Down':
 			seg_map =      [[1,4,4,1],
 					[1,4,4,1],
 					[1,3,3,1],
-					[0,0,0,0],
-					[0,0,0,0]]
+					[0,5,5,0],
+					[0,5,5,0]]
 		elif elevator_type == 'Small-Elevator-Up':
-			seg_map =      [[0,0,0,0],
-					[0,0,0,0],
+			seg_map =      [[0,5,5,0],
+					[0,5,5,0],
 					[1,3,3,1],
 					[1,4,4,1],
 					[1,4,4,1]]
@@ -1092,6 +1092,9 @@ class Level_Generator:
 				elif (seg_map[y][x] == 1):	
 					map[elevator.x1 + x][elevator.y1 + y].blocked = True
 					map[elevator.x1 + x][elevator.y1 + y].block_sight = True
+				elif (seg_map[y][x] == 5):  # and background_map is not None):
+					#background_map[elevator.x1 + x][elevator.y1 + y] = 2
+					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'decoration', '\''))
 
 		new_elevator = Elevator(door_points, local_spawn_points)
 		#print "elevatooooooooR"
@@ -1415,10 +1418,10 @@ class Level_Generator:
 		rooms.append(elev3)
 		rooms.append(elev4)
 
-		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
-		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
-		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left')
-		self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left', background_map)
+		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Left', background_map)
+		self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
 
 
 		# now... make the limits of our other rooms be such that there come close to but don't overlap the elevators..
@@ -1873,8 +1876,8 @@ class Level_Generator:
 		rooms.append(elev1)
 		rooms.append(elev2)
 
-		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
-		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)	
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
 
 
 	def new_tutorial(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
@@ -1924,7 +1927,7 @@ class Level_Generator:
 				[1,0,0,0,0,0,1,1],
 				[0,0,0,0,0,0,1,1],
 				[0,0,0,D,0,0,1,1],
-				[1,0,0,0,0,0,1,1],
+				[1,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,1,1]]
 		#seg_map = self.rotateSegment(seg_map)
 
@@ -2420,9 +2423,9 @@ class Level_Generator:
 		rooms.append(elev1)
 		#rooms.append(elev2)
 
-		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right')	
-		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up')
-		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up')
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)	
+		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up', background_map)
+		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up', background_map)
 		# . Move
 		# .   Moving diagonally
 		# . Pick up weapon 

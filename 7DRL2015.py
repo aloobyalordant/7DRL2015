@@ -2892,17 +2892,27 @@ def handle_keys(user_input_event):
 		pickup_radius = 0
 		for power_up in upgrade_array:
 			if getattr(power_up, "increase_pickup_radius", None) is not None:
-				pickup_radiuspower_up.increase_pickup_radius()
-#		for dx in range(pickup_radius):
-#			if d== 0:
-		for object in objectsArray[player.x][player.y]:
-			if object.weapon == True: 
-				weapons_found.append(object)		
+				pickup_radius += power_up.increase_pickup_radius()
+
+		# One day, I should make it so the code for deciding what can picked up happens in one place, 
+		# rather than once for telling the player their options and once for interpreting their choice.
+		# That day is not today.
+		for dx in range (-pickup_radius,pickup_radius+1):			#ergh
+			for dy in range(-pickup_radius,pickup_radius+1):
+				try:
+					for object in objectsArray[player.x+dx][player.y+dy]:
+						if  object.weapon == True: 
+							weapons_found.append(object)
+				except IndexError:
+					print('')
+
+
+
 		if keynum >= 1 and keynum <= len(weapons_found):
 			new_weapon = get_weapon_from_item(weapons_found[keynum-1], player.fighter.bonus_max_charge)
 			old_weapon = get_item_from_weapon(player_weapon)
 			player_weapon = new_weapon
-			objectsArray[player.x][player.y].remove(weapons_found[keynum-1])
+			objectsArray[weapons_found[keynum-1].x][weapons_found[keynum-1].y].remove(weapons_found[keynum-1])
 			# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 			#drop_weapon(old_weapon)
 			weapon_found = True
@@ -3051,38 +3061,56 @@ def handle_keys(user_input_event):
 			# picking up a new weapon.   Or maybe doing a thing with a plant?
 			#if key_char == 'p':
 			if actionCommand == "PICKUP":
+
+				
+				# by default, only pickup things directly underneath the player.
+				# but power ups can increase the pickup radius 
+				pickup_radius = 0
+				for power_up in upgrade_array:
+					if getattr(power_up, "increase_pickup_radius", None) is not None:
+						pickup_radius += power_up.increase_pickup_radius()
+
 				weapons_found = []
 				plants_found = []
 				weapon_found = False
 				keys_found = []
 				favours_found = []
-				for object in objectsArray[player.x][player.y]:
-					if  object.weapon == True: 
-						weapons_found.append(object)
-					if object.name == 'key': 
-						keys_found.append(object)
-					if object.name == 'favour token': 
-						favours_found.append(object)
-					if object.plant is not None:
-						plants_found.append(object)
+				for dx in range (-pickup_radius,pickup_radius+1):			#ergh
+					for dy in range(-pickup_radius,pickup_radius+1):
+						#print ("trying ")
+						try:
+							for object in objectsArray[player.x + dx][player.y + dy]:
+								if  object.weapon == True: 
+									weapons_found.append(object)
+								if object.name == 'key': 
+									keys_found.append(object)
+								if object.name == 'favour token': 
+									favours_found.append(object)
+								if object.plant is not None:
+									plants_found.append(object)
+						except IndexError:
+							print('')
+
+
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0:
 					message('You snatch up the key.', Color_Personal_Action)
 					key_count = key_count + len(keys_found)
 					for ki in keys_found:
-						objectsArray[player.x][player.y].remove(ki)	
+						objectsArray[ki.x][ki.y].remove(ki)	
 				#similarly, favours take priority over weapons but after keys.
 				elif len(favours_found) > 0:
 					message('You take the favour token.', Color_Personal_Action)
 					currency_count = currency_count + len(favours_found)
 					for fa in favours_found:
-						objectsArray[player.x][player.y].remove(fa)	
+						objectsArray[fa.x][fa.y].remove(fa)	
+				# TODO: make it so you pick up  fruits / plants / seeds / whatever in order to heal, rather than automatically.
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
 				elif len(weapons_found) == 1:
 					new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
 					old_weapon = get_item_from_weapon(player_weapon)
 					player_weapon = new_weapon
-					objectsArray[player.x][player.y].remove(weapons_found[0])
+					objectsArray[weapons_found[0].x][weapons_found[0].y].remove(weapons_found[0])
 					# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
 					#drop_weapon(old_weapon)
 					weapon_found = True
@@ -3386,8 +3414,6 @@ def place_objects(room):
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			shrine.shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
-
-
 
 
 
@@ -4224,8 +4250,8 @@ def next_level():
 		upgrade_array = []
 	
 		# give player a test upgrade?
-		#new_upgrade = Get_Test_Upgrade()
-		#upgrade_array.append(new_upgrade)
+		new_upgrade = Get_Test_Upgrade()
+		upgrade_array.append(new_upgrade)
 
 
 
@@ -5798,7 +5824,7 @@ while not translated_console_is_window_closed():
 				# for now we just care about non-TEXT events I think. But later we might care about text events
 				# (e.g. for handling menu choices? I unno.)
 				if event.type != 'TEXT':
-					print('HALLO ' + str(event))
+					#print('HALLO ' + str(event))
 					user_input = event
 		
 		if user_input is not None:
@@ -5813,7 +5839,7 @@ while not translated_console_is_window_closed():
 	#it does not
 	# libtcod.event.wait(timeout = 0.05, flush = True)
 
-	print('internal loop count = ' + str(internal_loop_count) +  ', game_time = ' + str(game_time) + str(user_input))
+	#print('internal loop count = ' + str(internal_loop_count) +  ', game_time = ' + str(game_time) + str(user_input))
 	internal_loop_count += 1
 
 	#print('key press?' + str(game_time)) # str(libtcod.get_fps()))
@@ -6093,6 +6119,7 @@ while not translated_console_is_window_closed():
 
 		weapon_found = False
 		key_found = False
+		favour_found = False
 		stairs_found = False
 		shrine_found = False
 		floor_message_found = False
@@ -6101,21 +6128,24 @@ while not translated_console_is_window_closed():
 		for obj in objects_here:
 			if weapon_found == False and obj.weapon == True:
 				weapon_found = True
-				if key_found == False:
-					possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
 			if key_found == False and obj.name == 'key':
 				key_found = True
-				if weapon_found== False:
-					possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
+			if favour_found == False and obj.name == 'favour token':
+				favour_found = True
 			if stairs_found == False and obj.name == 'stairs':
 				stairs_found = True
 				possible_commands.append('< to ascend')
 			if shrine_found == False and obj.shrine is not None:
 				shrine_found = True
-				possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
 			if floor_message_found == False and obj.floor_message is not None:
 				floor_message_text = obj.floor_message.string
 				floor_message_found = True
+
+
+		if weapon_found or key_found or favour_found:	
+			possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
+		if shrine_found:
+			possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
 			
 		if floor_message_found == True and player.decider.decision is not None and (player.decider.decision.move_decision is not None or player.decider.decision.jump_decision is not None): # trying to make it so messages don't repeat themselves
 			message('You see a message on the floor:', Color_Interesting_In_World)
@@ -6269,12 +6299,18 @@ while not translated_console_is_window_closed():
 
 		#UPDATE THE ALARMERS AND OTHER THINGS
 #		print ("'fixed' UPDATING ALARMERS AND OTHER THINGS")
+		#also track what alarmer is closest to recognizing you
+		large_count_down_val = 1000
+		temp_alarm_countdown = large_count_down_val
 		for ob in worldEntitiesList:
 		#UPDATE THE ALARMERS
 			if ob.alarmer is not None:
 				if fov_map.fov[ob.x, ob.y]:	
 					ob.alarmer.update(True)
 					spotted = True
+					# keep track of shortest alarm count still ongoing
+					if ob.alarmer.alarm_countdown > 0 and ob.alarmer.alarm_countdown < temp_alarm_countdown:
+						temp_alarm_countdown = ob.alarmer.alarm_countdown 
 				else: 
 					ob.alarmer.update(False)
 
@@ -6287,6 +6323,9 @@ while not translated_console_is_window_closed():
 				ob.plant.update()
 				ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
 				ob.char = ob.plant.symbol
+
+		if temp_alarm_countdown < large_count_down_val:
+			message(str(temp_alarm_countdown) + " seconds from being recognized.", Color_Stat_Info)
 
 		# LET'S MAKE SOME THINGS LEAVE A BLOOD TRAIL? FOR 'FUN'??
 		# Actually I don't like it. Might be a thing to try if you have a more open level and a need to 'track' something?
@@ -6650,6 +6689,10 @@ while not translated_console_is_window_closed():
 		# clean up stuff
 		for object in garbage_list:
 			objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
+			if object in worldEntitiesList:
+				worldEntitiesList.remove(object)
+			if object in worldAttackList:
+				worldAttackList.remove(object)
 		
 		#refresh decisions!
 		#for object in objects:
@@ -6783,7 +6826,7 @@ while not translated_console_is_window_closed():
 
 #			print ("'fixed' COUNTING MONSTERS")
 			for object in worldEntitiesList:
-				if object.fighter is not None:
+				if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
 					total_monsters = total_monsters + 1
 
 
@@ -6794,10 +6837,12 @@ while not translated_console_is_window_closed():
 #						if object.fighter is not None:
 #							total_monsters = total_monsters + 1
 
+			# print ("ummm " + str(total_monsters) + " vs " + str( lev_set.max_monsters))
 
 			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
 			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
 			if total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
+
 				elevator_shortlist = []
 				if lev_set.level_type == 'arena':	#pick one elvator at random
 					choice =  randint( 0, len(elevators)-1)
