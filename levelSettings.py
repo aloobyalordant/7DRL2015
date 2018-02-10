@@ -73,15 +73,20 @@ class Level_Settings:
 
 		# randomly decide that out of Bomen, Rooks and Rogues, one of them will appear in level 1, and the other 2 will appear in level 2
 		num =  randint( 0, 2)
-		if num == 0:
-			enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
-			enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
-		elif num == 0:
-			enemyprobs1 = [('swordsman', 50), ('boman', 50)]
-			enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
-		else:
-			enemyprobs1 = [('swordsman', 50), ('rook', 50)]
-			enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
+		#if num == 0:
+		#	enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
+		#	enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
+		#elif num == 0:
+		#	enemyprobs1 = [('swordsman', 50), ('boman', 50)]
+		#	enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
+		#else:
+		#	enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+		#	enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
+
+		# temp changing the random bit because i want to test rooks
+		enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+		enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
+
 
 		# A level with small rooms and few enemies
 		#enemy_probs = []

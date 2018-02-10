@@ -1955,7 +1955,7 @@ class Level_Generator:
 
 		# Room 2+3. Attack enemies
 		# makea new room and thereby update nearest_points_array hopefully
-		new_room = Rect( tut_rm_width,6*tut_rm_height,tut_rm_width,tut_rm_height)
+		new_room = Rect( tut_rm_width,6*tut_rm_height+1,tut_rm_width,tut_rm_height-1)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		A = Object_Name('monster', 'strawman')	
 		F = Object_Name('message', "Move next to an enemy and attack them! (#ATTCKUPLEFT#, #ATTCKUP#, #ATTCKUPRIGHT#, #ATTCKRIGHT#, #ATTCKDOWNRIGHT#, #ATTCKDOWN#, #ATTCKDOWNLEFT#, #ATTCKLEFT#)")
@@ -1974,7 +1974,7 @@ class Level_Generator:
 
 		# Room 4. Note about energy
 		# makea new room and thereby update nearest_points_array hopefully
-		new_room = Rect( tut_rm_width,5*tut_rm_height,tut_rm_width,tut_rm_height)
+		new_room = Rect( tut_rm_width,5*tut_rm_height+1,tut_rm_width,tut_rm_height-1)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		A = Object_Name('monster', 'strawman')	
 		F = Object_Name('message', "Attacking uses up energy! If you are low on energy, walk around or stand still (#STANDSTILL#) to recharge.")
@@ -1983,7 +1983,7 @@ class Level_Generator:
 				[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,0,0,0,1,1,1,1],
-				[0,0,F,0,1,1,0,0],
+				[0,0,F,0,1,1,1,1],
 				[1,0,0,0,1,1,1,1],
 				[1,1,0,1,1,1,1,1]]
 		seg_map = self.rotateSegment(seg_map)
@@ -1994,18 +1994,19 @@ class Level_Generator:
 
 		# Room 5. Don't get hit.
 		# makea new room and thereby update nearest_points_array hopefully
-		new_room = Rect(2*tut_rm_width,5*tut_rm_height,tut_rm_width,tut_rm_height)
+		new_room = Rect(2*tut_rm_width,5*tut_rm_height+1,tut_rm_width,tut_rm_height-1)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		B = Object_Name('strawman', 'sai', 'ATTCKLEFT')
-		C = Object_Name('strawman', 'sai', 'ATTCKUP')
+		C = Object_Name('strawman', 'sai', 'ATTCKRIGHT')
+		D = Object_Name('strawman', 'sai', 'ATTCKDOWNLEFT')
 		F = Object_Name('message', "The secret of all combat is this: Hit your enemy without your enemy hitting you!")
 		seg_map =      [[0,0,0,0,0,0,0,1],
+				[0,0,0,0,0,0,D,1],
 				[0,0,0,B,0,0,0,1],
-				[0,0,0,0,0,0,C,1],
-				[0,0,C,0,B,0,0,1],
 				[0,0,0,0,0,0,0,1],
+				[0,0,0,0,C,0,0,1],
 				[F,0,0,0,0,0,0,1],
-				[0,0,C,0,0,B,0,0],
+				[0,0,0,B,0,0,0,0],
 				[0,0,0,0,0,0,0,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 2*tut_rm_width,5*tut_rm_height, object_data)
 
@@ -2055,25 +2056,25 @@ class Level_Generator:
 
 		# Room 8. THE GAUNTLET
 		# makea new room and thereby update nearest_points_array hopefully
-		new_room = Rect(tut_rm_width,3*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
+		new_room = Rect(tut_rm_width,3*tut_rm_height,2*tut_rm_width,2*tut_rm_height-1)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		F = Object_Name('message', "Be not afraid to run into the place your enemy has just struck.")
 		B = Object_Name('strawman', 'spear', 'ATTCKLEFT')
 		C = Object_Name('strawman', 'spear', 'ATTCKUP')
 		D = Object_Name('strawman', 'spear', 'ATTCKDOWN')
 		E = Object_Name('strawman', 'spear', 'ATTCKRIGHT')
-		seg_map =      [[E,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				[1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
-				[1,1,0,0,B,1,1,1,1,1,1,1,0,F,0,1],
-				[1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,1],
-				[E,0,0,1,1,1,1,1,1,1,1,1,1,0,1,1],
-				[1,1,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
+		seg_map =      [[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+				[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
+				[1,1,0,1,1,1,1,1,1,1,1,1,0,F,0,1],
+				[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1],
+				[1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1],
+				[E,0,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
 				[1,1,0,1,1,0,1,1,1,1,1,1,1,0,1,1],
-				[E,0,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
+				[1,1,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
 				[1,1,1,0,1,0,0,B,1,1,1,1,1,0,1,1],
 				[1,1,1,C,1,0,1,1,1,1,1,1,1,0,0,B],
 				[1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1],
-				[1,1,1,1,1,0,0,B,D,1,D,E,0,0,1,1],
+				[1,1,1,1,1,0,0,1,D,1,D,E,0,0,1,1],
 				[1,1,1,1,1,1,0,1,0,1,0,1,1,0,1,1],
 				[1,1,1,1,E,0,0,0,0,0,0,0,0,0,1,1],
 				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
@@ -2088,6 +2089,7 @@ class Level_Generator:
 		G = Object_Name('message', "Whether faced with obstacles or enemies, sometimes the only thing to do is Jump (#JUMP#).")
 		W = Object_Name('water')
 		B = Object_Name('plant')
+		S = Object_Name('weapon', 'sword')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
 				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
@@ -2098,7 +2100,7 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,0,W,W,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,G,W,0,0,0,0,0,0,0],
 				[1,0,0,0,B,0,0,W,W,0,0,0,0,0,0,0],
-				[1,0,B,0,0,0,0,W,W,0,0,0,0,0,0,0],
+				[1,0,B,0,0,0,0,W,W,0,0,0,0,S,0,0],
 				[1,0,0,0,0,B,0,0,W,W,0,0,0,0,0,0],
 				[1,0,0,F,0,0,0,0,W,W,W,0,0,0,0,0],
 				[1,0,0,0,B,0,0,0,0,W,W,0,0,0,0,0],
@@ -2115,12 +2117,13 @@ class Level_Generator:
 		C = Object_Name('door', 'vertical')
 		F = Object_Name('message', "Be warned! Ahead lies your first true foe.")
 		G = Object_Name('message', "Remember your lessons. Avoid their attacks. Let them walk into yours. And good luck.")
+		S = Object_Name('weapon', 'sword')
 		seg_map =      [[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,1],
-				[0,0,F,0,0,G,0,C],
+				[0,0,F,0,0,G,S,C],
 				[1,0,0,0,0,0,0,1],
 				[1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,2*tut_rm_height, object_data)
@@ -2133,7 +2136,8 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('monster', 'swordsman')
 		W = Object_Name('water')
-		F = Object_Name('message', "Your next enemy has extended reach! But they forgot the instructions about attacking diagonally.")
+		F = Object_Name('message', "Observing your next enemy's patterns closely! It is the key to defeating them.")
+		S = Object_Name('weapon', 'sword')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -2141,7 +2145,7 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,0,0,0,0,W,W,W,0,0],
 				[0,0,0,0,0,0,0,0,0,0,W,W,W,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,W,W,W,0,0],
-				[1,0,0,0,0,0,0,0,0,0,0,0,W,W,0,0],
+				[1,0,0,0,0,0,0,0,0,0,S,0,W,W,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -2149,7 +2153,7 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,0,0,0,0,0,C,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,F,0,0,0,0,0,0,0],
-				[1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1]]
+				[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 2*tut_rm_height, object_data)
 
 		# Room 13. Rook battle
@@ -2159,15 +2163,18 @@ class Level_Generator:
 		R = Object_Name('monster', 'rook')
 		W = Object_Name('water')
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
-		F = Object_Name('message', "Your next enemy has extended reach! But they forgot the instructions about attacking diagonally.")
-		seg_map =      [[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
+		F = Object_Name('message', "Your next enemy has extended reach! But they cannot move or attack diagonally.")
+		G = Object_Name('message', "They will try to get in line with you so they can attack. Stay out of the range of their weapon!")
+		H = Object_Name('message', "Backing away from them will let you control how they approach you. Strike as they get in range!")
+		I = Object_Name('message', "Weapons are heavy, and your enemy can only attack intermitently. The moment after they have attacked is an exellent time to strike!")
+		seg_map =      [[1,1,1,1,1,1,1,1,C,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,0,F,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[1,0,0,G,0,0,0,0,0,0,0,0,R,I,0,0],
+				[1,0,0,0,0,0,0,0,H,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,0,0,0,0,R,0,0,0],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[1,1,0,1,1,1,1,1,C,1,1,1,1,1,1,1]]
+				[1,1,1,1,1,1,1,1,C,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 4*tut_rm_height, object_data)
 
 
@@ -2186,7 +2193,7 @@ class Level_Generator:
 				[1,0,R,0,0,1,0,0,0,0,0,1,C,0,0,0],
 				[1,0,0,0,0,0,0,0,F,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,1]]
+				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 5*tut_rm_height, object_data)
 
 
@@ -2199,19 +2206,20 @@ class Level_Generator:
 		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
 		G = Object_Name('message', "Sometimes though,you can't help but get spotted. The security system will defend itself, but defeat it and the alarms will get a bit quieter.")
 		B = Object_Name('plant')
+		D = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
 				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,1,0,0,0,0,F,0,0,0],
-				[0,0,G,0,0,0,0,1,0,0,1,0,1,1,1,1],
+				[1,0,0,0,0,0,0,1,0,0,0,F,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,1,0,1,1,1,1],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+				[D,0,G,0,0,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,B,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 				[1,0,0,0,0,0,0,B,0,0,1,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
-				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0],
+				[1,0,S,0,0,0,0,1,0,0,1,0,0,0,0,0],
 				[1,0,0,0,0,0,0,1,0,0,1,C,0,0,0,0],
 				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
 				[1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1]]
@@ -2226,12 +2234,12 @@ class Level_Generator:
 		C = Object_Name('security system', 'drops-key')
 		W = Object_Name('water')
 		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
-		G = Object_Name('message', "THIS ROOM IS UNDER CONSTRUCTION. Please pretend that enemies are rushing out of the elevators as you scramble to destroy the security systems.")
+		G = Object_Name('message', "Defeating security systems (even active ones) will give you rewards and sometimes keys.")
 		H = Object_Name('message', "When you have aquired enough keys, you will be able to use the elevators to leave the level.")
 		B = Object_Name('plant')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,W,0,0,0,0,0,0,W],
-				[1,0,0,0,0,0,0,0,W,W,0,0,0,C,W,W],
+				[1,0,0,0,0,0,0,0,W,W,S,0,0,C,W,W],
 				[1,0,0,0,0,0,0,0,0,W,0,0,0,W,W,0],
 				[1,0,0,0,0,B,0,0,0,W,W,W,W,W,0,0],
 				[1,0,0,0,0,0,0,0,0,0,W,W,W,0,0,0],

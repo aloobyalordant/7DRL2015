@@ -1955,6 +1955,8 @@ class Ninja_AI:
 
 
 # A rook acts like a standard enemy, except they can only walk/attack horizontally or vertically, and can attack from a distance of 2 rather than 1.
+# Controversial update! Making the rook prefer vertical movement over horizontal movement,
+# in the hopes of reducing the "this enemy is too random" annoyance
 class Rook_AI:
 	global nearest_center_to_player, player
 
@@ -2004,7 +2006,7 @@ class Rook_AI:
 				#move towards player if far away (3 plus) or not in a horizontal or vertical line
 				if monster.distance_to(player) >= 3 or (monster.x != player.x and monster.y != player.y):
 
-					(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y, rook_moves = True)
+					(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y, rook_moves = True, bias = 'vertical')
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 				
@@ -2167,8 +2169,8 @@ def Head_Towards_Players_Room(current_x, current_y, rook_moves = False):
 	return (dx,dy)
 
 
-def Move_Towards_Visible_Player(current_x, current_y, rook_moves = False):
-	(dx,dy) = next_step_towards(current_x, current_y, player.x, player.y, rook_moves)
+def Move_Towards_Visible_Player(current_x, current_y, rook_moves = False, bias = None):
+	(dx,dy) = next_step_towards(current_x, current_y, player.x, player.y, rook_moves, bias = bias)
 	# only walk if there's not something in the way. controversial maybe!
 	if is_blocked(current_x+dx, current_y+dy) == False:
 		#decider.decision = Decision(move_decision=Move_Decision(dx,dy))
@@ -2193,11 +2195,19 @@ def Move_Towards_Visible_Player(current_x, current_y, rook_moves = False):
 			elif is_blocked(current_x, current_y+ydiff) == True and is_blocked(current_x+xdiff, current_y) == False:
 				return (xdiff, 0)
 			elif is_blocked(current_x, current_y+ydiff) == False and is_blocked(current_x+xdiff, current_y) == False:
-				num =  randint( 0, 2) 
-				if num == 0:
+				# if there are two equal options to choose between, choose one randomly. Unless you have a bias
+				if bias == 'horizontal':
 					return (xdiff,0)
-				else:
+				elif bias == 'vertical':
+					print('ROOKVERT')
 					return(0,ydiff)
+				else:
+					print('ROOKanomaly')
+					num =  randint( 0, 2) 
+					if num == 0:
+						return (xdiff,0)
+					else:
+						return(0,ydiff)
 			else:
 				return (0,0)	
 		else:
@@ -2608,7 +2618,7 @@ def next_step_towards_center(current_x, current_y, center_number, rook_moves = F
 
 
 
-def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = False):
+def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = False, bias = None):
 
 	#vector from this object to the target, and distance
 	dx = target_x - current_x
@@ -2621,12 +2631,18 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 		dy = int(round(dy / distance))
 		if rook_moves == True:	# we can only travel in one axis if rook moves
 			if dx != 0 and dy != 0:
-				#randomly choose either horizontal or vertical to go with
-				num =  randint( 0, 1)
-				if num == 0:
-					dx = 0
-				elif num == 1:
+				# if there are two equal options to choose between, choose one randomly. Unless you have a bias
+				if bias == 'horizontal':
 					dy = 0
+				elif bias == 'vertical':
+					dx = 0
+				else:
+					#randomly choose either horizontal or vertical to go with
+					num =  randint( 0, 1)
+					if num == 0:
+						dx = 0
+					elif num == 1:
+						dy = 0
 			
 	return(dx, dy)
 
@@ -4250,8 +4266,8 @@ def next_level():
 		upgrade_array = []
 	
 		# give player a test upgrade?
-		new_upgrade = Get_Test_Upgrade()
-		upgrade_array.append(new_upgrade)
+		#new_upgrade = Get_Test_Upgrade()
+		#upgrade_array.append(new_upgrade)
 
 
 
@@ -6250,7 +6266,7 @@ while not translated_console_is_window_closed():
 		if lev_set.boss is not None:
 			level_complete = True
 			#check for bosses?
-			print ("CHECKING FOR BOSSES")
+			#print ("CHECKING FOR BOSSES")
 			for object in worldEntitiesList:
 				#for object in objects:
 				if object.name == lev_set.boss:
