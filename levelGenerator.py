@@ -362,7 +362,7 @@ class Level_Generator:
 			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[len(rooms)-1].center()
 			#object_data.append(Object_Datum(new_x,new_y, 'stairs'))
-			object_data.append(Object_Datum(new_x,new_y, 'security system'))
+			object_data.append(Object_Datum(new_x,new_y, 'security drone'))
 
 
 			if lev_set.boss is not None:
@@ -394,7 +394,7 @@ class Level_Generator:
 			(new_x, new_y) = rooms[4].center()
 
 			#if lev_set.final_level is not True:
-			#	object_data.append(Object_Datum(new_x,new_y, 'security system'))
+			#	object_data.append(Object_Datum(new_x,new_y, 'security drone'))
 
 
 			if lev_set.boss is not None:
@@ -402,7 +402,7 @@ class Level_Generator:
 				#objects.append(boss_monster)
 				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
 
-			self.add_security_systems(map, lev_set, dungeon_level, object_data, rooms, elevators, lev_set.number_sec_systems)
+			self.add_security_drones(map, lev_set, dungeon_level, object_data, rooms, elevators, lev_set.number_sec_drones)
 	
 
 
@@ -470,7 +470,7 @@ class Level_Generator:
 			
 			#object_data.append(Object_Datum(new_x,new_y,'stairs'))
 			if lev_set.final_level is not True:
-				object_data.append(Object_Datum(new_x,new_y, 'security system'))
+				object_data.append(Object_Datum(new_x,new_y, 'security drone'))
 
 		
 			if lev_set.boss is not None:
@@ -610,7 +610,16 @@ class Level_Generator:
 
 
 
-		#self.append_segment(map, self.create_segment(), player_start_x, player_start_y, object_data)
+		# Here is a thing in a terrible place: delete water that is next to security drones
+		if dungeon_level > 0:
+			water_removal_list = []
+			for od1 in object_data:
+				for od2 in object_data:
+					if od2.x >= od1.x-1 and od2.x <= od1.x + 1 and od2.y >= od1.y-1 and od2.y <= od1.y+1 and od2.name == 'water' and od1.name == 'security drone':
+						water_removal_list.append(od2)
+			for od in water_removal_list:
+				print("REMOVING WATER")		
+				object_data.remove(od)
 
 
 		return Level_Data(map, background_map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
@@ -649,8 +658,8 @@ class Level_Generator:
 
 
 
-	def add_security_systems(self, map, lev_set, dungeon_level, object_data, rooms, elevators, number_sec_systems):
-		# create an initial shortlist of rooms where one could place security system
+	def add_security_drones(self, map, lev_set, dungeon_level, object_data, rooms, elevators, number_sec_drones):
+		# create an initial shortlist of rooms where one could place security drone
 		# for now, theshortlist is just anything that's not an elevator. This should probabl change later.
 		initial_shortlist = []
 		for room in rooms:
@@ -669,29 +678,32 @@ class Level_Generator:
 				initial_shortlist.append(room)
 		current_shortlist = initial_shortlist
 
-		for i in range(0, number_sec_systems):		
-			# choose a room at random, stick a security system in, strike it off the shortlist
+		for i in range(0, number_sec_drones):		
+			# choose a room at random, stick a security drone in, strike it off the shortlist
 			num = randint(0, len(current_shortlist)-1)
 			selected_room = current_shortlist[num]
 			# Make it be a thing that drops keys!
-			self.add_security_system(map, lev_set, dungeon_level, object_data, selected_room, True)
+			self.add_security_drone(map, lev_set, dungeon_level, object_data, selected_room, True)
 			current_shortlist.remove(selected_room)
 			# have we run out of rooms? then refresh the list, allow doubling up to happen.
 			if len(current_shortlist) == 0:
 				current_shortlist = initial_shortlist
 
 
-	def add_security_system(self, map, lev_set, dungeon_level, object_data, security_room, drops_key):
-		# new thing: place security system randomly rather than in center of room
+	def add_security_drone(self, map, lev_set, dungeon_level, object_data, security_room, drops_key):
+		# new thing: place security drone randomly rather than in center of room
 
 		sec_x = randint(security_room.x1, security_room.x2)
 		sec_y = randint(security_room.y1, security_room.y2)
 		#(sec_x,sec_y) = security_room.center()
 		if drops_key:
-			object_data.append(Object_Datum(sec_x,sec_y,'security system', 'drops-key'))
+			object_data.append(Object_Datum(sec_x,sec_y,'security drone', 'drops-key'))
 		else: 
-			object_data.append(Object_Datum(sec_x,sec_y,'security system'))
-		# commenting this out, because now that sec systems can activate if they see you for too long, it's kind of 
+			object_data.append(Object_Datum(sec_x,sec_y,'security drone'))
+			# Here is a terrible hack - clear water from around the security drone.
+
+
+		# commenting this out, because now that sec drones can activate if they see you for too long, it's kind of 
 		# fun to stumble upon them by accident. Hopefully.
 		#self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
 	
@@ -774,14 +786,14 @@ class Level_Generator:
 				#new_shrine.send_to_back()
 				object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
 				self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
-		# or maybe security systems?
+		# or maybe security drones?
 			elif num == 1:
-				if lev_set.final_level is not True:	#don't have sec systems on final levels?
+				if lev_set.final_level is not True:	#don't have sec drones on final levels?
 					keyval = randint(0,4)  #maybe drop a key
 					if keyval == 0:
-						self.add_security_system(map, lev_set, dungeon_level, object_data, room, True)
+						self.add_security_drone(map, lev_set, dungeon_level, object_data, room, True)
 					else:
-						self.add_security_system(map, lev_set, dungeon_level, object_data, room, False)
+						self.add_security_drone(map, lev_set, dungeon_level, object_data, room, False)
 				
 					#chance of key dropping nearby?
 					keyval = randint(0,2)  #maybe drop a key
@@ -1038,7 +1050,7 @@ class Level_Generator:
 	
 
 
-	def create_elevator(self, elevator, map, spawn_points, center_points, nearest_points_array, object_data, elevators, elevator_type = 'Small-Elevator-Right', background_map = None):
+	def create_elevator(self, elevator, map, spawn_points, center_points, nearest_points_array, object_data, elevators, elevator_type = 'Small-Elevator-Right', background_map = None, easy_elevator = False):
 		# like creating a room, but with a spawn point!
 		#global map, spawn_points, center_points, nearest_points_array
 
@@ -1096,7 +1108,7 @@ class Level_Generator:
 					#background_map[elevator.x1 + x][elevator.y1 + y] = 2
 					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'decoration', '\''))
 
-		new_elevator = Elevator(door_points, local_spawn_points)
+		new_elevator = Elevator(door_points, local_spawn_points, player_authorised = easy_elevator)
 		#print "elevatooooooooR"
 		elevators.append(new_elevator)
 
@@ -1181,7 +1193,7 @@ class Level_Generator:
 
 		elif code == 'Tut-Test':
 			R = Object_Name('monster','rook')
-			S = Object_Name('monster','security system')
+			S = Object_Name('monster','security drone')
 			D = Object_Name('door', 'vertical')
 			seg_map =      [[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
 					[0,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1],
@@ -1927,7 +1939,7 @@ class Level_Generator:
 				[1,0,0,0,0,0,1,1],
 				[0,0,0,0,0,0,1,1],
 				[0,0,0,D,0,0,1,1],
-				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,1,1],
 				[1,0,0,0,0,0,1,1]]
 		#seg_map = self.rotateSegment(seg_map)
 
@@ -2038,19 +2050,19 @@ class Level_Generator:
 		seg_map =      [[1,1,1,1,1,1,1,1],
 				[0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0],
-				[1,0,0,0,A,0,0,0],
-				[1,0,0,0,0,0,A,0],
-				[1,0,0,0,0,0,0,0],
-				[1,0,0,A,0,0,0,0],
-				[1,0,0,0,0,0,0,0],
-				[1,0,0,0,0,1,1,1],
 				[1,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0],
+				[1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,0],
+				[0,0,0,0,0,A,0,0],
 				[1,0,A,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,A],
 				[1,0,0,A,0,0,0,0],
-				[1,0,0,0,0,0,F,0],
-				[1,0,0,0,0,0,0,0]]
+				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,F,0]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,3*tut_rm_height, object_data)
 
 
@@ -2071,12 +2083,12 @@ class Level_Generator:
 				[E,0,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
 				[1,1,0,1,1,0,1,1,1,1,1,1,1,0,1,1],
 				[1,1,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
-				[1,1,1,0,1,0,0,B,1,1,1,1,1,0,1,1],
-				[1,1,1,C,1,0,1,1,1,1,1,1,1,0,0,B],
-				[1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1],
-				[1,1,1,1,1,0,0,1,D,1,D,E,0,0,1,1],
-				[1,1,1,1,1,1,0,1,0,1,0,1,1,0,1,1],
-				[1,1,1,1,E,0,0,0,0,0,0,0,0,0,1,1],
+				[1,1,1,0,1,0,0,B,1,1,1,1,1,1,1,1],
+				[1,1,1,C,1,0,1,1,1,1,1,1,0,0,0,1],
+				[1,1,1,1,1,0,1,1,1,1,1,1,0,F,0,0],
+				[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1],
+				[1,1,1,1,1,1,C,1,C,1,C,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,3*tut_rm_height, object_data)
 
@@ -2085,26 +2097,28 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(tut_rm_width,tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
+		A = Object_Name('strawman')
 		F = Object_Name('message', "Taken wounds in battle? We recommend: fresh fruit.")
-		G = Object_Name('message', "Whether faced with obstacles or enemies, sometimes the only thing to do is Jump (#JUMP#).")
+		G = Object_Name('message', "Sometimes the best thing to do is not to fight but to Jump (#JUMP#).")
+		H = Object_Name('message', "Water is fine to swim in. You just can't attack while doing so.")
 		W = Object_Name('water')
 		B = Object_Name('plant')
 		S = Object_Name('weapon', 'sword')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
-				[1,0,0,0,0,W,W,0,0,0,0,0,W,W,0,0],
-				[1,0,0,0,0,0,W,W,0,0,0,W,W,0,0,0],
-				[1,0,0,0,0,0,W,W,W,0,0,W,W,0,0,0],
-				[1,0,0,0,B,0,0,W,W,0,W,W,0,0,0,0],
-				[1,0,B,0,0,0,0,0,W,W,W,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,W,W,0,0,0,0,0,0],
-				[1,0,0,0,0,0,0,G,W,0,0,0,0,0,0,0],
-				[1,0,0,0,B,0,0,W,W,0,0,0,0,0,0,0],
-				[1,0,B,0,0,0,0,W,W,0,0,0,0,S,0,0],
-				[1,0,0,0,0,B,0,0,W,W,0,0,0,0,0,0],
-				[1,0,0,F,0,0,0,0,W,W,W,0,0,0,0,0],
-				[1,0,0,0,B,0,0,0,0,W,W,0,0,0,0,0],
-				[1,0,0,0,0,0,0,0,0,W,W,0,0,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,W,W,A,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,W,0,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,W,W,A,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,W,W,0,H,0],
+				[1,A,A,A,A,A,A,1,0,0,0,0,W,A,0,0],
+				[1,0,0,G,0,0,0,1,0,0,0,0,W,W,A,W],
+				[1,0,0,0,B,0,0,1,0,0,0,0,0,W,W,W],
+				[1,0,B,0,0,0,0,1,0,0,0,0,0,W,W,0],
+				[1,0,0,0,0,B,0,1,0,0,0,0,0,0,0,0],
+				[1,0,0,F,0,0,0,1,0,0,0,S,0,0,0,0],
+				[1,0,0,0,B,0,0,1,0,0,0,0,0,0,0,0],
+				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
 				[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,tut_rm_height, object_data)
 
@@ -2123,7 +2137,7 @@ class Level_Generator:
 				[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,1],
-				[0,0,F,0,0,G,S,C],
+				[0,0,F,0,0,G,0,C],
 				[1,0,0,0,0,0,0,1],
 				[1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,2*tut_rm_height, object_data)
@@ -2136,7 +2150,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('monster', 'swordsman')
 		W = Object_Name('water')
-		F = Object_Name('message', "Observing your next enemy's patterns closely! It is the key to defeating them.")
+		F = Object_Name('message', "Observe your next enemy's patterns closely! It is the key to defeating them.")
 		S = Object_Name('weapon', 'sword')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -2163,7 +2177,7 @@ class Level_Generator:
 		R = Object_Name('monster', 'rook')
 		W = Object_Name('water')
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
-		F = Object_Name('message', "Your next enemy has extended reach! But they cannot move or attack diagonally.")
+		F = Object_Name('message', "This enemy has extended reach! But they cannot move or attack diagonally.")
 		G = Object_Name('message', "They will try to get in line with you so they can attack. Stay out of the range of their weapon!")
 		H = Object_Name('message', "Backing away from them will let you control how they approach you. Strike as they get in range!")
 		I = Object_Name('message', "Weapons are heavy, and your enemy can only attack intermitently. The moment after they have attacked is an exellent time to strike!")
@@ -2201,10 +2215,10 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(4*tut_rm_width, 6*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		C = Object_Name('security system', 'drops-key')
+		C = Object_Name('security drone', 'drops-key')
 		W = Object_Name('water')
-		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
-		G = Object_Name('message', "Sometimes though,you can't help but get spotted. The security system will defend itself, but defeat it and the alarms will get a bit quieter.")
+		F = Object_Name('message', "Security drones! Given enough time to observe you, they will sound an alarm. Try to sneak up on them before they do that.")
+		G = Object_Name('message', "Sometimes though,you can't help but get spotted. The security drone will defend itself, but defeat it and the alarms will get a bit quieter.")
 		B = Object_Name('plant')
 		D = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
@@ -2215,12 +2229,12 @@ class Level_Generator:
 				[D,0,G,0,0,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,B,0,0,1,0,0,1,0,0,0,0,1],
-				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-				[1,0,0,0,0,0,0,B,0,0,1,0,0,0,0,1],
-				[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0],
-				[1,0,S,0,0,0,0,1,0,0,1,0,0,0,0,0],
-				[1,0,0,0,0,0,0,1,0,0,1,C,0,0,0,0],
+				[1,0,0,0,0,0,0,B,0,0,1,C,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+				[1,0,S,0,0,0,0,1,1,1,1,1,1,1,1,1],
+				[1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0],
 				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
 				[1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 4*tut_rm_width, 6*tut_rm_height, object_data)
@@ -2231,27 +2245,29 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(2*tut_rm_width, 6*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		C = Object_Name('security system', 'drops-key')
+		C = Object_Name('security drone', 'drops-key')
 		W = Object_Name('water')
-		F = Object_Name('message', "Security systems! They often hold keys and rewards. Try to sneak up on them before they sound the alarm.")
-		G = Object_Name('message', "Defeating security systems (even active ones) will give you rewards and sometimes keys.")
+		F = Object_Name('message', "The favour you get from defeating security drones can be exchanged at shrines for powerful abilities.")
+		G = Object_Name('message', "Defeating security drones (even active ones) will give you rewards and sometimes keys.")
 		H = Object_Name('message', "When you have aquired enough keys, you will be able to use the elevators to leave the level.")
 		B = Object_Name('plant')
+		X = Object_Name('shrine', 'rejuvenation')
+		Y = Object_Name('shrine', 'instantaneous-strength')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				[1,0,0,0,0,0,0,0,W,0,0,0,0,0,0,W],
-				[1,0,0,0,0,0,0,0,W,W,S,0,0,C,W,W],
-				[1,0,0,0,0,0,0,0,0,W,0,0,0,W,W,0],
-				[1,0,0,0,0,B,0,0,0,W,W,W,W,W,0,0],
-				[1,0,0,0,0,0,0,0,0,0,W,W,W,0,0,0],
+				[1,0,0,0,0,W,0,0,W,0,0,0,0,0,0,W],
+				[1,0,X,0,W,W,0,0,W,W,S,Y,0,C,W,W],
+				[1,0,W,W,W,0,0,0,0,W,0,0,0,W,W,0],
+				[1,W,W,W,0,B,0,F,0,W,W,W,W,W,0,0],
+				[1,W,0,0,0,0,0,0,0,0,W,W,W,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,W,W,0,G,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,B,0,0,0,0,0,B,0,0],
 				[1,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,B,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,0,0,B,0,0,0,0,0,0,0,C,0],
-				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[0,0,0,0,H,0,0,0,0,0,0,0,H,0,0,0],
+				[1,0,0,0,0,0,B,0,0,0,0,0,0,0,C,0],
+				[1,0,0,0,H,H,0,0,0,0,0,0,H,H,0,0],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 2*tut_rm_width, 6*tut_rm_height, object_data)
 
@@ -2431,7 +2447,8 @@ class Level_Generator:
 		rooms.append(elev1)
 		#rooms.append(elev2)
 
-		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)	
+		# the elevator next to the start area just always allows the player in
+		self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map, easy_elevator = True)	
 		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up', background_map)
 		self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Up', background_map)
 		# . Move
@@ -2447,7 +2464,7 @@ class Level_Generator:
 		# . fight one enemy
 		# . fight a rook
 		# . fight two enemies
-		# .  o k so security systems:
+		# .  o k so security drones:
 		#		 - increase the alarm when they see you
 		# 		 - decrease the alarm when they get killed
 		#		 - higher alarm means more enemies are coming for you

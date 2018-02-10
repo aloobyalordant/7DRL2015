@@ -381,6 +381,49 @@ class NewWeaponSmell(PowerUp):
 		else:
 			return 0
 
+# TODO: might need to change this if I get round to having variable durability on weapons?
+class Rejuvenation(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Rejuvenation", tech_description = "1-off full heal and energy recharge", verbose_description = "I shall heal all your wounds!", code='[+]')
+		self.consumed = False
+
+
+	def upgrade_player_stats_once(self,player):
+		if self.consumed == False:
+			self.status = 'active'
+			player.fighter.wounds = 0
+			player.fighter.fully_heal()
+			self.consumed = True
+
+
+#Gives the player +1 strength, but only for this level
+class InstantaneousStrength(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Instantaneous Strength", tech_description = "+1 strength for this floor", verbose_description = "For the remainder of this floor, I shall enhance your damage in combat!", code='I.S')
+		self.activated = True
+		self.level_number = None
+	# Activates if player weapon is on 10 or less durability
+	def update_based_on_level(self, dungeon_level):
+
+		if self.activated:
+			if self.level_number is None:
+				self.level_number = dungeon_level
+				self.tech_description = "+1 strength on floor " + str(self.level_number)
+			elif dungeon_level != self.level_number:  #deactivate after leaving the level
+				self.activated = False
+	
+
+	def affect_strength_at_attack_choice(self):
+		if self.activated:
+			print("+1 strength from " + str(self.name))
+			self.status = 'active'
+			return 1
+		else:
+			return 0
+
+
 
 
 def Get_Random_Upgrade():
@@ -396,6 +439,9 @@ def Get_Random_Upgrade():
 	upgrade_list.append(FarReaching())
 	upgrade_list.append(ScrapingTheBarrel())
 	upgrade_list.append(NewWeaponSmell())
+	upgrade_list.append(Rejuvenation())
+	upgrade_list.append(InstantaneousStrength())
+
 
 	# return a random upgrade from list
 	# choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
@@ -405,5 +451,5 @@ def Get_Random_Upgrade():
 	#return PersonalSpace()					#return this particular thing, for testing purposes
 
 def Get_Test_Upgrade():
-	return FarReaching()				#return this particular thing, for testing purposes	
+	return InstantaneousStrength()				#return this particular thing, for testing purposes	
 

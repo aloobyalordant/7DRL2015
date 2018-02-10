@@ -39,7 +39,8 @@ class Level_Settings:
 			max_room_monsters = 3,
 			enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE/2,
 			enemy_probabilities = enemy_probs,
-			keys_required = len(self.bigArray),
+			#keys_required = len(self.bigArray),
+			keys_required = 3,		# special for the tutorial
 			initial_alarm_level = 0)
 
 		self.bigArray.append(lev0)
@@ -72,20 +73,20 @@ class Level_Settings:
 
 
 		# randomly decide that out of Bomen, Rooks and Rogues, one of them will appear in level 1, and the other 2 will appear in level 2
-		num =  randint( 0, 2)
-		#if num == 0:
+		num =  randint( 0, 1)
+		if num == 0:
 		#	enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
 		#	enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
 		#elif num == 0:
-		#	enemyprobs1 = [('swordsman', 50), ('boman', 50)]
-		#	enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
-		#else:
-		#	enemyprobs1 = [('swordsman', 50), ('rook', 50)]
-		#	enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
+			enemyprobs1 = [('swordsman', 50), ('boman', 50)]
+			enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
+		else:
+			enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+			enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
 
 		# temp changing the random bit because i want to test rooks
-		enemyprobs1 = [('swordsman', 50), ('rook', 50)]
-		enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
+		#enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+		#enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
 
 
 		# A level with small rooms and few enemies
@@ -102,7 +103,7 @@ class Level_Settings:
 			max_room_monsters = 1,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
-			number_sec_systems = len(self.bigArray),
+			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = 0	
 			)
@@ -122,7 +123,7 @@ class Level_Settings:
 			max_room_monsters = 1,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
-			number_sec_systems = len(self.bigArray),
+			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = len(self.bigArray)
 			)
@@ -162,7 +163,7 @@ class Level_Settings:
 			max_room_monsters = 1,
 			enemy_probabilities = enemy_probs,
 			#enemy_spawn_rate = 20
-			number_sec_systems = len(self.bigArray),
+			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = len(self.bigArray)
 			)
@@ -189,7 +190,7 @@ class Level_Settings:
 #			boss = 'samurai',
 #			enemy_probabilities = enemy_probs,
 #			#enemy_spawn_rate = 20
-#			number_sec_systems = len(self.bigArray),
+#			number_sec_drones = len(self.bigArray),
 #			keys_required = len(self.bigArray),
 #			initial_alarm_level = len(self.bigArray)
 #			)
@@ -213,7 +214,7 @@ class Level_Settings:
 			max_rooms = 8,
 			max_room_monsters = 5,
 			enemy_probabilities = enemy_probs,
-			number_sec_systems = len(self.bigArray),
+			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = len(self.bigArray)
 			)
@@ -248,7 +249,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_systems = 1, keys_required = 0, initial_alarm_level = 1):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -269,7 +270,7 @@ class Level_Setting:
 		for (name, prob) in enemy_probabilities:
 			total_prob += prob
 		self.total_enemy_prob = total_prob
-		self.number_sec_systems = number_sec_systems
+		self.number_sec_drones = number_sec_drones
 		self.keys_required = keys_required
 		self.initial_alarm_level = initial_alarm_level
 	

@@ -11,7 +11,7 @@ from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, We
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
-from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade, Get_Test_Upgrade
+from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibious, Perfectionist, Get_Random_Upgrade, Get_Test_Upgrade, InstantaneousStrength, Rejuvenation
 from saveDataHandler import SaveDataHandler #, SaveDatum
 from controlHandler import ControlHandler
 from colorHandler import ColorHandler
@@ -685,7 +685,7 @@ class Fighter:
 
 class Energy_Fighter:
 	# combat-related properties and methods (player).
-	# trying out an exciting new 'energy system'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
+	# trying out an exciting new 'energy drone'. Use energy to attack and to jump, energy gradually recharges, but getting hit reduces your energy semi-permanently, and you die if you lose more energy than you have.
 	# UPDATE: actually let's make it so that you die only if your max energy goes to 0, and losing more energy than you have doesn't kill you, just reduces your max health by more
 	def __init__(self, hp, defense, power, death_function=None, attack_color = PLAYER_COLOR, faded_attack_color = PLAYER_COLOR, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
 		self.max_hp = hp
@@ -1350,8 +1350,8 @@ class Rogue_AI(BasicMonster):
 
 			# If the player is one or two steps from me, do one of the following attacks
 			if xdiffabs <=2 and ydiffabs <= 2: 
-				#if near to the player, and I have charge, then attack!
-				if self.weapon.current_charge >= self.weapon.default_usage:
+				#if near to the player, and I have charge, and am not in water, then attack!
+				if self.weapon.current_charge >= self.weapon.default_usage and not monster.fighter.in_water:
 					attack_command = 0
 
 					# attack to left if player is on left, or right if player on right.
@@ -2011,8 +2011,8 @@ class Rook_AI:
 
 				
 
-				#close enough, attack! (if the player is still alive.)
-				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage:#   recharge_time <= 0:
+				#close enough, attack! (if the player is still alive.) (and you can attack) (and are not in water)
+				elif player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage and not monster.fighter.in_water:#   recharge_time <= 0:
 					attackList = []
 
 					(dx,dy) = next_step_towards(monster.x, monster.y, player.x, player.y)
@@ -2506,11 +2506,11 @@ class BasicAttack:
 
 					translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
 					target.fighter.take_damage(self.damage)
-#					if target.name == 'security system':
+#					if target.name == 'security drone':
 #						if target.raising_alarm is False:
 #							target.raising_alarm = True
 #							alarm_level += 2
-#							message('The security system sounds a loud alarm!')
+#							message('The security drone sounds a loud alarm!')
 #							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
 #							spawn_timer = 1	#This is not always working as I'd like???
 				elif target.door is not None and target.name != 'elevator door':
@@ -3558,13 +3558,18 @@ def create_monster(x,y, name, guard_duty = False):
 
 
 
-	elif name == 'security system':
-		# let's make a security system! It stays where it is and doesn't attack! In fact it's basically a strawman with more health.
+	elif name == 'security drone':
+		# let's make a security drone! It stays where it is and doesn't attack! In fact it's basically a strawman with more health.
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color =color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		alarmer_component = Alarmer(assoc_fighter = strawman_component)
-		monster = Object(x, y, 'O', 'security system', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
+		temp_alarm_time = 4
+		if dungeon_level < 2:	# make security drones a bit easier on the tutorial and level 1
+			temp_alarm_time +=  + 2
+			if  dungeon_level == 0:
+				temp_alarm_time += 1
+		alarmer_component = Alarmer(alarm_time = temp_alarm_time, pre_alarm_time = 0, assoc_fighter = strawman_component)
+		monster = Object(x, y, 'O', 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
 
 
 
@@ -3675,7 +3680,7 @@ def make_map():
 			worldEntitiesList.append(monster)
 			# Hackiest of all hacks - make the tutorial rook drop a key
 			if dungeon_level == 0:
-				if od.info == 'security system':
+				if od.info == 'security drone':
 					monster.drops_key = True
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
@@ -3699,8 +3704,15 @@ def make_map():
 			shrine.shrine.cost += dungeon_level - 2
 			objectsArray[od.x][od.y].append(shrine)
 			shrine.send_to_back()
-		elif  od.name == 'security system':
-			monster = create_monster(od.x,od.y, 'security system', guard_duty = True)
+			if od.info == 'rejuvenation':
+				shrine.shrine.upgrade = Rejuvenation()
+			elif od.info == 'instantaneous-strength':
+				shrine.shrine.upgrade = InstantaneousStrength()
+			if dungeon_level == 0:		# hack for making tutorial shrines cost more tha, like, 1 or 0.
+				shrine.shrine.cost = 2				
+
+		elif  od.name == 'security drone':
+			monster = create_monster(od.x,od.y, 'security drone', guard_duty = True)
 			if od.info == 'drops-key':
 				monster.drops_key = True
 			objectsArray[od.x][od.y].append(monster)
@@ -4179,7 +4191,7 @@ def monster_death(monster):
 
 	#transform it into a nasty corpse! it doesn't block, can't be
 	#attacked and doesn't move
-	#if monster.name == 'security system':
+	#if monster.name == 'security drone':
 	if monster.alarmer is not None:
 		number_alarmers -= 1
 		message(monster.name.capitalize() + ' is destroyed!', color_warning)
@@ -4194,7 +4206,7 @@ def monster_death(monster):
 			alarm_level = 0
 			message('A sudden silence descends as the alarms stop.', Color_Interesting_In_World)
 
-		# Temp hack, probably: if thismonster is an alarmer (i.e. a security system), make it drop currency?
+		# Temp hack, probably: if thismonster is an alarmer (i.e. a security drone), make it drop currency?
 
 		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True)
 		objectsArray[monster.x][monster.y].append(favour_object) 
@@ -4364,7 +4376,7 @@ def next_level():
 
 # Figure out how often enemies should spawn, based on overall rate for this floor, and the alarm level.
 # Originally was just one divided by the other; now it's going to be something a bit more tierd, hopefully?
-# Update: might have been my fault for not making it visible to the player, but I  wasn't really feeling the tiered system.
+# Update: might have been my fault for not making it visible to the player, but I  wasn't really feeling the tiered drone.
 # Going back to 'faster with higher alarm'; 
 # I have some ideas about how to make it more exicitng to avoid alarms so am going to make alarm level more of a threat?
 def decide_spawn_time(enemy_spawn_rate,alarm_level):
@@ -6260,7 +6272,7 @@ while not translated_console_is_window_closed():
 		if player_can_see_elevator_opening:
 			message("Ding!", Color_Message_In_World)
 
-		# update elevators with whether the player is authorized - for now this is just based on whether there are security systems around.
+		# update elevators with whether the player is authorized - for now this is just based on whether there are security drones around.
 		# later this process will become a bit more complicated (and might be folded into Elevator.update)
 		level_complete = False
 		if lev_set.boss is not None:
@@ -6281,7 +6293,7 @@ while not translated_console_is_window_closed():
 #						if object.name == lev_set.boss:
 #							level_complete = False
 
-		#elif number_security_systems <= 0:
+		#elif number_security_drones <= 0:
 		#	level_complete = True
 		elif lev_set.keys_required <= key_count:
 			level_complete = True
@@ -6294,8 +6306,14 @@ while not translated_console_is_window_closed():
 		for (puncher, victim) in potential_punch_list:
 			# check if the victim is where the puncher was expecting
 			if victim.x == puncher.x + puncher.decider.decision.move_decision.dx and victim.y == puncher.y +  puncher.decider.decision.move_decision.dy:
-				victim.stun()
-				message ('The ' + puncher.name + ' punches the ' + victim.name + ' in the face! The ' + victim.name + ' is stunned!')
+				message ('The ' + puncher.name + ' punches the ' + victim.name + ' in the face!')
+
+				if victim.name != 'strawman' and victim.name != 'flailing strawman' and victim.name != 'strawman on wheels':
+					victim.stun()
+					message('The ' + victim.name + ' is stunned!')
+				else:
+					message('It doesn\'t seem to have any affect.')
+
 
 
 
@@ -6382,6 +6400,8 @@ while not translated_console_is_window_closed():
 			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
 				power_up.upgrade_player_stats_once(player)
 
+			if getattr(power_up, "update_based_on_level", None) is not None:
+				power_up.update_based_on_level(dungeon_level)
 
 
 		#if spotted == True:
@@ -6801,7 +6821,7 @@ while not translated_console_is_window_closed():
 
 
 		# oh let's start creating enemies at random intervals? 
-		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_systems > 0:
+		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_drones > 0:
 		if alarm_level > 0 and spawn_timer <= 0:
 			#reset timer
 			spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
@@ -6831,7 +6851,7 @@ while not translated_console_is_window_closed():
 #						for object in objectsArray[x][y]:
 #							if object.name == lev_set.boss:
 #								level_complete = False
-			#elif number_security_systems <= 0:
+			#elif number_security_drones <= 0:
 			#	level_complete = True
 			elif lev_set.keys_required <= key_count:
 				level_complete = True
