@@ -165,7 +165,8 @@ class Level_Settings:
 			#enemy_spawn_rate = 20
 			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
-			initial_alarm_level = len(self.bigArray)
+			initial_alarm_level = len(self.bigArray),
+			color_scheme = 'coldTest'
 			)
 		
 		self.bigArray.append(lev3)
@@ -249,7 +250,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1, color_scheme = 'lobbyTest'):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -273,5 +274,6 @@ class Level_Setting:
 		self.number_sec_drones = number_sec_drones
 		self.keys_required = keys_required
 		self.initial_alarm_level = initial_alarm_level
+		self.color_scheme = color_scheme
 	
 		

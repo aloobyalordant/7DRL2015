@@ -3688,9 +3688,9 @@ def make_map():
 			worldEntitiesList.append(strawman)
 		elif od.name == 'shrine':
 			#get altar color - gonna make it depend on the background of the tile it's on.
-			altar_color = color_light_ground_alt
+			altar_color = 	default_altar_color	#color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
-				altar_color = color_light_ground
+				altar_color = alt_altar_color #color_light_ground
 			num = randint( 0, 2) 
 			if num == 0:
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
@@ -4246,7 +4246,8 @@ def monster_death(monster):
 
 
 def next_level():
-	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array
+	global colorHandler
+	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array, color_handler
 
 	# doing some test saving
 	save_game()
@@ -4321,6 +4322,15 @@ def next_level():
 
 
 
+	lev_set = game_level_settings.get_setting(dungeon_level)
+
+	# Update color scheme
+	colorHandler = ColorHandler(lev_set.color_scheme)  #('adjustedOriginal')
+	print ('setting color scheme yO ' + lev_set.color_scheme)
+	#colorHandler = ColorHandler(game_level)
+	setColorScheme()
+
+
 	#objects = []
 	make_map()
 	objectsArray[player.x][player.y].append(player)
@@ -4361,9 +4371,10 @@ def next_level():
 	initialize_fov()
 
 
-	lev_set = game_level_settings.get_setting(dungeon_level)
 	enemy_spawn_rate = lev_set.enemy_spawn_rate
 	spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
+
+
 
 	#for ele in elevators:			#open the doors when the level starts?
 	#	ele.set_doors_open(True)
@@ -4967,6 +4978,10 @@ def create_GUI_panel():
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 
+	## Update color scheme
+	#colorHandler = ColorHandler(lev_set.color_scheme)  #('adjustedOriginal')
+	#setColorScheme()
+
 	#GUI STUFF
 	#prepare to render the GUI panel
 	#libtcod.console_set_default_background(panel, default_background_color)
@@ -5468,12 +5483,16 @@ def clear_onscreen_objects():
 
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
-	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
+	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, alt_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
 	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
 	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
 	
+	print("i think it's " + colorHandler.colorScheme)
+
 	levelColors = colorHandler.levelColors
+
+	print("i think walls are " + str(levelColors['color_light_wall']))
 	
 	color_dark_wall = levelColors['color_dark_wall']
 	color_light_wall = levelColors['color_light_wall']
@@ -5482,6 +5501,7 @@ def setColorScheme(colorScheme = 'default'):
 	color_light_ground_alt = levelColors['color_light_ground_alt']
 	color_fog_of_war = levelColors['color_fog_of_war']
 	default_altar_color = levelColors['default_altar_color']
+	alt_altar_color = levelColors['alt_altar_color']
 	default_door_color = levelColors['default_door_color']
 	default_message_color = levelColors['default_message_color']
 	default_decoration_color = levelColors['default_decoration_color']
@@ -5489,6 +5509,9 @@ def setColorScheme(colorScheme = 'default'):
 	water_foreground_color = levelColors['water_foreground_color']
 	blood_background_color = levelColors['blood_background_color']
 	blood_foreground_color = levelColors['blood_foreground_color']
+
+
+	print("now i think walls are " + str(color_light_wall))
 
 	# collectiable e.g. weapons and plants and keys
 	default_flower_color = levelColors['default_flower_color']
@@ -5605,9 +5628,10 @@ def initialise_game():
 	#Initialise controls
 	controlHandler = ControlHandler(control_scheme)
 
-	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
-	setColorScheme()
 
+	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
+	#colorHandler = ColorHandler('coldTest')  #('adjustedOriginal')
+	#colorHandler = ColorHandler(game_level)
 
 	#create the list of game messages and their colors, starts empty
 	game_msgs = []
@@ -5615,6 +5639,10 @@ def initialise_game():
 	
 	game_level_settings = Level_Settings()
 	dungeon_level = 0	#SO HEY currently there is a game-crashing flaw on the first level because room_adjacencies is not properly initialised, that's great
+
+
+	setColorScheme()
+
 	alarm_level = 1
 	god_healer = God(god_type = God_Healer())
 	favoured_by_healer = False
@@ -5779,6 +5807,10 @@ initialise_game()
 
 
 lev_set = game_level_settings.get_setting(dungeon_level)
+
+# Update color scheme
+colorHandler = ColorHandler(lev_set.color_scheme)  #('adjustedOriginal')
+setColorScheme()
 
 enemy_spawn_rate = lev_set.enemy_spawn_rate
 spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)

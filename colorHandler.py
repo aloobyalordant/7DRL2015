@@ -92,10 +92,24 @@ class ColorHandler:
 			newDictionary['color_dark_ground'] = (150,150,150)	#	(150,150,150)		#(50, 50, 150)
 			newDictionary['color_light_ground'] = (243, 195, 134)	#	(200, 180, 50)
 			newDictionary['color_light_ground_alt'] = (210, 110,100)	#(235, 120, 80)	#(219, 126, 61)	#	(200, 180, 50)
-			newDictionary['default_altar_color'] = (230, 00, 230)
+			newDictionary['default_altar_color'] = (235, 120, 80)
+			newDictionary['alt_altar_color'] = (243, 195, 134)
 			newDictionary['default_door_color'] = (102, 28, 25)
 			newDictionary['default_message_color'] = (230, 00, 230)
 			newDictionary['default_decoration_color'] =(200, 106, 41)
+			newDictionary['color_alarmer_alarmed'] =(250,0,0)	#	(2
+
+		if colorScheme == 'coldTest':
+			newDictionary['color_dark_wall'] = (100,100,100)	#	(100,100,100)		#(0, 0, 100)
+			newDictionary['color_light_wall'] = (25, 28, 102)	# ((vsw,vsw,vsw), vsw)),	#	(130, 110, 50)
+			newDictionary['color_dark_ground'] = (150,150,150)	#	(150,150,150)		#(50, 50, 150)
+			newDictionary['color_light_ground'] = (143, 195, 234)	#	(200, 180, 50)
+			newDictionary['color_light_ground_alt'] = (120, 170,220)	#(235, 120, 80)	#(219, 126, 61)	#	(200, 180, 50)
+			newDictionary['default_altar_color'] = (200, 00, 200)			
+			newDictionary['alt_altar_color'] = (200, 00, 200)
+			newDictionary['default_door_color'] = (102, 28, 25)
+			newDictionary['default_message_color'] = (230, 00, 230)
+			newDictionary['default_decoration_color'] =(41, 106, 200)
 			newDictionary['color_alarmer_alarmed'] =(250,0,0)	#	(2
 
 
@@ -234,7 +248,7 @@ class ColorHandler:
 
 
 		# trying colors taken from Solarized  http://ethanschoonover.com/solarized
-		if colorScheme == 'lobbyTest':
+		if colorScheme == 'lobbyTest' or colorScheme == 'coldTest' :
 			print("yoooooo")
 			newDictionary['default_background_color']=(0,0,15)
 			newDictionary['color_energy']=(38,139,210)	
