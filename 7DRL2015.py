@@ -21,6 +21,8 @@ SCREEN_HEIGHT = 39
 
 LIMIT_FPS = 20
 
+VERSION_STRING = 'Version 0.0.1.0.0'
+
 #Controls
 ControlMode = 'Crypsis' 	# 'Wheatley'   'Glados'
 
@@ -565,10 +567,15 @@ class Flower:
 
 	# If someone walks on the flower while it's growing, it gets trampled :(
 	def tread(self):
+		global garbage_list
 		if self.state == 'growing':
 			self.state  = 'trampled'  # :(
 			self.name = 'trampled ' + self.flower_type
 			self.symbol = 'x'
+
+
+			#self.send_to_back()
+			#garbage_list.append(self.owner)
 
 	# Once activated, plant starts growing until the bloom timer counts down to 0, at which point it bears fruit
 	def update(self):
@@ -600,7 +607,7 @@ class Flower:
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
 	def __init__(self, hp, defense, power, death_function=None, attack_color = PLAYER_COLOR, faded_attack_color = PLAYER_COLOR, extra_strength = 0, recharge_rate = 1, bonus_max_charge = 0, jump_array = [], jump_recharge_time = DEFAULT_JUMP_RECHARGE_TIME, bleeds = True):
-		self.max_hp = hp
+		self.max_hp = hp + 1		# new thing! every enemy can heal up to one extra.
 		self.hp = hp
 		self.defense = defense
 		self.power = power
@@ -980,7 +987,7 @@ class Alarmer:
 
 
 class Decision:
-	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None):
+	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None, pickup_decision = False):
 		self.move_decision=move_decision
 		if move_decision is not None:
 			self.move_decision.owner = self
@@ -990,6 +997,9 @@ class Decision:
 		self.jump_decision=jump_decision
 		if jump_decision is not None:
 			self.jump_decision.owner = self
+		self.pickup_decision=pickup_decision		# pickup_decision is just a boolean I think?
+		#if  pickup_decision is not None:
+		#	self.pickup_decision.owner = self
 
 class Move_Decision:
 	def __init__(self,dx,dy):
@@ -1011,7 +1021,7 @@ class Attack_Decision:
 
 
 class BasicMonster:
-	global nearest_center_to_player
+	global nearest_center_to_player, objectsArray
 
 	#AI for a basic monster.
 	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
@@ -1054,7 +1064,9 @@ class BasicMonster:
 			# Step 3: Given the above, decide on a plan of action (a move or attack; decision depends a lot on state)
 			
 			# Do the things that you do when going towards a target room rather than a specific grid reference
-			if self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
+			if self.state == 'hungry':
+				self.pursueFood(monster, decider)
+			elif self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
 
  				self.moveTowardsRoom(monster, decider)							
 
@@ -1089,7 +1101,16 @@ class BasicMonster:
 	
 		#keeping it pretty simple for now... pursue the player if you see them
 		#if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
-		if fov_map.fov[monster.x, monster.y]:
+
+		# new thing: see if there is a plant here
+		plant_here = False
+		for obj in objectsArray[monster.x][monster.y]:
+			if obj.plant is not None:
+				plant_here = True
+				break
+		if plant_here and monster.fighter.hp < monster.fighter.max_hp:
+			self.state = 'hungry'
+		elif fov_map.fov[monster.x, monster.y]:
 			self.state = 'pursue-visible-target'
 		elif self.state == 'pursue-visible-target':	#go to room-based targeting
 			self.state = 'wander-aimlessly'		
@@ -1171,7 +1192,17 @@ class BasicMonster:
 			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
-
+	# Part of Step 3: do the things you can do when you've decided you want food!
+	# For now, this just consists of picking up the fruit at your feet if there is one, but this may change later
+	def pursueFood(self, monster, decider):
+		plant_here = False
+		for obj in objectsArray[monster.x][monster.y]:
+			if obj.plant is not None:
+				plant_here = True
+				break
+		if plant_here:
+			decider.decision = Decision(pickup_decision=True)
+			
 
 
 
@@ -3109,17 +3140,30 @@ def handle_keys(user_input_event):
 
 
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
-				if len(keys_found) > 0:
+				if len(keys_found) > 0 and len(favours_found) == 0:
 					message('You snatch up the key.', Color_Personal_Action)
 					key_count = key_count + len(keys_found)
 					for ki in keys_found:
 						objectsArray[ki.x][ki.y].remove(ki)	
 				#similarly, favours take priority over weapons but after keys.
-				elif len(favours_found) > 0:
+				elif len(keys_found) == 0 and len(favours_found) > 0:
 					message('You take the favour token.', Color_Personal_Action)
 					currency_count = currency_count + len(favours_found)
 					for fa in favours_found:
 						objectsArray[fa.x][fa.y].remove(fa)	
+				elif len(keys_found) > 0 and len(favours_found) > 0:
+					message('You pick up the key and favour token.', Color_Personal_Action)
+					key_count = key_count + len(keys_found)
+					for ki in keys_found:
+						objectsArray[ki.x][ki.y].remove(ki)
+					currency_count = currency_count + len(favours_found)
+					for fa in favours_found:
+						objectsArray[fa.x][fa.y].remove(fa)
+				elif len(plants_found) > 0:
+					for pl in plants_found:
+						message('You pick up the ' + pl.name + ' and eat it.', Color_Personal_Action)
+						pl.plant.harvest(player)
+						garbage_list.append(pl)
 				# TODO: make it so you pick up  fruits / plants / seeds / whatever in order to heal, rather than automatically.
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
 				elif len(weapons_found) == 1:
@@ -4666,8 +4710,10 @@ def pause_screen():
 	'Press Esc to unpause, C to change controls or Q to quit')
 	#translated_console_print_ex(pause_menu, SCREEN_WIDTH/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
 	#test_save_message)
+	#translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 6, libtcod_BKGND_NONE, libtcod_CENTER,
+	#"This is play number " + str(play_count))
 	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 6, libtcod_BKGND_NONE, libtcod_CENTER,
-	"This is play number " + str(play_count))
+	VERSION_STRING)
 	
 	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 	'-------------------------------------------------------')
@@ -6069,6 +6115,23 @@ while not translated_console_is_window_closed():
 
 
 
+		# actually before movement happens, let's have things picking up things
+		# todo: integrate the player pickup stuff into this 
+		mover_list = []
+		for object in worldEntitiesList:
+			if object.decider and object is not player:
+				if object.decider.decision is not None:
+					if object.decider.decision.pickup_decision:
+						# for now, all we're doing is checking for plants to pickup
+						for other_object in objectsArray[object.x][object.y]:	
+							if other_object.plant is not None:
+								other_object.plant.tread()
+								garbage_list.append(other_object)
+								# also I guess get health maybe???
+								if object.fighter and object is not player:
+									message('The ' + object.name + ' picks up the ' + other_object.name + ' and eats it.', Color_Personal_Action)
+									other_object.plant.harvest(object)
+
 
 
 		# firstly movement happens
@@ -6123,12 +6186,13 @@ while not translated_console_is_window_closed():
 						player.move(jd.dx, jd.dy)
 						player_just_jumped = True
 	
-				# check for player trampling plants. This is not where it should go...
-				for other_object in objectsArray[player.x][player.y]:	
-					if other_object.plant is not None:
-						other_object.plant.tread()
-						# also I guess get health maybe???
-						other_object.plant.harvest(player)
+			#	# check for player trampling plants. This is not where it should go...
+			#	for other_object in objectsArray[player.x][player.y]:	
+			#		if other_object.plant is not None:
+			#			other_object.plant.tread()
+			#			# also I guess get health maybe???
+			#			other_object.plant.harvest(player)
+			#			garbage_list.append(other_object)
 
 
 
@@ -6158,13 +6222,14 @@ while not translated_console_is_window_closed():
 		for object in mover_list:
 			md = object.decider.decision.move_decision
 			object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
-			# also maybe trample some plants while you're here
-			for other_object in objectsArray[object.x][object.y]:	
-				if other_object.plant is not None:
-					other_object.plant.tread()
-					# also I guess get health maybe???
-					if object.fighter:
-						other_object.plant.harvest(object)
+		#	# also maybe trample some plants while you're here
+		#	for other_object in objectsArray[object.x][object.y]:	
+		#		if other_object.plant is not None:
+		#			other_object.plant.tread()
+		#			garbage_list.append(other_object)
+		#			# also I guess get health maybe???
+		#			if object.fighter and object is not player:
+		#				other_object.plant.harvest(object)
 
 		
 
@@ -6180,6 +6245,7 @@ while not translated_console_is_window_closed():
 		weapon_found = False
 		key_found = False
 		favour_found = False
+		plant_found = False
 		stairs_found = False
 		shrine_found = False
 		floor_message_found = False
@@ -6192,6 +6258,8 @@ while not translated_console_is_window_closed():
 				key_found = True
 			if favour_found == False and obj.name == 'favour token':
 				favour_found = True
+			if plant_found == False and obj.plant is not None:
+				plant_found = True
 			if stairs_found == False and obj.name == 'stairs':
 				stairs_found = True
 				possible_commands.append('< to ascend')
@@ -6202,7 +6270,7 @@ while not translated_console_is_window_closed():
 				floor_message_found = True
 
 
-		if weapon_found or key_found or favour_found:	
+		if weapon_found or key_found or favour_found or plant_found:	
 			possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
 		if shrine_found:
 			possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
