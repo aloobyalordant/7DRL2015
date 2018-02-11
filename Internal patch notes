@@ -1,0 +1,17 @@
+--------------------------------------------------
+version  0.1.0.0  release date ???
+--------------------------------------------------
+
+ - A  whole bunch of performance improvements; hopefully the game is no longer unbearably slow on the tutorial and larger levels
+ - Added a new weapon, the sai, and a new enemy who wield it, the Rogue
+ - Tweaked Rook behaviour to be less 'random'; Rooks can no longer attack while in water (Tridentors still can though, so watch out)
+ - Far Reaching is finally implemented
+ - New upgrades: Scraping The Barrel, New Weapon Smell, Rejuvenation, Instantaneous Strength
+ - Fruit now has to picked up rather than healing automatically
+ - Some enemies can pick up fruit, and heal to 1 above their starting health
+ - Security drones (formerly 'security systems') are now a bit more lenient on early levels, and you get told how close you are to one going off
+ - A number of changes to the tutorial level
+ - Slight tweak to the default color scheme (hopefully Bomen show up better in the middle of big rooms now); let me know if there are still problems
+ - A cool new color scheme for level 3! (no mechanical changes as of yet though)
+ - A bunch of other bug fixes, tweaks, UI improvements, and stuff I've been meaning to fix.
+
