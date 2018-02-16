@@ -812,31 +812,65 @@ class Level_Generator:
 
 
 			# Maybe let's put some water in the room? 
-			num = randint(0,6)
-			if num == 0:
-				#Put a big puddle in the  room!
-				rad = randint(1,3)
-				(cent_x, cent_y) = room.center()
-				
-				for x in range(room.x1, room.x2+1):
-					for y in range(room.y1, room.y2+1):
-						if math.fabs(x - cent_x) +math.fabs(y-cent_y) <= rad:
-						#if math.sqrt((x-cent_x) ** 2 + (y - cent_y) ** 2) <= rad:
-							object_data.append(Object_Datum(x,y, 'water'))
 
-				## flood the whole room! 
-				#for x in range(room.x1, room.x2+1):
-				#	for y in range(room.y1, room.y2+1):
-				#		object_data.append(Object_Datum(x,y, 'water'))
-				#		object_data.append(Object_Datum(x,y, 'water'))
-			elif num == 1:
-				#flood half the room?
-				for x in range(room.x1, room.x2+1):
-					for y in range(room.y1, room.y2+1):
-						cointoss = randint(0, 1)
-						if cointoss == 0:
+			# If level is waterlogged, add lots of water
+			if 'waterlogged' in lev_set.effects:
+				num = randint(0,4)
+				if num == 0:
+					#Put a big puddle somewhere random in the  room!
+					rad = randint(1,max(math.fabs(room.x2 - room.x1),math.fabs(room.y2 - room.y1)))
+					cent_x = randint (room.x1, room.x2+1)
+					cent_y = randint (room.y1, room.y2+1)
+					
+					for x in range(room.x1, room.x2+1):
+						for y in range(room.y1, room.y2+1):
+							if math.fabs(x - cent_x) +math.fabs(y-cent_y) <= rad:
+							#if math.sqrt((x-cent_x) ** 2 + (y - cent_y) ** 2) <= rad:
+								object_data.append(Object_Datum(x,y, 'water'))
+	
+					## flood the whole room! 
+				elif num == 1:
+					for x in range(room.x1, room.x2+1):
+						for y in range(room.y1, room.y2+1):
 							object_data.append(Object_Datum(x,y, 'water'))
+							object_data.append(Object_Datum(x,y, 'water'))
+				elif num == 2:
+					#flood half the room?
+					for x in range(room.x1, room.x2+1):
+						for y in range(room.y1, room.y2+1):
+							cointoss = randint(0, 1)
+							if cointoss == 0:
+								object_data.append(Object_Datum(x,y, 'water'))
 
+
+
+			# If level is not waterlogged, add some water
+			else:
+				num = randint(0,6)
+				if num == 0:
+					#Put a medium puddle in the  room!
+					rad = randint(1,3)
+					(cent_x, cent_y) = room.center()
+					
+					for x in range(room.x1, room.x2+1):
+						for y in range(room.y1, room.y2+1):
+							if math.fabs(x - cent_x) +math.fabs(y-cent_y) <= rad:
+							#if math.sqrt((x-cent_x) ** 2 + (y - cent_y) ** 2) <= rad:
+								object_data.append(Object_Datum(x,y, 'water'))
+	
+					## flood the whole room! 
+					#for x in range(room.x1, room.x2+1):
+					#	for y in range(room.y1, room.y2+1):
+					#		object_data.append(Object_Datum(x,y, 'water'))
+					#		object_data.append(Object_Datum(x,y, 'water'))
+				elif num == 1:
+					#flood half the room?
+					for x in range(room.x1, room.x2+1):
+						for y in range(room.y1, room.y2+1):
+							cointoss = randint(0, 1)
+							if cointoss == 0:
+								object_data.append(Object_Datum(x,y, 'water'))
+	
 			# Let's also plant plants! In every room, for now.
 			if room.x1 < room.x2 -1 and room.y1 < room.y2 - 1:
 				x = randint(room.x1+1, room.x2-1)

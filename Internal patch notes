@@ -1,9 +1,9 @@
 --------------------------------------------------
-version  0.1.0.0  release date ???
+version  0.1.0.0  released 11th Feb 2018
 --------------------------------------------------
 
  - A  whole bunch of performance improvements; hopefully the game is no longer unbearably slow on the tutorial and larger levels
- - Added a new weapon, the sai, and a new enemy who wield it, the Rogue
+ - Added a new weapon, the sai, and a new enemy to wield it, the Rogue
  - Tweaked Rook behaviour to be less 'random'; Rooks can no longer attack while in water (Tridentors still can though, so watch out)
  - Far Reaching is finally implemented
  - New upgrades: Scraping The Barrel, New Weapon Smell, Rejuvenation, Instantaneous Strength
@@ -14,4 +14,5 @@ version  0.1.0.0  release date ???
  - Slight tweak to the default color scheme (hopefully Bomen show up better in the middle of big rooms now); let me know if there are still problems
  - A cool new color scheme for level 3! (no mechanical changes as of yet though)
  - A bunch of other bug fixes, tweaks, UI improvements, and stuff I've been meaning to fix.
+ - Also added version numbering and patch notes I guess
 

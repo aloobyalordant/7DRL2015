@@ -4381,6 +4381,15 @@ def next_level():
 	worldEntitiesList.append(player)
 	print( 'heyo (' + str(player.x) + ',' + str(player.y))	
 
+
+	# display some stuff about level effects maybe?
+	print ('word' + str(lev_set.effects))
+	if 'waterlogged' in lev_set.effects:
+		message('There must be a leak somewhere. This floor is waterlogged!', Color_Stat_Info)
+		
+
+
+
    	#make_map()  #create a fresh new level!
 	#objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
 							# Think it's enough to move this to after make_map(), and then use player's x and y
@@ -4699,6 +4708,7 @@ def translateCommands(msg):
 
 def pause_screen():
 	global test_save_message, gameSaveDataHandler, play_count
+	global game_level_settings
 
 	# print the pause screen I guess 
 	translated_console_set_default_background(pause_menu, default_background_color)
@@ -4715,10 +4725,24 @@ def pause_screen():
 	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 6, libtcod_BKGND_NONE, libtcod_CENTER,
 	VERSION_STRING)
 	
-	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+	# add some stuff about the level effects here, for now
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER, "Levels: ")
+	temp_lev_num = 0
+	current_line = 10		
+	for temp_lev_num in range (0, len(game_level_settings.bigArray)-1):
+		temp_lev_set = game_level_settings.bigArray[temp_lev_num]
+		translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, str(temp_lev_num) + " " + str(temp_lev_set.effects))
+		current_line += 1
+	#	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, str(temp_lev_num) + " " + str(temp_lev_set.enemy_probabilities))
+	#	current_line += 1
+	
+		
+
+	current_line += 1
+	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER,
 	'-------------------------------------------------------')
+	current_line += 2
 	# Add a list of what upgrades the player has
-	current_line = 10
 	for upgrade in upgrade_array:
 		if current_line < SCREEN_HEIGHT:
 			translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, 

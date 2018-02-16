@@ -41,7 +41,8 @@ class Level_Settings:
 			enemy_probabilities = enemy_probs,
 			#keys_required = len(self.bigArray),
 			keys_required = 3,		# special for the tutorial
-			initial_alarm_level = 0)
+			initial_alarm_level = 0
+			)
 
 		self.bigArray.append(lev0)
 
@@ -105,7 +106,8 @@ class Level_Settings:
 			enemy_probabilities = enemy_probs,
 			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
-			initial_alarm_level = 0	
+			initial_alarm_level = 0
+			#effects = ['waterlogged']	
 			)
 		self.bigArray.append(levsr)
 		
@@ -242,6 +244,53 @@ class Level_Settings:
 
 		self.bigArray.append(lev3)
 
+
+
+		# randomly add some effects to levels! Todo: maybe make effects more likely to carry between levels.
+		i = 2
+		while i < len(self.bigArray):
+#		for i in range (0, len(self.bigArray)-1):
+			temp_lev_set = self.bigArray[i]
+			# 1 in 4 chance of being wterlogged, for level 2 onwards
+			testnum =  randint( 0, 3)
+			print('doing ' + str(testnum))
+			if testnum == 0:
+				#temp_lev_set.effects.append('waterloooogged')
+				self.bigArray[i].effects = ['waterlogged']		# I have no idea why 'append' here breaks everything
+				print ('adding water' + str(self.bigArray[i].enemy_probabilities))
+			else:
+				print ('not watering' + str(self.bigArray[i].enemy_probabilities))
+			print(str(self.bigArray[i].effects))
+			i += 1
+
+#		for j in range (0, 5):
+#			print('hi' + str(j) + str(self.bigArray[j].effects))
+#
+#		temp_lev = self.get_setting(2)
+#		other_lev = self.get_setting(3)
+#		print('ha' + str(temp_lev.effects) + " vs " +  str(other_lev.effects))
+#		temp_lev.effects = ['waterlogged']
+#		print('ha' + str(temp_lev.effects) + " vs " +  str(other_lev.effects))
+#
+#
+#		for j in range (0, 5):
+#			print('ho' + str(j) + str(self.bigArray[j].effects))
+
+
+		#alter level settings based on effects, maybe?
+		for lev_set in self.bigArray:
+			if 'waterlogged' in lev_set.effects:
+				# take out swordsmen and add tridentors if level is waterlogged
+				swordsman_found = False
+				for (name, prob) in lev_set.enemy_probabilities:
+					if name == 'swordsman':
+						swordsman_found = True
+						lev_set.enemy_probabilities.remove((name,prob))
+						lev_set.enemy_probabilities.append(('tridentor', prob))
+				if not swordsman_found:
+					 # if we didn't find any swordsmen to replace, add a few tridentors anyway
+					lev_set.enemy_probabilities.append(('tridentor', 30))
+
 	def get_setting(self, level_num):
 		return self.bigArray[level_num]			
 		
@@ -250,7 +299,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1, color_scheme = 'lobbyTest'):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = []):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -275,5 +324,6 @@ class Level_Setting:
 		self.keys_required = keys_required
 		self.initial_alarm_level = initial_alarm_level
 		self.color_scheme = color_scheme
+		self.effects = effects
 	
 		
