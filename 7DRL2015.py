@@ -4323,8 +4323,8 @@ def next_level():
 		upgrade_array = []
 	
 		# give player a test upgrade?
-		new_upgrade = Get_Test_Upgrade()
-		upgrade_array.append(new_upgrade)
+		#new_upgrade = Get_Test_Upgrade()
+		#upgrade_array.append(new_upgrade)
 
 
 
@@ -4494,6 +4494,7 @@ def get_weapon_from_item(item, bonus_max_charge= 0):
 	return get_weapon_from_name(name, bonus_max_charge)
 
 def get_weapon_from_name(name, bonus_max_charge = 0):
+	global upgrade_array
 	if name == 'sword':
 		#new_weapon =  Weapon_Wierd_Sword()
 		new_weapon =  Weapon_Sword()
@@ -4523,6 +4524,11 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 
 	if new_weapon is not None:
 		new_weapon.max_charge = new_weapon.max_charge + bonus_max_charge
+
+		# upgrades might affect weapon stats
+		for power_up in upgrade_array:
+			if getattr(power_up, "affect_weapon_on_creation", None) is not None:
+				power_up.affect_weapon_on_creation(player, new_weapon)
 	
 	return new_weapon
 
@@ -6530,6 +6536,10 @@ while not translated_console_is_window_closed():
 		for power_up in upgrade_array:
 			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
 				power_up.upgrade_player_stats_once(player)
+
+
+			if getattr(power_up, "upgrade_player_weapon_once", None) is not None:
+				power_up.upgrade_player_weapon_once(player, player_weapon)
 
 			if getattr(power_up, "update_based_on_level", None) is not None:
 				power_up.update_based_on_level(dungeon_level)

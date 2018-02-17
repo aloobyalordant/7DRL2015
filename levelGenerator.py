@@ -611,7 +611,8 @@ class Level_Generator:
 
 
 		# Here is a thing in a terrible place: delete water that is next to security drones
-		if dungeon_level > 0:
+		# don't do it in waterlogged levels though?  and hopefully the tridentors will help you take them out if needs be?
+		if dungeon_level > 0 and 'waterlogged' not in lev_set.effects:
 			water_removal_list = []
 			for od1 in object_data:
 				for od2 in object_data:

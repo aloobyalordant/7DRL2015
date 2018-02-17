@@ -424,10 +424,10 @@ class InstantaneousStrength(PowerUp):
 			return 0
 
 
-class DeathsDoor(PowerUp):
+class DareDevil(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Death's Door", tech_description = "+1 strength when on 1 max health", verbose_description = "A blessing of strength on those one false move from the afterlife", code='D.D')
+		PowerUp.__init__(self, name = "Daredevil", tech_description = "+1 strength when on 1 max health", verbose_description = "A blessing of strength on those one false move from the afterlife", code='D.D')
 
 	# Activates if player weapon is on 10 or less durability
 	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
@@ -448,6 +448,23 @@ class DeathsDoor(PowerUp):
 			return 0
 
 
+# +10 durability to new weapons
+class Fortification(PowerUp):
+	def __init__(self):
+		PowerUp.__init__(self, name = "Fortification", tech_description = "+10 durability to weapons", verbose_description = "Your weapons will last longer", code='Frt')
+		self.first_boost_done = False
+
+
+
+	def upgrade_player_weapon_once(self,player, weapon):
+		if self.first_boost_done == False:
+			weapon.durability += 10
+			self.status = 'active'
+			self.first_boost_done = True
+
+	def affect_weapon_on_creation(self, player, weapon):
+		weapon.durability += 10
+		self.status = 'active'
 
 def Get_Random_Upgrade():
 	# create list of possible upgrades
@@ -464,7 +481,8 @@ def Get_Random_Upgrade():
 	upgrade_list.append(NewWeaponSmell())
 	upgrade_list.append(Rejuvenation())
 	upgrade_list.append(InstantaneousStrength())
-	upgrade_list.append(DeathsDoor())
+	upgrade_list.append(DareDevil())
+	upgrade_list.append(Fortification())
 
 
 	# return a random upgrade from list
@@ -475,5 +493,5 @@ def Get_Random_Upgrade():
 	#return PersonalSpace()					#return this particular thing, for testing purposes
 
 def Get_Test_Upgrade():
-	return DeathsDoor()				#return this particular thing, for testing purposes	
+	return Fortification()				#return this particular thing, for testing purposes	
 
