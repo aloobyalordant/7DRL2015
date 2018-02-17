@@ -424,6 +424,29 @@ class InstantaneousStrength(PowerUp):
 			return 0
 
 
+class DeathsDoor(PowerUp):
+
+	def __init__(self):
+		PowerUp.__init__(self, name = "Death's Door", tech_description = "+1 strength when on 1 max health", verbose_description = "A blessing of strength on those one false move from the afterlife", code='D.D')
+
+	# Activates if player weapon is on 10 or less durability
+	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
+
+		if  player.fighter.max_hp - player.fighter.wounds <= 1:
+			self.activated = True
+		else:
+			self.activated = False
+
+
+	def affect_strength_at_attack_choice(self):
+		if self.activated:
+			self.activated = False			# probably a good safety tip is to always reset activated status
+			print("+1 strength from " + str(self.name))
+			self.status = 'active'
+			return 1
+		else:
+			return 0
+
 
 
 def Get_Random_Upgrade():
@@ -441,6 +464,7 @@ def Get_Random_Upgrade():
 	upgrade_list.append(NewWeaponSmell())
 	upgrade_list.append(Rejuvenation())
 	upgrade_list.append(InstantaneousStrength())
+	upgrade_list.append(DeathsDoor())
 
 
 	# return a random upgrade from list
@@ -451,5 +475,5 @@ def Get_Random_Upgrade():
 	#return PersonalSpace()					#return this particular thing, for testing purposes
 
 def Get_Test_Upgrade():
-	return InstantaneousStrength()				#return this particular thing, for testing purposes	
+	return DeathsDoor()				#return this particular thing, for testing purposes	
 

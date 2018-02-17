@@ -107,7 +107,6 @@ class Level_Settings:
 			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = 0
-			#effects = ['waterlogged']	
 			)
 		self.bigArray.append(levsr)
 		
@@ -168,7 +167,8 @@ class Level_Settings:
 			number_sec_drones = len(self.bigArray),
 			keys_required = len(self.bigArray),
 			initial_alarm_level = len(self.bigArray),
-			color_scheme = 'coldTest'
+			color_scheme = 'coldTest',
+			effects = ['cold']	
 			)
 		
 		self.bigArray.append(lev3)
@@ -255,12 +255,31 @@ class Level_Settings:
 			testnum =  randint( 0, 3)
 			print('doing ' + str(testnum))
 			if testnum == 0:
-				#temp_lev_set.effects.append('waterloooogged')
-				self.bigArray[i].effects = ['waterlogged']		# I have no idea why 'append' here breaks everything
+				effects_copy = list(self.bigArray[i].effects)
+				effects_copy.append('waterlogged')
+				self.bigArray[i].effects = effects_copy
 				print ('adding water' + str(self.bigArray[i].enemy_probabilities))
 			else:
 				print ('not watering' + str(self.bigArray[i].enemy_probabilities))
 			print(str(self.bigArray[i].effects))
+
+
+
+			# 1 in 5 chance of having large rooms, another 1 in of having small rooms for level 2 onwards
+			testnum =  randint( 0, 4)
+			print('doing ' + str(testnum))
+			if testnum == 0:
+				effects_copy = list(self.bigArray[i].effects)
+				effects_copy.append('large rooms')
+				self.bigArray[i].effects = effects_copy
+			elif testnum == 1:
+				effects_copy = list(self.bigArray[i].effects)
+				effects_copy.append('small rooms')
+				self.bigArray[i].effects = effects_copy
+
+
+
+
 			i += 1
 
 #		for j in range (0, 5):
@@ -290,6 +309,13 @@ class Level_Settings:
 				if not swordsman_found:
 					 # if we didn't find any swordsmen to replace, add a few tridentors anyway
 					lev_set.enemy_probabilities.append(('tridentor', 30))
+
+			if 'large rooms' in lev_set.effects:
+				lev_set.room_max_size = 20
+				lev_set.room_min_size = 15
+			elif 'small rooms' in lev_set.effects:
+				lev_set.room_max_size = 7
+				lev_set.room_min_size = 4
 
 	def get_setting(self, level_num):
 		return self.bigArray[level_num]			

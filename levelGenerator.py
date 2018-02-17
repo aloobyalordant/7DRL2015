@@ -618,9 +618,12 @@ class Level_Generator:
 					if od2.x >= od1.x-1 and od2.x <= od1.x + 1 and od2.y >= od1.y-1 and od2.y <= od1.y+1 and od2.name == 'water' and od1.name == 'security drone':
 						water_removal_list.append(od2)
 			for od in water_removal_list:
-				print("REMOVING WATER")		
-				object_data.remove(od)
-
+				print("REMOVING WATER")	
+				try:	
+					object_data.remove(od)
+				
+				except ValueError:
+					print('')
 
 		return Level_Data(map, background_map, player_start_x, player_start_y, object_data, nearest_points_array, center_points, spawn_points, elevators, room_adjacencies)
 

@@ -4323,8 +4323,8 @@ def next_level():
 		upgrade_array = []
 	
 		# give player a test upgrade?
-		#new_upgrade = Get_Test_Upgrade()
-		#upgrade_array.append(new_upgrade)
+		new_upgrade = Get_Test_Upgrade()
+		upgrade_array.append(new_upgrade)
 
 
 
@@ -4386,6 +4386,8 @@ def next_level():
 	print ('word' + str(lev_set.effects))
 	if 'waterlogged' in lev_set.effects:
 		message('There must be a leak somewhere. This floor is waterlogged!', Color_Stat_Info)
+	if 'cold' in lev_set.effects:
+		message('Brrrr! It\'s so cold! You gain energy slowly', Color_Stat_Info)
 		
 
 
@@ -5897,6 +5899,10 @@ libtcod.set_fps(30)
 
 internal_loop_count = 0
 
+
+# hear is a thing to keep track of yay
+cold_energy_parity = 0
+
 # Main loop!
 while not translated_console_is_window_closed():
 
@@ -6001,6 +6007,7 @@ while not translated_console_is_window_closed():
 		player_got_hit = False
 		player_just_jumped = False
 		number_hit_by_player = 0
+
 
 		if nearest_points_array[player.x][player.y] is not None:
 			nearest_center_to_player =  nearest_points_array[player.x][player.y]
@@ -6815,7 +6822,18 @@ while not translated_console_is_window_closed():
 		# refresh the player's energy
 		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
 		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False):
+
+
 			recharge_rate = 1  			#by default
+
+			# if it's cold, recharging happens at half usual speed.
+			if 'cold' in lev_set.effects:	
+				if cold_energy_parity == 0:
+					cold_energy_parity = 1
+				else:
+					cold_energy_parity = 0
+				recharge_rate = cold_energy_parity
+
 			# bonus recharge from upgrades:
 			for power_up in upgrade_array:
 				if  getattr(power_up, "affect_rate_of_energy_recharge", None) is not None:
