@@ -74,23 +74,43 @@ class Level_Settings:
 
 
 		# randomly decide that out of Bomen, Rooks and Rogues, one of them will appear in level 1, and the other 2 will appear in level 2
-		num =  randint( 0, 1)
-		if num == 0:
-		#	enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
-		#	enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
-		#elif num == 0:
-			enemyprobs1 = [('swordsman', 50), ('boman', 50)]
-			enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
-		else:
-			enemyprobs1 = [('swordsman', 50), ('rook', 50)]
-			enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
+		#num =  randint( 0, 1)
+		#if num == 0:
+		##	enemyprobs1 = [('swordsman', 50), ('rogue', 30)]
+		##	enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50)]
+		##elif num == 0:
+		#	enemyprobs1 = [('swordsman', 50), ('boman', 50)]
+		#	enemyprobs2 =  [('swordsman', 50),  ('rook', 50),  ('rogue', 30)]
+		#else:
+		#	enemyprobs1 = [('swordsman', 50), ('rook', 50)]
+		#	enemyprobs2 =  [('swordsman', 50),  ('rogue', 30), ('boman', 50)]
 
 		# temp changing the random bit because i want to test rooks
 		#enemyprobs1 = [('swordsman', 50), ('rook', 50)]
 		#enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
 
-		#enemyprobs1 = [('swordsman', 10), ('boman', 10), ('rook', 10), ('rogue', 10), ('ninja', 10), ('samurai', 10), ('axe maniac', 10), ('nunchuck fanatic', 10), ('tridentor', 10), ('wizard', 10)]
-		#enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
+	#	enemyprobs1 = [('albatross', 10), ('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
+	#	enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
+
+
+
+		# Let's try having a set of the new 'basic' enemies, and then select three of them at random for each level
+		enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
+		enemyprobs1 = []
+		for i in range (0,2):
+			j = randint( 0, len(enemies_probs_set)-1)
+			enemy_choice = enemies_probs_set[j]
+			enemyprobs1.append(enemy_choice)
+			enemies_probs_set.remove(enemy_choice)
+		enemyprobs1.append(('albatross', 10))
+		enemies_probs_set = [('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
+		enemyprobs2 = []
+		for i in range (0,2):
+			j = randint( 0, len(enemies_probs_set)-1)
+			enemy_choice = enemies_probs_set[j]
+			enemyprobs2.append(enemy_choice)
+			enemies_probs_set.remove(enemy_choice)
+		enemyprobs2.append(('albatross', 10))
 
 
 		# A level with small rooms and few enemies

@@ -94,6 +94,30 @@ class Generic_Weapon:
 		self.just_attacked = False
 
 
+
+
+
+
+def create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos):
+	return_array = []
+	#changed 'xrange' to 'range' for python3
+	for j in range(len(temp_array)):
+		for i in range(len(temp_array[j])):
+			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
+			if (temp_array[j][i] > 0):
+				return_array.append((i-ava_x_pos,j-ava_y_pos,temp_array[j][i]))
+	return return_array
+
+
+
+
+
+
+
+
+
+
+
 class Weapon_Staff(Generic_Weapon):
 
 	def __init__(self):
@@ -2412,15 +2436,413 @@ class Weapon_Strawhands(Generic_Weapon):
 
 
 
-def create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos):
-	return_array = []
-	#changed 'xrange' to 'range' for python3
-	for j in range(len(temp_array)):
-		for i in range(len(temp_array[j])):
-			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
-			if (temp_array[j][i] > 0):
-				return_array.append((i-ava_x_pos,j-ava_y_pos,temp_array[j][i]))
-	return return_array
+
+
+class Weapon_Shiv(Generic_Weapon):
+	# New thing: like a sword, but lighter
+	def __init__(self):
+		Generic_Weapon.__init__(self,  'shiv', 1, 1, 0)
+		default_usage = self.default_usage
+
+		
+		command = ATTCKUPLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKUP
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,1,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+
+class Weapon_Broom(Generic_Weapon):
+	# New thing: basically the cardinal directions of the bo staff
+
+	def __init__(self):
+		Generic_Weapon.__init__(self, 'broom', 1, 1, 1)
+		default_usage = self.default_usage
+
+		command = ATTCKUP
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,1,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,1,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+
+# new thing: basically the diagonal directions of the bo staff
+class Weapon_Pike(Generic_Weapon):
+
+	def __init__(self):
+		Generic_Weapon.__init__(self, 'pike', 1, 1, 1)
+		default_usage = self.default_usage
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,0,1],
+				  [0,0,0,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,1,0],
+				  [0,0,0,0,1]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,0,0,0],
+				  [1,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKUPLEFT
+		temp_array =	 [[1,0,0,0,0],
+				  [0,1,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+	######################
+
+
+
+class Weapon_Halberd(Generic_Weapon):
+	# A long range weapon, like a lighter but less flexible axe? can attack 3 spaces at distance but can't do anything up close
+	def __init__(self):
+		Generic_Weapon.__init__(self, 'halberd', 1, 1, 1)
+		default_usage = self.default_usage
+	
+		self.command_items = []
+		
+		command = ATTCKUP
+		temp_array =	 [[0,1,1,1,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,1],
+				  [0,0,0,0,1],
+				  [0,0,0,0,1],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+		command = ATTCKUPRIGHT
+		temp_array =	 [[0,0,0,1,1],
+				  [0,0,0,0,1],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+		command = ATTCKDOWNRIGHT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,1],
+				  [0,0,0,1,1]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWN
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+		command = ATTCKDOWNALT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,1,1,1,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+
+
+
+
+		command = ATTCKLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [1,0,0,0,0],
+				  [1,0,0,0,0],
+				  [1,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKUPLEFT
+		temp_array =	 [[1,1,0,0,0],
+				  [1,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+		command = ATTCKDOWNLEFT
+		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [0,0,0,0,0],
+				  [1,0,0,0,0],
+				  [1,1,0,0,0]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_attack_data = create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos)
+		self.command_items.append((command, abstract_attack_data, default_usage))
+
+#############
 
 
 

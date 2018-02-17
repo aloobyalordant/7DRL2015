@@ -7,7 +7,7 @@ import textwrap
 import random
 #import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
 from random import randint
-from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power
+from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power, Weapon_Shiv, Weapon_Broom, Weapon_Pike, Weapon_Halberd
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
@@ -1108,7 +1108,8 @@ class BasicMonster:
 			if obj.plant is not None:
 				plant_here = True
 				break
-		if plant_here and monster.fighter.hp < monster.fighter.max_hp:
+		# bit of a cheat here - make it so enemies only pick up fruit when you can see them.
+		if plant_here and monster.fighter.hp < monster.fighter.max_hp and fov_map.fov[monster.x, monster.y]:
 			self.state = 'hungry'
 		elif fov_map.fov[monster.x, monster.y]:
 			self.state = 'pursue-visible-target'
@@ -3507,6 +3508,8 @@ def create_monster(x,y, name, guard_duty = False):
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
+
+
 	elif name == 'stupid swordsman':
 		#create an orc
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
@@ -3529,6 +3532,50 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+
+	elif name == 'albatross':
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
+		ai_component = BasicMonster(weapon = Weapon_Shiv(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'A', 'albatross', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
+	elif name == 'bustard':
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'B', 'bustard', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
+	elif name == 'crane':
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
+		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'C', 'crane', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
+	elif name == 'dove':
+		#create a troll
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
+		ai_component = Boman_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'D', 'dove', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
+
+	elif name == 'eagle':
+		#create a guy with an axe!
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
+		ai_component = BasicMonster(weapon = Weapon_Halberd(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'E', 'eagle', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
+	elif name == 'falcon':
+		#create a guy with an axe!
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		ai_component = BasicMonster(weapon = Weapon_Sai(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'F', 'falcon', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+
 
 #	elif name == 'stupid rook':
 #		#create a rook! That's a guy with a spear who only moves in four directions
@@ -4517,6 +4564,14 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 		new_weapon =  Weapon_Hammer()
 	elif name == 'trident':
 		new_weapon =  Weapon_Trident()
+	elif name == 'broom':
+		new_weapon =  Weapon_Broom()
+	elif name == 'pike':
+		new_weapon =  Weapon_Pike()
+	elif name == 'halberd':
+		new_weapon =  Weapon_Halberd()
+	elif name == 'shiv':
+		new_weapon =  Weapon_Shiv()
 	elif name == 'ring of power':
 		new_weapon =  Weapon_Ring_Of_Power()
 	else:
@@ -4581,6 +4636,14 @@ def get_item_from_name(x,y, name):
 		char = 'h'
 	elif name == 'trident':
 		char = 't'
+	elif name == 'broom':
+		char = 'b'
+	elif name == 'pike':
+		char = 'p'
+	elif name == 'halberd':
+		char = 'h'
+	elif name == 'shiv':
+		char = 's'
 	elif name == 'ring of power':
 		char = 'o'
 	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True)
