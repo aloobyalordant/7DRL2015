@@ -5101,7 +5101,7 @@ def create_GUI_panel():
 		panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
 
 	# list some attacks out.
-	attack_list = str(player_weapon.command_list)
+	#attack_list = str(player_weapon.command_list)
 	#libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Attacks:")
 	panel.draw_str(attack_panel_x, 3, "Attacks:", fg=attack_panel_default_color, bg=None)
 	## set colors based on weapon durability

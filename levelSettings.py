@@ -89,6 +89,9 @@ class Level_Settings:
 		#enemyprobs1 = [('swordsman', 50), ('rook', 50)]
 		#enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
 
+		#enemyprobs1 = [('swordsman', 10), ('boman', 10), ('rook', 10), ('rogue', 10), ('ninja', 10), ('samurai', 10), ('axe maniac', 10), ('nunchuck fanatic', 10), ('tridentor', 10), ('wizard', 10)]
+		#enemyprobs2 =  [('swordsman', 50), ('boman', 50), ('rook', 50), ('rogue', 30)]
+
 
 		# A level with small rooms and few enemies
 		#enemy_probs = []
