@@ -1302,6 +1302,7 @@ class Boman_AI(BasicMonster):
 				if temp_diagonality < opt_diagonality:
 					shorter_list = []
 					shorterlist.append((dx,dy))
+					opt_diagonality = temp_diagonality		#hey did I just forget to add this before?
 				elif temp_diagonality == opt_diagonality:
 					shorterlist.append((dx,dy))
 			if len(shorterlist) > 0 :
@@ -1312,6 +1313,154 @@ class Boman_AI(BasicMonster):
 				print('oh no index error!!' + str(len(move_shortlist)) + ', ' + str(move_shortlist))
 
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+#Like the Boman AI, but more so.Tryand move diagonally, but AVOID GETTING NON-DIAGONALLY ADJACENT TO PLAYER. Or at least move if that happens.
+class Dove_AI(BasicMonster):
+	
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+
+
+		xdiff = player.x - monster.x
+		ydiff = player.y - monster.y
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+
+
+
+
+		# otherwise, walk towards the player if possible.
+		#elif monster.distance_to(player) > 2: 	
+		elif math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2:
+			
+			#take list of possible good moves, then prioritise diagonal ones
+			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True)
+			shorterlist = []
+			for (dx,dy) in  move_shortlist:
+				if dx != 0 and dy != 0:
+					shorterlist.append((dx,dy))
+			# are there diagonal moves? then let's say will do one of those.
+			if len(shorterlist) > 0 :
+				move_shortlist = shorterlist
+
+			#Furthermore, try to restrict to moves that will let you approach the player from a diagonal direction.
+			#TODO NOTE: This isn't working quite as intended yet
+			opt_diagonality =  max(math.fabs(monster.x - player.x),math.fabs(monster.y - player.y))
+			shorterlist = []
+			for (dx,dy) in  move_shortlist:
+				#how far away from being 'on the diagonal' is this move?
+				temp_diagonality = math.fabs(math.fabs(monster.x + dx - player.x) - math.fabs(monster.y + dy - player.y))
+				# restrict to moves that are closest to being 'on the diagonal'
+				if temp_diagonality < opt_diagonality:
+					shorter_list = []
+					shorterlist.append((dx,dy))
+					opt_diagonality = temp_diagonality		#hey did I just forget to add this before?
+				elif temp_diagonality == opt_diagonality:
+					shorterlist.append((dx,dy))
+			if len(shorterlist) > 0 :
+				move_shortlist = shorterlist
+			try:
+				(dx,dy) = random.choice(tuple(move_shortlist))
+			except IndexError:
+				print('oh no index error!!' + str(len(move_shortlist)) + ', ' + str(move_shortlist))
+
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+		else:	#if close to player, movement depends on exact positions. but bascially we're trying to line up a diagonal attack.		# movement will be biased towards the entry in this table corresponding to your current position relative to player
+
+
+			clockwise_prefs =      [[( 0, 0),( 0, 1),(-1, 1),( 0, 1),( 0, 0)],
+						[( 1, 0),( 0, 0),(-1, 0),( 0, 0),(-1, 0)],
+						[( 1, 1),( 0, 1),( 0, 0),( 0,-1),(-1,-1)],
+						[( 1, 0),( 0, 0),( 1, 0),( 0, 0),(-1, 0)],
+						[( 0, 0),( 0,-1),( 1,-1),( 0,-1),( 0, 0)]]
+
+			anticlockwise_prefs =  [[( 0, 0),( 0, 1),( 1, 1),( 0, 1),( 0, 0)],
+						[( 1, 0),( 0, 0),( 1, 0),( 0, 0),(-1, 0)],
+						[( 1,-1),( 0,-1),( 0, 0),( 0, 1),(-1, 1)],
+						[( 1, 0),( 0, 0),(-1, 0),( 0, 0),(-1, 0)],
+						[( 0, 0),( 0,-1),(-1,-1),( 0,-1),( 0, 0)]]
+			movement_preferences = clockwise_prefs
+			secondary_preferences = anticlockwise_prefs
+			# commenting out because whatever, let the enemies that have a bias. similar reasoning to making rooks less random.
+			#num =  randint( 0, 1)
+			#if num == 0:
+			#	movement_preferences = anticlockwise_prefs
+			#	secondary_preferences = clockwise_prefs
+
+			(dx,dy) = movement_preferences[-ydiff+2][-xdiff+2]
+			print("DOVE: based on ydiff " + str(ydiff) + " and xdiff " + str(xdiff) + ", I want to do (" + str(dx) + "," + str(dy) + ")")
+			#print "distance (" + str(xdiff) + "," + str(ydiff) + ") leading to movement (" + str(dx) + "," + str(dy) + ")."
+			if not is_blocked(monster.x + dx, monster.y + dy):
+			#	print "huh"
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			else:
+				(dx,dy) = secondary_preferences[-ydiff+2][-xdiff+2]
+				if not is_blocked(monster.x + dx, monster.y + dy):
+				#	print "huh"
+					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+				else:	# for now, just run towards player I guess
+					print("DOVEBLOCKD")
+					(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
+					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+
+
+# Like the basic AI, but the eagle attacks towards the player when standing next to them, even though the player isn't in range for that attack
+class Eagle_AI(BasicMonster):
+
+	# returns what possible attacks you can make that would hit the player.
+	# This is a little different for the eagle - attack in direction of player if they are right next to you, even though your weapon doesn't hit like that.
+	def possibleAttackList(self, monster, decider):
+		attackList = []
+		# Is the player alive and do you have enough 'weapon charge'?
+		# AND are you not in water?
+		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage and not monster.fighter.in_water:
+			# figure out the vector that the player is from you
+			dist_x = self.target_x  - monster.x
+			dist_y = self.target_y  - monster.y
+
+			# ok, now see if any of your attacks could hit the player
+			# TODO: optimising the weapon code to avoid all these loops might be nice some time
+			for (temp_command, temp_abstract_attack_data, temp_usage) in self.weapon.command_items:
+				for (temp_x,temp_y, temp_damage) in temp_abstract_attack_data:
+					if temp_x == dist_x and temp_y == dist_y and temp_damage > 0:	#then this attack command could work
+						# here's a bad hack to get round a bad hack
+						# (avoid giving extra weight to down attacks just because there's two buttons for it)
+						if temp_command != ATTCKDOWNALT:  
+							attackList.append(temp_command)
+							break
+
+			# extra thing for eagle - add attacks toward adjacent square if player is there
+			if dist_x == 1 and dist_y == 1:
+				attackList.append(ATTCKDOWNRIGHT)
+			elif dist_x == 0 and dist_y == 1:
+				attackList.append(ATTCKDOWN)
+			elif dist_x == -1 and dist_y == 1:
+				attackList.append(ATTCKDOWNLEFT)
+			elif dist_x == -1 and dist_y == 0:
+				attackList.append(ATTCKLEFT)
+			elif dist_x == -1 and dist_y == -1:
+				attackList.append(ATTCKUPLEFT)
+			elif dist_x == 0 and dist_y == -1:
+				attackList.append(ATTCKUP)
+			elif dist_x == 1 and dist_y == -1:
+				attackList.append(ATTCKUPRIGHT)
+			elif dist_x == 1 and dist_y == 0:
+				attackList.append(ATTCKRIGHT)
+
+		return attackList
 
 
 
@@ -3557,14 +3706,14 @@ def create_monster(x,y, name, guard_duty = False):
 	elif name == 'dove':
 		#create a troll
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
-		ai_component = Boman_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
+		ai_component = Dove_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'D', 'dove', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'eagle':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
-		ai_component = BasicMonster(weapon = Weapon_Halberd(), guard_duty = guard_duty)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
+		ai_component = Eagle_AI(weapon = Weapon_Halberd(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'E', 'eagle', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component)
 

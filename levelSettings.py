@@ -103,6 +103,7 @@ class Level_Settings:
 			enemyprobs1.append(enemy_choice)
 			enemies_probs_set.remove(enemy_choice)
 		enemyprobs1.append(('albatross', 10))
+		enemyprobs1.append(('eagle', 10))
 		enemies_probs_set = [('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
 		enemyprobs2 = []
 		for i in range (0,2):
@@ -111,6 +112,7 @@ class Level_Settings:
 			enemyprobs2.append(enemy_choice)
 			enemies_probs_set.remove(enemy_choice)
 		enemyprobs2.append(('albatross', 10))
+		enemyprobs1.append(('eagle', 10))
 
 
 		# A level with small rooms and few enemies
