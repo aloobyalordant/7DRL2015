@@ -95,7 +95,7 @@ class Level_Settings:
 
 
 		# Let's try having a set of the new 'basic' enemies, and then select three of them at random for each level
-		enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
+		enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
 		enemyprobs1 = []
 		for i in range (0,2):
 			j = randint( 0, len(enemies_probs_set)-1)
@@ -103,7 +103,7 @@ class Level_Settings:
 			enemyprobs1.append(enemy_choice)
 			enemies_probs_set.remove(enemy_choice)
 		enemyprobs1.append(('albatross', 10))
-		enemyprobs1.append(('eagle', 10))
+		#enemyprobs1.append(('eagle', 10))
 		enemies_probs_set = [('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
 		enemyprobs2 = []
 		for i in range (0,2):
@@ -112,7 +112,7 @@ class Level_Settings:
 			enemyprobs2.append(enemy_choice)
 			enemies_probs_set.remove(enemy_choice)
 		enemyprobs2.append(('albatross', 10))
-		enemyprobs1.append(('eagle', 10))
+		#enemyprobs1.append(('eagle', 10))
 
 
 		# A level with small rooms and few enemies
@@ -129,9 +129,13 @@ class Level_Settings:
 			max_room_monsters = 1,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
-			number_sec_drones = len(self.bigArray),
+			number_sec_drones = randint(1,3) + randint(1,3),	#2d3 drones? let's see #len(self.bigArray),
 			keys_required = len(self.bigArray),
-			initial_alarm_level = 0
+			number_keys = 3,
+			number_shrines = 4,
+			guard_probability = (1,25),			# 1 in 25 chance of a given space having a guard on
+			initial_alarm_level = 0,
+			door_probability = (7,8)
 			)
 		self.bigArray.append(levsr)
 		
@@ -149,7 +153,8 @@ class Level_Settings:
 			max_room_monsters = 1,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
-			number_sec_drones = len(self.bigArray),
+			number_sec_drones = 5, # len(self.bigArray),
+			number_keys = 3,
 			keys_required = len(self.bigArray),
 			initial_alarm_level = len(self.bigArray)
 			)
@@ -256,6 +261,7 @@ class Level_Settings:
 		enemy_probs.append(('swordsman', 10))
 		enemy_probs.append(('ninja', 10))
 		last_lev = Level_Setting(
+			level_type = 'modern',
 			room_max_size = 20,
 			room_min_size = 15,
 			max_rooms = 10,
@@ -350,7 +356,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, keys_required = 0, initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = []):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, number_keys = 0, keys_required = 0, number_shrines = 1, guard_probability = (1,25), initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = [], door_probability = (1,8)):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -372,9 +378,13 @@ class Level_Setting:
 			total_prob += prob
 		self.total_enemy_prob = total_prob
 		self.number_sec_drones = number_sec_drones
+		self.number_keys = number_keys
 		self.keys_required = keys_required
+		self.number_shrines = number_shrines
+		self.guard_probability = guard_probability
 		self.initial_alarm_level = initial_alarm_level
 		self.color_scheme = color_scheme
 		self.effects = effects
+		self.door_probability = door_probability # prob of (a,b) means individual rooms have an a in b chance of having doors
 	
 		

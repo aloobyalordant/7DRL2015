@@ -402,212 +402,227 @@ class Level_Generator:
 				#objects.append(boss_monster)
 				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
 
-			self.add_security_drones(map, lev_set, dungeon_level, object_data, rooms, elevators, lev_set.number_sec_drones)
+
+			# Add security drones to rooms, as per the level settings
+			self.add_drones_and_keys(map, lev_set, dungeon_level, object_data, rooms, elevators)
 	
 
+		#	# Add shrines to rooms, as per level settings
+			self.add_shrines(map, lev_set, dungeon_level, object_data, rooms, elevators)
+	
+		#	# Add enemies to rooms
+			self.add_guards(map, lev_set, dungeon_level, object_data, rooms, elevators)
 
-		#elif lev_set.level_type == 'modern':
-		#elif lev_set.level_type == 'classic':
-		elif 1 == 0:
-			# okay, maybe let's get some larger rooms going that can overlap?
-	
-			# so for now, this is the code for classic mode, with the code for checking room overlaps removed
-			for r in range(room_range):
-				#random width and height
-				w = randint(room_min_size, room_max_size)
-				h = randint(room_min_size, room_max_size)
-				#random position without going out of the boundaries of the map
-				x = randint(0, map_width - w - 1)
-				y = randint(0, map_height - h - 1)
-		
-				#"Rect" class makes rectangles easier to work with
-				new_room = Rect(x, y, w, h)
-		 
-	
-		
-				if True:
-					#this means there are no intersections, so this room is valid
-		
-					#"paint" it to the map's tiles
-					self.create_room(new_room, map, center_points, nearest_points_array)
-					#add some contents to this room, such as monsters
-					self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
-		
-					#center coordinates of new room, will be useful later
-					(new_x, new_y) = new_room.center()
-					if num_rooms == 0:
-						#this is the first room, where the player starts at
-						player_start_x = new_x
-						player_start_y = new_y
-					else:
-						#all rooms after the first:
-						#connect it to the previous room with a tunnel
-		
-						#center coordinates of previous room
-						(prev_x, prev_y) = rooms[num_rooms-1].center()
-		
-						#draw a coin (random number that is either 0 or 1)
-						if randint(0, 1) == 1:
-							#first move horizontally, then vertically
-							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-						else:
-							#first move vertically, then horizontally
-							self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-							self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-		
-					#finally, append the new room to the list
-					rooms.append(new_room)
-					num_rooms += 1
-	
-			#create_segment()
-
+		#	# Add other objects to rooms,
+			self.add_objects(map, lev_set, dungeon_level, object_data, rooms, elevators)
 			
-			#create stairs at the center of the last room
-			#stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-			#objects.append(stairs)
-			#stairs.send_to_back()  #so it's drawn below the monsters
 			
-			#object_data.append(Object_Datum(new_x,new_y,'stairs'))
-			if lev_set.final_level is not True:
-				object_data.append(Object_Datum(new_x,new_y, 'security drone'))
-
-		
-			if lev_set.boss is not None:
-				#boss_monster = create_monster(new_x,new_y,lev_set.boss)
-				#objects.append(boss_monster)
-				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
-	
-	
-			# now, append some elevators?
-			num_norm_rooms = num_rooms
-			elev1 = Rect(5, 5, 4, 4)
-			elev2 = Rect(max_map_width-5, 5, 4, 4)
-			elev3 = Rect(max_map_width-5, max_map_height -5, 4, 4)
-			elev4 = Rect(5, max_map_height - 5, 4, 4)
-			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
-			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
-			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
-			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
-			(new_x, new_y) = elev1.center()
-			num = randint(0, num_norm_rooms-1)
-			(prev_x, prev_y) = rooms[num].center()
-				#draw a coin (random number that is either 0 or 1)
-			if randint(0, 1) == 1:
-				#first move horizontally, then vertically
-				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-			else:
-				#first move vertically, then horizontally
-				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-			(new_x, new_y) = elev2.center()
-			num = randint(0, num_norm_rooms-1)
-			(prev_x, prev_y) = rooms[num].center()
-				#draw a coin (random number that is either 0 or 1)
-			if randint(0, 1) == 1:
-				#first move horizontally, then vertically
-				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-			else:
-				#first move vertically, then horizontally
-				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-			(new_x, new_y) = elev3.center()
-			num = randint(0, num_norm_rooms-1)
-			(prev_x, prev_y) = rooms[num].center()
-				#draw a coin (random number that is either 0 or 1)
-			if randint(0, 1) == 1:
-				#first move horizontally, then vertically
-				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-				self.create_v_tunnel(prev_y, new_y, new_x, map, nearest_points_array, center_points)
-			else:
-				#first move vertically, then horizontally
-				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-			(new_x, new_y) = elev4.center()
-			num = randint(0, num_norm_rooms-1)
-			(prev_x, prev_y) = rooms[num].center()
-				#draw a coin (random number that is either 0 or 1)
-			if randint(0, 1) == 1:
-				#first move horizontally, then vertically
-				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-			else:
-				#first move vertically, then horizontally
-				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-				# ok that was a bunch of code to append some elevators! Let's see how it goes
-	
-	
-	
-		else:		# 'classic' mode
-	
-			for r in range(room_range):
-				#random width and height
-				w = randint(room_min_size, room_max_size)
-				h = randint(room_min_size, room_max_size)
-				#random position without going out of the boundaries of the map
-				x = randint(0, map_width - w - 1)
-				y = randint(0, map_height - h - 1)
-		
-				#"Rect" class makes rectangles easier to work with
-				new_room = Rect(x, y, w, h)
-		 
-				#run through the other rooms and see if they intersect with this one
-				failed = False
-				for other_room in rooms:
-					if new_room.intersect(other_room):
-						failed = True
-						break
-		
-				if not failed:
-					#this means there are no intersections, so this room is valid
-		
-					#"paint" it to the map's tiles
-					self.create_room(new_room, map, center_points, nearest_points_array)
-					#add some contents to this room, such as monsters
-					self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
-		
-					#center coordinates of new room, will be useful later
-					(new_x, new_y) = new_room.center()
-					if num_rooms == 0:
-						#this is the first room, where the player starts at
-						player_start_x = new_x
-						player_start_y = new_y
-					else:
-						#all rooms after the first:
-						#connect it to the previous room with a tunnel
-		
-						#center coordinates of previous room
-						(prev_x, prev_y) = rooms[num_rooms-1].center()
-		
-						#draw a coin (random number that is either 0 or 1)
-						if randint(0, 1) == 1:
-							#first move horizontally, then vertically
-							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
-							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
-						else:
-							#first move vertically, then horizontally
-							self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
-							self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
-		
-					#finally, append the new room to the list
-					rooms.append(new_room)
-					num_rooms += 1
-		
-			#create stairs at the center of the last room
-			#stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
-			#objects.append(stairs)
-			#stairs.send_to_back()  #so it's drawn below the monsters
-			#object_data.append(Object_Datum(new_x,new_y, 'stairs'))
-			
-			if lev_set.boss is not None:
-				#boss_monster = create_monster(new_x,new_y,lev_set.boss)
-				#objects.append(boss_monster)
-				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
+		#	self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 
 
+		# TIME TO COMMENT OUT A BUNCH OF CODE
+#		#elif lev_set.level_type == 'modern':
+#		#elif lev_set.level_type == 'classic':
+#		elif 1 == 0:
+#			# okay, maybe let's get some larger rooms going that can overlap?
+#	
+#			# so for now, this is the code for classic mode, with the code for checking room overlaps removed
+#			for r in range(room_range):
+#				#random width and height
+#				w = randint(room_min_size, room_max_size)
+#				h = randint(room_min_size, room_max_size)
+#				#random position without going out of the boundaries of the map
+#				x = randint(0, map_width - w - 1)
+#				y = randint(0, map_height - h - 1)
+#		
+#				#"Rect" class makes rectangles easier to work with
+#				new_room = Rect(x, y, w, h)
+#		 
+#	
+#		
+#				if True:
+#					#this means there are no intersections, so this room is valid
+#		
+#					#"paint" it to the map's tiles
+#					self.create_room(new_room, map, center_points, nearest_points_array)
+#					#add some contents to this room, such as monsters
+#					self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
+#		
+#					#center coordinates of new room, will be useful later
+#					(new_x, new_y) = new_room.center()
+#					if num_rooms == 0:
+#						#this is the first room, where the player starts at
+#						player_start_x = new_x
+#						player_start_y = new_y
+#					else:
+#						#all rooms after the first:
+#						#connect it to the previous room with a tunnel
+#		
+#						#center coordinates of previous room
+#						(prev_x, prev_y) = rooms[num_rooms-1].center()
+#		
+#						#draw a coin (random number that is either 0 or 1)
+#						if randint(0, 1) == 1:
+#							#first move horizontally, then vertically
+#							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+#						else:
+#							#first move vertically, then horizontally
+#							self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#							self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#		
+#					#finally, append the new room to the list
+#					rooms.append(new_room)
+#					num_rooms += 1
+#	
+#			#create_segment()
+#
+#			
+#			#create stairs at the center of the last room
+#			#stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
+#			#objects.append(stairs)
+#			#stairs.send_to_back()  #so it's drawn below the monsters
+#			
+#			#object_data.append(Object_Datum(new_x,new_y,'stairs'))
+#			if lev_set.final_level is not True:
+#				object_data.append(Object_Datum(new_x,new_y, 'security drone'))
+#
+#		
+#			if lev_set.boss is not None:
+#				#boss_monster = create_monster(new_x,new_y,lev_set.boss)
+#				#objects.append(boss_monster)
+#				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
+#	
+#	
+#			# now, append some elevators?
+#			num_norm_rooms = num_rooms
+#			elev1 = Rect(5, 5, 4, 4)
+#			elev2 = Rect(max_map_width-5, 5, 4, 4)
+#			elev3 = Rect(max_map_width-5, max_map_height -5, 4, 4)
+#			elev4 = Rect(5, max_map_height - 5, 4, 4)
+#			self.create_elevator(elev1, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+#			self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+#			self.create_elevator(elev3, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+#			self.create_elevator(elev4, map, spawn_points, center_points, nearest_points_array, elevators, object_data, background_map)
+#			(new_x, new_y) = elev1.center()
+#			num = randint(0, num_norm_rooms-1)
+#			(prev_x, prev_y) = rooms[num].center()
+#				#draw a coin (random number that is either 0 or 1)
+#			if randint(0, 1) == 1:
+#				#first move horizontally, then vertically
+#				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+#			else:
+#				#first move vertically, then horizontally
+#				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#			(new_x, new_y) = elev2.center()
+#			num = randint(0, num_norm_rooms-1)
+#			(prev_x, prev_y) = rooms[num].center()
+#				#draw a coin (random number that is either 0 or 1)
+#			if randint(0, 1) == 1:
+#				#first move horizontally, then vertically
+#				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+#			else:
+#				#first move vertically, then horizontally
+#				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#			(new_x, new_y) = elev3.center()
+#			num = randint(0, num_norm_rooms-1)
+#			(prev_x, prev_y) = rooms[num].center()
+#				#draw a coin (random number that is either 0 or 1)
+#			if randint(0, 1) == 1:
+#				#first move horizontally, then vertically
+#				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#				self.create_v_tunnel(prev_y, new_y, new_x, map, nearest_points_array, center_points)
+#			else:
+#				#first move vertically, then horizontally
+#				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#			(new_x, new_y) = elev4.center()
+#			num = randint(0, num_norm_rooms-1)
+#			(prev_x, prev_y) = rooms[num].center()
+#				#draw a coin (random number that is either 0 or 1)
+#			if randint(0, 1) == 1:
+#				#first move horizontally, then vertically
+#				self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#				self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+#			else:
+#				#first move vertically, then horizontally
+#				self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#				self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#				# ok that was a bunch of code to append some elevators! Let's see how it goes
+#	
+	# WOOO! That was one bunch of level generation code that Iwasn't using. Here's another!
+	
+#		else:		# 'classic' mode
+#	
+#			for r in range(room_range):
+#				#random width and height
+#				w = randint(room_min_size, room_max_size)
+#				h = randint(room_min_size, room_max_size)
+#				#random position without going out of the boundaries of the map
+#				x = randint(0, map_width - w - 1)
+#				y = randint(0, map_height - h - 1)
+#		
+#				#"Rect" class makes rectangles easier to work with
+#				new_room = Rect(x, y, w, h)
+#		 
+#				#run through the other rooms and see if they intersect with this one
+#				failed = False
+#				for other_room in rooms:
+#					if new_room.intersect(other_room):
+#						failed = True
+#						break
+#		
+#				if not failed:
+#					#this means there are no intersections, so this room is valid
+#		
+#					#"paint" it to the map's tiles
+#					self.create_room(new_room, map, center_points, nearest_points_array)
+#					#add some contents to this room, such as monsters
+#					self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
+#		
+#					#center coordinates of new room, will be useful later
+#					(new_x, new_y) = new_room.center()
+#					if num_rooms == 0:
+#						#this is the first room, where the player starts at
+#						player_start_x = new_x
+#						player_start_y = new_y
+#					else:
+#						#all rooms after the first:
+#						#connect it to the previous room with a tunnel
+#		
+#						#center coordinates of previous room
+#						(prev_x, prev_y) = rooms[num_rooms-1].center()
+#		
+#						#draw a coin (random number that is either 0 or 1)
+#						if randint(0, 1) == 1:
+#							#first move horizontally, then vertically
+#							self.create_h_tunnel(prev_x, new_x, prev_y, map, nearest_points_array, center_points)
+#							self.create_v_tunnel(new_y, prev_y, new_x, map, nearest_points_array, center_points)
+#						else:
+#							#first move vertically, then horizontally
+#							self.create_v_tunnel(prev_y, new_y, prev_x, map, nearest_points_array, center_points)
+#							self.create_h_tunnel(new_x, prev_x, new_y, map, nearest_points_array, center_points)
+#		
+#					#finally, append the new room to the list
+#					rooms.append(new_room)
+#					num_rooms += 1
+#		
+#			#create stairs at the center of the last room
+#			#stairs = Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
+#			#objects.append(stairs)
+#			#stairs.send_to_back()  #so it's drawn below the monsters
+#			#object_data.append(Object_Datum(new_x,new_y, 'stairs'))
+#			
+#			if lev_set.boss is not None:
+#				#boss_monster = create_monster(new_x,new_y,lev_set.boss)
+#				#objects.append(boss_monster)
+#				object_data.append(Object_Datum(new_x,new_y, 'boss', lev_set.boss))
+#
+	# Hooray for commenting out things!
 
 
 		# Here is a thing in a terrible place: delete water that is next to security drones
@@ -662,9 +677,12 @@ class Level_Generator:
 
 
 
-	def add_security_drones(self, map, lev_set, dungeon_level, object_data, rooms, elevators, number_sec_drones):
+	def add_drones_and_keys(self, map, lev_set, dungeon_level, object_data, rooms, elevators):
 		# create an initial shortlist of rooms where one could place security drone
 		# for now, theshortlist is just anything that's not an elevator. This should probabl change later.
+		number_sec_drones = lev_set.number_sec_drones
+		number_keys = lev_set.number_keys
+
 		initial_shortlist = []
 		for room in rooms:
 			# Add room to shortlist if it doesn't intersect an elevator
@@ -681,20 +699,40 @@ class Level_Generator:
 			if room_near_elevator == False:
 				initial_shortlist.append(room)
 		current_shortlist = initial_shortlist
+		
+		number_affected_rooms = max(number_sec_drones, number_keys)
 
-		for i in range(0, number_sec_drones):		
-			# choose a room at random, stick a security drone in, strike it off the shortlist
+		for i in range(0, number_affected_rooms):		
+			# choose a room at random, stick a security drone in, (update) DO NOTstrike it off the shortlist
 			num = randint(0, len(current_shortlist)-1)
 			selected_room = current_shortlist[num]
+
+
+			#Decide whether we're adding a drone or a key or a drone that guards a key or a drone that drops a key.
+			if i < min(number_sec_drones, number_keys):	# add drone and key
+				# do a coin toss to decide if the drone guards a key or drops it
+				drops_key = True
+				guards_key = False
+				if randint(0,1) == 0:
+					drops_key = False
+					guards_key = True
+				# add the drone (and its key)
+				self.add_security_drone(map, lev_set, dungeon_level, object_data, selected_room, drops_key, guards_key)
+			elif i < number_sec_drones:	# add drone
+				self.add_security_drone(map, lev_set, dungeon_level, object_data, selected_room, drops_key = False, guards_key = False)
+			elif i < number_keys:		# add a key on its own
+				self.add_key(map, lev_set, dungeon_level, object_data, selected_room)
+
 			# Make it be a thing that drops keys!
-			self.add_security_drone(map, lev_set, dungeon_level, object_data, selected_room, True)
-			current_shortlist.remove(selected_room)
+			#self.add_security_drone(map, lev_set, dungeon_level, object_data, selected_room, drops_key = True, guards_key = False)
+			#current_shortlist.remove(selected_room)
 			# have we run out of rooms? then refresh the list, allow doubling up to happen.
-			if len(current_shortlist) == 0:
-				current_shortlist = initial_shortlist
+			#if len(current_shortlist) == 0:
+			#	current_shortlist = initial_shortlist
 
 
-	def add_security_drone(self, map, lev_set, dungeon_level, object_data, security_room, drops_key):
+	# add a security systemhere. possibly holding a key, possibly guarding a key in the same room
+	def add_security_drone(self, map, lev_set, dungeon_level, object_data, security_room, drops_key, guards_key):
 		# new thing: place security drone randomly rather than in center of room
 
 		sec_x = randint(security_room.x1, security_room.x2)
@@ -706,113 +744,248 @@ class Level_Generator:
 			object_data.append(Object_Datum(sec_x,sec_y,'security drone'))
 			# Here is a terrible hack - clear water from around the security drone.
 
+		if guards_key:
+			key_x= randint(security_room.x1,security_room.x2) 
+			key_y= randint(security_room.y1,security_room.y2) 
+			object_data.append(Object_Datum(key_x,key_y,'key'))
+			
+
 
 		# commenting this out, because now that sec drones can activate if they see you for too long, it's kind of 
 		# fun to stumble upon them by accident. Hopefully.
 		#self.decorate_room(security_room, lev_set, map, object_data, dungeon_level,symbol = '.')
+
+
+	# add an unguarded key to a room
+	def add_key(self, map, lev_set, dungeon_level, object_data, key_room):
+
+		key_x= randint(key_room.x1,key_room.x2) 
+		key_y= randint(key_room.y1,key_room.y2) 
+		object_data.append(Object_Datum(key_x,key_y,'key'))
 	
 
+	def add_shrines(self, map, lev_set, dungeon_level, object_data, rooms, elevators):
+		# create an initial shortlist of rooms where one could place shrine
+		# for now, theshortlist is just anything that's not an elevator. This should probabl change later.
+		number_shrines = lev_set.number_shrines
 
-	def place_objects(self, room, lev_set, map, object_data, dungeon_level):
+		initial_shortlist = []
+		for room in rooms:
+			# Add room to shortlist if it doesn't intersect an elevator
+			# This is a bit of a hacky workaround but whatever.
+			room_near_elevator = False
+			for ele in elevators:
+				for (x,y) in ele.spawn_points:
+					#check this spawn point is not near the room.
+					near_room = True
+					if x < room.x1-1 or x > room.x2 + 1 or y < room.y1 - 1 or y > room.y2 + 1:
+						near_room = False
+					if near_room:
+						room_near_elevator = True
+			if room_near_elevator == False:
+				initial_shortlist.append(room)
+		current_shortlist = initial_shortlist
+		
+		number_affected_rooms = number_shrines
+
+		for i in range(0, number_affected_rooms):		
+			# choose a room at random, stick a shrine in, DO strike it off the shortlist
+			num = randint(0, len(current_shortlist)-1)
+			selected_room = current_shortlist[num]
+			self.add_shrine(map, lev_set, dungeon_level, object_data, selected_room)
+			current_shortlist.remove(selected_room)
+			# have we run out of rooms? then break, because I don't want to double up shrines. That'd be wierd.
+			if len(current_shortlist) == 0:
+				break
+				#current_shortlist = initial_shortlist
+
+
+	# Add a shrine to a room
+	def add_shrine(self, map, lev_set, dungeon_level, object_data, shrine_room):
+		(shrine_x, shrine_y) = shrine_room.center()
+		object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
+		self.decorate_room(shrine_room, lev_set, map, object_data, dungeon_level,symbol = '+')
+		# TODO hey I bet in future we're going to want to control what upgrades the shrines have, and what sort of distribution of upgrade types you can get
+
+
+	# place some intial enemies on guard duty to rooms
+	def add_guards(self, map, lev_set, dungeon_level, object_data, rooms, elevators):
+		#place guards (potentially) in any room not overlapping an elevator
+
+		initial_shortlist = []
+		for room in rooms:
+			# Add room to shortlist if it doesn't intersect an elevator
+			# This is a bit of a hacky workaround but whatever.
+			room_near_elevator = False
+			for ele in elevators:
+				for (x,y) in ele.spawn_points:
+					#check this spawn point is not near the room.
+					near_room = True
+					if x < room.x1-1 or x > room.x2 + 1 or y < room.y1 - 1 or y > room.y2 + 1:
+						near_room = False
+					if near_room:
+						room_near_elevator = True
+			if room_near_elevator == False:
+				self.add_guards_to_room(room, lev_set, map, object_data, dungeon_level)
+
+
+	def add_guards_to_room(self, room, lev_set, map, object_data, dungeon_level):
+
+		#each square has prob (guard_denominator/guard_numerator) of having a guard on it
+		(guard_denominator, guard_numerator) = lev_set.guard_probability	
+		
+		# theseprobs handle the distribution of different enemy types within this level
+		total_enemy_prob = lev_set.total_enemy_prob
+		enemy_probabilities = lev_set.enemy_probabilities
+
+		
+		for x in range(room.x1, room.x2+1):
+			for y in range(room.y1, room.y2+1):
+				#only place it if the tile is not blocked
+				if not self.is_occupied(x, y, map, object_data):
+
+					# now roll the dice to decide if an enemy spawns here
+					if randint(1,guard_numerator) <= guard_denominator:	
+		
+						enemy_name = 'none'
+						num = randint(0, total_enemy_prob)
+						for (name, prob) in enemy_probabilities:
+							#print '(' + name + ',' + str(prob) + ')'
+							if num <= prob:
+								enemy_name = name
+								break
+							else:
+								num -= prob
+			
+						#monster = create_monster(x,y,name)
+						#objects.append(monster)
+						object_data.append(Object_Datum(x,y,'monster', name))
+
+
+	# add misc other objects (water + fruit, currently) to rooms
+	def add_objects(self, map, lev_set, dungeon_level, object_data, rooms, elevators):
+		#place guards (potentially) in any room not overlapping an elevator
+
+		initial_shortlist = []
+		for room in rooms:
+			# Add room to shortlist if it doesn't intersect an elevator
+			# This is a bit of a hacky workaround but whatever.
+			room_near_elevator = False
+			for ele in elevators:
+				for (x,y) in ele.spawn_points:
+					#check this spawn point is not near the room.
+					near_room = True
+					if x < room.x1-1 or x > room.x2 + 1 or y < room.y1 - 1 or y > room.y2 + 1:
+						near_room = False
+					if near_room:
+						room_near_elevator = True
+			if room_near_elevator == False:
+				self.add_objects_to_room(room, lev_set, map, object_data, dungeon_level)
+
+	# add misc other objects (water + fruit, currently) to a room
+	def add_objects_to_room(self, room, lev_set, map, object_data, dungeon_level):
+
+		#I swear there's some uncommented code further down
+
 		#global game_level_settings, dungeon_level, god_healer
 	
 		#lev_set = game_level_settings.get_setting(dungeon_level)
 
-		max_room_monsters = lev_set.max_room_monsters
+		#max_room_monsters = lev_set.max_room_monsters
 
 		#choose random number of monsters
-		num_monsters = randint(0, max_room_monsters)
+		#num_monsters = randint(0, max_room_monsters)
 		
 
 		#print('x1 ' + str(room.x1) + ', x2 ' + str(room.x2) + ',y1 ' +  str(room.y1) + ',y2 ' + str(room.y2) + ',)')
 
-		for i in range(num_monsters):
-		#for i in range(50):
-			#choose random spot for this monster
-			x = randint(room.x1, room.x2)
-			y = randint(room.y1, room.y2)
-			# x = randint(room.x1+1, room.x2-1)
-			# y = randint(room.y1+1, room.y2-1)
-	
-			#only place it if the tile is not blocked
-			if not self.is_occupied(x, y, map, object_data):
-	
-				total_enemy_prob = lev_set.total_enemy_prob
-				enemy_probabilities = lev_set.enemy_probabilities
-
-				
-	
-				enemy_name = 'none'
-				num = randint(0, total_enemy_prob)
-				for (name, prob) in enemy_probabilities:
-					#print '(' + name + ',' + str(prob) + ')'
-					if num <= prob:
-						enemy_name = name
-						break
-					else:
-						num -= prob
-	
-				#monster = create_monster(x,y,name)
-				#objects.append(monster)
-				object_data.append(Object_Datum(x,y,'monster', name))
-	
-		# on first level, in in 2 chance of a weapon appearing in a room I guess
-		if dungeon_level == 0:
-			num = randint(0, 2)
-			if num == 0:
-				x = randint(room.x1, room.x2)
-				y = randint(room.y1, room.y2)
-			#	x = randint(room.x1+1, room.x2-1)
-			#	y = randint(room.y1+1, room.y2-1)
-				#new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True)
-				#drop_weapon(new_weapon)
-				#objects.append(new_weapon)
-				#new_weapon.send_to_back()
-				object_data.append(Object_Datum(x,y,'weapon', 'sword'))
-			elif num == 1:
-				x = randint(room.x1, room.x2)
-				y = randint(room.y1, room.y2)
-			#	x = randint(room.x1+1, room.x2-1)
-			#	y = randint(room.y1+1, room.y2-1)
-				#new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True)
-				#drop_weapon(new_weapon)
-				#objects.append(new_weapon)
-				#new_weapon.send_to_back()
-				object_data.append(Object_Datum(x,y,'weapon', 'sai'))
-	
-		# on higher levels, maybe there are shrines? Maybe??
-		else:
-			num = randint(0,6)
-			if num == 0:
-				(shrine_x, shrine_y) = room.center()
-				#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
-				#objects.append(new_shrine)
-				#new_shrine.send_to_back()
-				object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
-				self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
-		# or maybe security drones?
-			elif num == 1:
-				if lev_set.final_level is not True:	#don't have sec drones on final levels?
-					keyval = randint(0,4)  #maybe drop a key
-					if keyval == 0:
-						self.add_security_drone(map, lev_set, dungeon_level, object_data, room, True)
-					else:
-						self.add_security_drone(map, lev_set, dungeon_level, object_data, room, False)
-				
-					#chance of key dropping nearby?
-					keyval = randint(0,2)  #maybe drop a key
-					if keyval == 0:
-						(sec_x,sec_y) = room.center()
-						xval= randint(room.x1,room.x2) 
-						yval= randint(room.y1,room.y2) 
-						object_data.append(Object_Datum(xval,yval,'key'))
-						#TODO Make the code actually drop the key in a random place in the room.
-
-					#else:
-					#	(sec_x,sec_y) = room.center()
-					#	xval= randint(room.x1,room.x2) 
-					#	yval= randint(room.y1,room.y2) 
-					#	object_data.append(Object_Datum(xval,yval,'water'))
+	#	for i in range(num_monsters):
+	#	#for i in range(50):
+	#		#choose random spot for this monster
+	#		x = randint(room.x1, room.x2)
+	#		y = randint(room.y1, room.y2)
+	#		# x = randint(room.x1+1, room.x2-1)
+	#		# y = randint(room.y1+1, room.y2-1)
+	#
+	#		#only place it if the tile is not blocked
+	#		if not self.is_occupied(x, y, map, object_data):
+	#
+	#			total_enemy_prob = lev_set.total_enemy_prob
+	#			enemy_probabilities = lev_set.enemy_probabilities
+#
+#	#			
+	#
+	#			enemy_name = 'none'
+	#			num = randint(0, total_enemy_prob)
+	#			for (name, prob) in enemy_probabilities:
+	#				#print '(' + name + ',' + str(prob) + ')'
+	#				if num <= prob:
+	#					enemy_name = name
+	#					break
+	#				else:
+	#					num -= prob
+	#
+	#			#monster = create_monster(x,y,name)
+	#			#objects.append(monster)
+	#			object_data.append(Object_Datum(x,y,'monster', name))
+	#
+	#	# on first level, in in 2 chance of a weapon appearing in a room I guess
+	#	if dungeon_level == 0:
+	#		num = randint(0, 2)
+	#		if num == 0:
+	#			x = randint(room.x1, room.x2)
+	#			y = randint(room.y1, room.y2)
+	#		#	x = randint(room.x1+1, room.x2-1)
+	#		#	y = randint(room.y1+1, room.y2-1)
+	#			#new_weapon = Object(x,y, 's', 'sword', default_weapon_color, blocks = False, weapon = True)
+	#			#drop_weapon(new_weapon)
+	#			#objects.append(new_weapon)
+	#			#new_weapon.send_to_back()
+	#			object_data.append(Object_Datum(x,y,'weapon', 'sword'))
+	#		elif num == 1:
+	#			x = randint(room.x1, room.x2)
+	#			y = randint(room.y1, room.y2)
+	#		#	x = randint(room.x1+1, room.x2-1)
+	#		#	y = randint(room.y1+1, room.y2-1)
+	#			#new_weapon = Object(x,y, 'f', 'sai', default_weapon_color, blocks = False, weapon = True)
+	#			#drop_weapon(new_weapon)
+	#			#objects.append(new_weapon)
+	#			#new_weapon.send_to_back()
+	#			object_data.append(Object_Datum(x,y,'weapon', 'sai'))
+	#
+	#	# on higher levels, maybe there are shrines? Maybe??
+	#	else:
+	#		num = randint(0,6)
+	#		if num == 0:
+	#			(shrine_x, shrine_y) = room.center()
+	#			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=Fa"lse, shrine= Shrine(god_healer), always_visible=True) 		
+	#			#objects.append(new_shrine)
+	#			#new_shrine.send_to_back()
+	#			object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
+	#			self.decorate_room(room, lev_set, map, object_data, dungeon_level,symbol = '+')
+	##	# or maybe security drones?
+	#		elif num == 1:
+	#			if lev_set.final_level is not True:	#don't have sec drones on final levels?
+	#				keyval = randint(0,4)  #maybe drop a key
+	#				if keyval == 0:
+	#					self.add_security_drone(map, lev_set, dungeon_level, object_data, room, True)
+	#				else:
+	#					self.add_security_drone(map, lev_set, dungeon_level, object_data, room, False)
+	#			
+	#				#chance of key dropping nearby?
+	#				keyval = randint(0,2)  #maybe drop a key
+	#				if keyval == 0:
+	#					(sec_x,sec_y) = room.center()
+	#					xval= randint(room.x1,room.x2) 
+	#					yval= randint(room.y1,room.y2) 
+	#					object_data.append(Object_Datum(xval,yval,'key'))
+	#					#TODO Make the code actually drop the key in a random place in the room.
+	#
+	#				#else:
+	#				#	(sec_x,sec_y) = room.center()
+	#				#	xval= randint(room.x1,room.x2) 
+	#				#	yval= randint(room.y1,room.y2) 
+	#				#	object_data.append(Object_Datum(xval,yval,'water'))
 
 
 			# Maybe let's put some water in the room? 
@@ -1521,10 +1694,11 @@ class Level_Generator:
 			#Put this new room into the map
 			self.create_room(new_room, map, center_points, nearest_points_array, background_map = background_map)
 			rooms.append(new_room)
-			self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
+			#self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 		
 			# decide whether or not this room has doors. FOR NOW JUST A 1/8 CHANCE OF HAVING DOORS
-			if randint(0, 7) == 1:
+			(doorNumerator, doorDenominator) = lev_set.door_probability
+			if randint(1, doorDenominator) <= doorNumerator:
 				doorhavers.append(True)
 			else:
 				doorhavers.append(False)
