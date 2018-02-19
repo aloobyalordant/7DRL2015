@@ -484,7 +484,8 @@ class Floor_Message:
 
 
 class Door:
-	def __init__(self, horizontal, default_looseness = 3, easy_open = False):
+	# update: increasing door lossness, because these things stick slightly too often
+	def __init__(self, horizontal, default_looseness = 4, easy_open = False):
 		self.horizontal = horizontal
 		self.default_looseness = default_looseness
 		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
@@ -1039,6 +1040,8 @@ class BasicMonster:
 		self.blocked_by_door_o_meter = 0		 #decreases by 1 each turn, and goes up by 2 if blocked door in way
 		self.impatience_threshold_for_doors_being_in_the_way = 4
 		self.state = state
+		if self.guard_duty:
+			self.state = 'guard-duty'
 		self.target_x = player.x
 		self.target_y = player.y
 
@@ -1075,6 +1078,7 @@ class BasicMonster:
 
 				self.engagePlayer(monster, decider)
 
+			# I *think* that if state is 'guard-guty', the enemy just won't do anything
 
 
 			# Update various cooldowns and counters and such

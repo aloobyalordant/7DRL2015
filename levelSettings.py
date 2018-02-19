@@ -3,7 +3,7 @@ import tdl as libtcod
 import random
 from random import randint
 
-MAP_WIDTH = 80
+MAP_WIDTH = 60
 MAP_HEIGHT = 30
 
 ROOM_MAX_SIZE = 10
@@ -124,8 +124,8 @@ class Level_Settings:
 			max_rooms = 12,
 			room_max_size = 7,
 			room_min_size = 4,	
-			max_map_height = 20,
-			max_map_width = 40,
+			max_map_height = 25,
+			max_map_width = 50,
 			max_room_monsters = 1,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
