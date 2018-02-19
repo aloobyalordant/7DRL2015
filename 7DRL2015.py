@@ -2996,7 +2996,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_action_before_pause, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -3011,6 +3011,9 @@ def handle_keys(user_input_event):
 
 	elif veekay == 'ESCAPE': #libtcod.KEY_ESCAPE:
 		something_changed = True
+		
+		if game_state == 'playing':				# w o w ,   w h a t   a
+			player_action_before_pause = player_action	# b a d   h a c k
 		return 'pause' #exit game
 
 	if game_state == 'big message':
@@ -3048,6 +3051,7 @@ def handle_keys(user_input_event):
 		elif key_char == 'c':
 			something_changed = True
 			game_state = 'control screen'
+			player_action = player_action_before_pause
 
 	elif game_state == 'control screen':
 		#key_char = chr(key.c) 
@@ -5550,6 +5554,10 @@ def create_GUI_panel():
 	'Favour: ' + str(currency_count))
 
 
+	#testing testing
+	translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
+	'Player action ' + str(player_action))
+
 	if favoured_by_healer:
 		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
 		'Favoured by ' + god_healer.name)
@@ -6001,6 +6009,7 @@ def initialise_game():
 	
 	game_state = 'playing'
 	player_action = None
+	player_action_before_pause = None
 	
 	#a warm welcoming message!
 	message('Welcome! Use #MOVEUPLEFT#, #MOVEUP#, #MOVEUPRIGHT#, #MOVERIGHT#, #MOVEDOWNRIGHT#, #MOVEDOWN#, #MOVEDOWNLEFT#, #MOVELEFT# to move, #ATTCKUPLEFT#, #ATTCKUP#, #ATTCKUPRIGHT#, #ATTCKRIGHT#, #ATTCKDOWNRIGHT#, #ATTCKDOWN#, #ATTCKDOWNLEFT#, #ATTCKLEFT# to attack, #PICKUP# to pick up a new weapon. Press #PAUSE# to access the pause menu, including control options. Go up for a tutorial, or step into the elevator on your left to go to Floor 1.', Color_Message_In_World)
@@ -6210,11 +6219,15 @@ while not translated_console_is_window_closed():
 	player_action = handle_keys(user_input)
 	if player_action == 'pause':
 		something_changed = True
-		if game_state == 'playing' or game_state == 'control screen':
+		if game_state == 'playing':
 			game_state = 'paused'
+		elif game_state == 'control screen':
+			game_state = 'paused'	
 		elif game_state == 'paused' or game_state == 'big message':
 			game_state = 'playing'
+			player_action = player_action_before_pause
 	#	break
+
 
 	# Game things happen woo!
 	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'upgrade shop dialog' and player_action != 'jump_dialog' :
