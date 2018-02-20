@@ -97,12 +97,13 @@ class Level_Settings:
 		# Let's try having a set of the new 'basic' enemies, and then select three of them at random for each level
 		enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
 		enemyprobs1 = []
-		for i in range (0,2):
-			j = randint( 0, len(enemies_probs_set)-1)
-			enemy_choice = enemies_probs_set[j]
-			enemyprobs1.append(enemy_choice)
-			enemies_probs_set.remove(enemy_choice)
+		#for i in range (0,2):
+		#	j = randint( 0, len(enemies_probs_set)-1)
+		#	enemy_choice = enemies_probs_set[j]
+		#	enemyprobs1.append(enemy_choice)
+		#	enemies_probs_set.remove(enemy_choice)
 		enemyprobs1.append(('albatross', 10))
+		enemyprobs1.append(('crane', 10))
 		#enemyprobs1.append(('eagle', 10))
 		enemies_probs_set = [('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
 		enemyprobs2 = []
@@ -119,6 +120,8 @@ class Level_Settings:
 		#enemy_probs = []
 		#enemy_probs.append(('swordsman', 50))	
 		#enemy_probs.append(('rogue', 50))
+
+		
 		enemy_probs = enemyprobs1
 		levsr = Level_Setting(
 			max_rooms = 12,
@@ -130,7 +133,7 @@ class Level_Settings:
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
 			number_sec_drones = randint(1,3) + randint(1,3),	#2d3 drones? let's see #len(self.bigArray),
-			keys_required = len(self.bigArray),
+			keys_required =  2, #len(self.bigArray),
 			number_keys = 3,
 			number_shrines = 4,
 			guard_probability = (1,25),			# 1 in 25 chance of a given space having a guard on
@@ -144,6 +147,11 @@ class Level_Settings:
 		#enemy_probs.append(('swordsman', 50))
 		#enemy_probs.append(('boman', 50))
 		#enemy_probs.append(('rook', 50))
+		temp_keys_req = len(self.bigArray) + 1
+		temp_keys_here = 2*temp_keys_req
+		temp_number_sec_drones = 3*temp_keys_req
+		temp_number_shrines = 5
+
 		enemy_probs = enemyprobs2	
 		enemy_probs.append(('ninja', 5))
 		lev1 = Level_Setting(
@@ -153,9 +161,10 @@ class Level_Settings:
 			max_room_monsters = 1,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
-			number_sec_drones = 5, # len(self.bigArray),
-			number_keys = 3,
-			keys_required = len(self.bigArray),
+			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
+			number_keys = temp_keys_here,
+			keys_required = temp_keys_req, #len(self.bigArray),
+			number_shrines = temp_number_shrines,
 			initial_alarm_level = len(self.bigArray)
 			)
 		
@@ -189,13 +198,19 @@ class Level_Settings:
 		enemy_probs.append(('boman', 50))
 		enemy_probs.append(('axe maniac', 30))
 		enemy_probs.append(('ninja', 5))
+		temp_keys_req = len(self.bigArray) + 1
+		temp_keys_here = 2*temp_keys_req
+		temp_number_sec_drones = 3*temp_keys_req
+		temp_number_shrines = 5
 		lev3 = Level_Setting(
 			level_type = 'modern',
 			max_room_monsters = 1,
 			enemy_probabilities = enemy_probs,
 			#enemy_spawn_rate = 20
-			number_sec_drones = len(self.bigArray),
-			keys_required = len(self.bigArray),
+			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
+			number_keys = temp_keys_here,
+			keys_required = temp_keys_req, #len(self.bigArray),
+			number_shrines = temp_number_shrines,
 			initial_alarm_level = len(self.bigArray),
 			color_scheme = 'coldTest',
 			effects = ['cold']	
@@ -240,6 +255,10 @@ class Level_Settings:
 		enemy_probs.append(('ninja', 10))
 		enemy_probs.append(('rook', 10))
 		enemy_probs.append(('nunchuck fanatic', 10))
+		temp_keys_req = len(self.bigArray) + 1
+		temp_keys_here = 2*temp_keys_req
+		temp_number_sec_drones = 3*temp_keys_req
+		temp_number_shrines = 5
 		lev4 = Level_Setting(
 			level_type = 'modern',
 			room_max_size = 20,
@@ -247,8 +266,10 @@ class Level_Settings:
 			max_rooms = 8,
 			max_room_monsters = 5,
 			enemy_probabilities = enemy_probs,
-			number_sec_drones = len(self.bigArray),
-			keys_required = len(self.bigArray),
+			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
+			number_keys = temp_keys_here,
+			keys_required = temp_keys_req, #len(self.bigArray),
+			number_shrines = temp_number_shrines,
 			initial_alarm_level = len(self.bigArray)
 			)
 		
@@ -268,6 +289,10 @@ class Level_Settings:
 			max_room_monsters = 10,
 			boss = 'wizard',
 			final_level = True,
+			number_sec_drones = len(self.bigArray),
+			number_keys = 0,
+			keys_required = 0, #len(self.bigArray),
+			number_shrines = 5,
 			enemy_probabilities = enemy_probs)
 		
 		self.bigArray.append(last_lev)

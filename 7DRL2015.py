@@ -1319,6 +1319,92 @@ class Boman_AI(BasicMonster):
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 
+#Crane_AI acts like BasicMonster, but (a) moves slower, and (b) never moves to be adjacent to the player, so they only end up attacking if the player approaches them (for range 1 weapons anyway)
+class Crane_AI(BasicMonster):
+
+	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
+		BasicMonster.__init__(self, weapon, guard_duty, attack_dist, state)
+		self.pausing = True
+
+
+	# Crane overall acts quite similar to basicMonster, but slower - movement only happens every other turn.
+	def decide(self):
+		#a basic monster takes its turn. If you can see it, it can see you
+		decider = self.owner
+		monster = decider.owner #yaaay
+		# only do thing (including weapon recharge? maybe not) if not stunned
+		if self.stunned_time <= 0:
+
+
+			# Welcome to basic monster ai business! Let's try and get the structure of this  cleared up a bit.
+
+			# Step 0: put some details about external stuff here?
+			current_room = nearest_points_array[monster.x][monster.y]
+
+			# Step 1: Decide your current state, and maybe a few other bits.
+			self.decideState(monster)
+
+			# Step 2: Now you know yourself, or at least your state, decide your target (either a room or a specific space).
+			self.decideTarget(monster)
+
+			# Step 3: Given the above, decide on a plan of action (a move or attack; decision depends a lot on state)
+			
+			# Do the things that you do when going towards a target room rather than a specific grid reference
+			if self.state == 'hungry':
+				self.pursueFood(monster, decider)
+			elif self.state == 'head-towards-room' or self.state == 'wander-aimlessly':
+				if not self.pausing:
+
+ 					self.moveTowardsRoom(monster, decider)	
+				self.pausing = not self.pausing					
+
+			# Now do things for the other cases!
+			elif self.state == 'pursue-visible-target':
+
+				self.engagePlayer(monster, decider)
+
+			# I *think* that if state is 'guard-guty', the enemy just won't do anything
+
+
+			# Update various cooldowns and counters and such
+			if self.weapon:
+				self.weapon.recharge()
+			if self.ally_in_the_way_o_meter > 0:
+				self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter - 1
+			if self.blocked_by_door_o_meter > 0:
+				self.blocked_by_door_o_meter = self.blocked_by_door_o_meter - 1
+		if self.stunned_time > 0:
+			self.stunned_time = self.stunned_time - 1
+
+
+	# Crane avoids moving directlynext to player, and moves slower, but otherwise acts like basicMonster			
+	def engagePlayer(self, monster, decider):
+
+		
+		xdiff = player.x - monster.x
+		ydiff = player.y - monster.y
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+
+		# Crane only approaches player if to do so wouldn't bring them next to the player. Also, slowly?
+		elif xdiff > 2 or ydiff > 2:
+			if not self.pausing:
+				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+				self.pausing = True
+			else:
+				self.pausing = False		
+			
+
 #Like the Boman AI, but more so.Tryand move diagonally, but AVOID GETTING NON-DIAGONALLY ADJACENT TO PLAYER. Or at least move if that happens.
 class Dove_AI(BasicMonster):
 	
@@ -3706,7 +3792,7 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'crane':
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
-		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty = guard_duty)
+		ai_component = Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'C', 'crane', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
