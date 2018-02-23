@@ -964,8 +964,8 @@ class Alarmer:
 			elif self.status ==  'raising-alarm':
 				# add a bunch of health to the fighter associated with this alarmer??
 				if self.assoc_fighter is not None:
-					self.assoc_fighter.max_hp += 6
-					self.assoc_fighter.heal(6)
+					self.assoc_fighter.max_hp += 5#6
+					self.assoc_fighter.heal(5)	#6
 				self.status = 'alarm-raised'
 			# if self.status = 'alarm-raised', don't do anything
 
@@ -1324,7 +1324,9 @@ class Crane_AI(BasicMonster):
 
 	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
 		BasicMonster.__init__(self, weapon, guard_duty, attack_dist, state)
-		self.pausing = True
+		# cutting the 'pausing' idea for now, at least for this enemy
+		#self.pausing = True
+		self.pausing = False
 
 
 	# Crane overall acts quite similar to basicMonster, but slower - movement only happens every other turn.
@@ -1356,7 +1358,9 @@ class Crane_AI(BasicMonster):
 				if not self.pausing:
 
  					self.moveTowardsRoom(monster, decider)	
-				self.pausing = not self.pausing					
+
+				# cutting the 'pausing' idea for now, at least for this enemy
+				#self.pausing = not self.pausing					
 
 			# Now do things for the other cases!
 			elif self.state == 'pursue-visible-target':
@@ -1396,13 +1400,17 @@ class Crane_AI(BasicMonster):
 			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
 
 		# Crane only approaches player if to do so wouldn't bring them next to the player. Also, slowly?
-		elif xdiff > 2 or ydiff > 2:
+		# tried a bunch of modifications to this behaviour to make them still a threat if left completely alone
+		# elif math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2 :
+		# elif math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2 or (math.fabs(xdiff) == math.fabs(ydiff)):
+		elif (math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2 or (randint(0,2) == 0)) and (max(math.fabs(xdiff),math.fabs(ydiff)) > 1 ):
+			# cutting the 'pausing' idea for now, at least for this enemy.
 			if not self.pausing:
 				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
-				self.pausing = True
-			else:
-				self.pausing = False		
+#				self.pausing = True
+#			else:
+#				self.pausing = False		
 			
 
 #Like the Boman AI, but more so.Tryand move diagonally, but AVOID GETTING NON-DIAGONALLY ADJACENT TO PLAYER. Or at least move if that happens.
@@ -3780,21 +3788,21 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
 		ai_component = BasicMonster(weapon = Weapon_Shiv(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'albatross', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'bustard':
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'bustard', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'crane':
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'C', 'crane', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'B', 'blocker', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'dove':
@@ -3802,7 +3810,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = Dove_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'D', 'dove', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'D', 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'eagle':
 		#create a guy with an axe!
@@ -4606,7 +4614,8 @@ def next_level():
 		print ("leaving tutorial, resetting player stats")
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
-		player_weapon = Weapon_Sword()
+		#player_weapon = Weapon_Sword()
+		player_weapon = Weapon_Shiv()
 		#player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
@@ -5358,7 +5367,7 @@ def create_GUI_panel():
 	global game_level_settings, dungeon_level
 	global controlHandler
 	global upgrade_array
-
+	global spawn_timer
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 
@@ -5641,8 +5650,10 @@ def create_GUI_panel():
 
 
 	#testing testing
+	#translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
+	#'Player action ' + str(player_action))
 	translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Player action ' + str(player_action))
+	'Reinforcements in ' + str(spawn_timer))
 
 	if favoured_by_healer:
 		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
@@ -6009,6 +6020,7 @@ def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme
 	current_big_message = 'You weren\'t supposed to see this'
 
+	spawn_timer = 0
 
 	# load stuff. yay, I'm testing loading and saving
 	load_game()

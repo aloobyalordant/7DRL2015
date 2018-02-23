@@ -1,3 +1,23 @@
+
+
+
+--------------------------------------------------
+version  0.1.1.0  released ????
+--------------------------------------------------
+ - Swords are now lighter to use
+ - Swordsmen are now more relentless
+ - Added new weapons, the broom and pike, that basically split the bo staff up between them  (bo staff may be nerfed later on but currently still appears in later levels)
+ - Added 'long range only' weapon the halberd. Great against most enemies, terrible against swordsmen
+ - Added new enemies, the Blocker, Diagonatrix and Eagle, that wield the broom, pike and halberd respectively
+ - Also you may see a (more stupid?) version of the rogue called the Falcon
+ - Can you tell a bunch of these names are working titles.
+ - A little bit of randomization in the enemy distributions of levels 2 and 3.
+ - Security drones now have slightly fewer hit points after spotting you.
+ - Added a 'time to reinforcements' tracker to the GUI that tracks when more enemies are due. Mainly added for bugtesting purposes, but hey, enjoy it while it's there.
+
+
+
+
 --------------------------------------------------
 version  0.1.0.0  released 11th Feb 2018
 --------------------------------------------------

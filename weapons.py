@@ -2441,7 +2441,7 @@ class Weapon_Strawhands(Generic_Weapon):
 class Weapon_Shiv(Generic_Weapon):
 	# New thing: like a sword, but lighter
 	def __init__(self):
-		Generic_Weapon.__init__(self,  'shiv', 1, 1, 0)
+		Generic_Weapon.__init__(self,  'sword', 1, 1, 0)
 		default_usage = self.default_usage
 
 		

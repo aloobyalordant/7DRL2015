@@ -95,7 +95,7 @@ class Level_Settings:
 
 
 		# Let's try having a set of the new 'basic' enemies, and then select three of them at random for each level
-		enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
+		#enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
 		enemyprobs1 = []
 		#for i in range (0,2):
 		#	j = randint( 0, len(enemies_probs_set)-1)
@@ -103,16 +103,39 @@ class Level_Settings:
 		#	enemyprobs1.append(enemy_choice)
 		#	enemies_probs_set.remove(enemy_choice)
 		enemyprobs1.append(('albatross', 10))
-		enemyprobs1.append(('crane', 10))
+		#enemyprobs1.append(('crane', 10))
+		enemyprobs1.append(('bustard', 10))
 		#enemyprobs1.append(('eagle', 10))
-		enemies_probs_set = [('bustard', 10), ('crane', 10), ('dove', 10), ('eagle', 10), ('falcon', 10)]
+		enemies_probs_set = [('crane', 5),  ('dove', 10),  ('falcon', 10)]
+		third_enemy_choice = randint( 0, len(enemies_probs_set)-1)
+		third_enemy = enemies_probs_set[third_enemy_choice]
 		enemyprobs2 = []
-		for i in range (0,2):
-			j = randint( 0, len(enemies_probs_set)-1)
-			enemy_choice = enemies_probs_set[j]
-			enemyprobs2.append(enemy_choice)
-			enemies_probs_set.remove(enemy_choice)
 		enemyprobs2.append(('albatross', 10))
+		enemyprobs2.append(('bustard', 10))
+		enemyprobs2.append(third_enemy)
+
+		enemies_probs_set.remove(third_enemy)
+		enemies_probs_set.append(('eagle', 5))
+
+		enemyprobs3 = []
+		enemyprobs3.append(('albatross', 10))
+		if randint(0,3) == 0:
+			enemyprobs3.append(('bustard', 10))
+		else:
+			enemyprobs3.append(third_enemy)
+
+		fourth_enemy_choice = randint( 0, len(enemies_probs_set)-1)
+		fourth_enemy = enemies_probs_set[fourth_enemy_choice]
+		enemyprobs3.append(fourth_enemy)
+
+		
+
+		#for i in range (0,2):
+		#	j = randint( 0, len(enemies_probs_set)-1)
+		#	enemy_choice = enemies_probs_set[j]
+		#	enemyprobs2.append(enemy_choice)
+		#	enemies_probs_set.remove(enemy_choice)
+		#enemyprobs2.append(('albatross', 10))
 		#enemyprobs1.append(('eagle', 10))
 
 
@@ -125,8 +148,8 @@ class Level_Settings:
 		enemy_probs = enemyprobs1
 		levsr = Level_Setting(
 			max_rooms = 12,
-			room_max_size = 7,
-			room_min_size = 4,	
+			room_max_size = 12,
+			room_min_size = 5,	
 			max_map_height = 25,
 			max_map_width = 50,
 			max_room_monsters = 1,
@@ -136,7 +159,7 @@ class Level_Settings:
 			keys_required =  2, #len(self.bigArray),
 			number_keys = 3,
 			number_shrines = 4,
-			guard_probability = (1,25),			# 1 in 25 chance of a given space having a guard on
+			guard_probability = (1,35),			# 1 in 35 chance of a given space having a guard on
 			initial_alarm_level = 0,
 			door_probability = (7,8)
 			)
@@ -153,7 +176,7 @@ class Level_Settings:
 		temp_number_shrines = 5
 
 		enemy_probs = enemyprobs2	
-		enemy_probs.append(('ninja', 5))
+		#enemy_probs.append(('ninja', 5))
 		lev1 = Level_Setting(
 			max_rooms = 8,
 			room_max_size = 12,	#20,
@@ -165,7 +188,8 @@ class Level_Settings:
 			number_keys = temp_keys_here,
 			keys_required = temp_keys_req, #len(self.bigArray),
 			number_shrines = temp_number_shrines,
-			initial_alarm_level = len(self.bigArray)
+			initial_alarm_level = len(self.bigArray),
+			door_probability = (5,8)
 			)
 		
 		self.bigArray.append(lev1)
@@ -191,6 +215,30 @@ class Level_Settings:
 
 
 
+		# New level 3 
+		temp_keys_req = len(self.bigArray) + 1
+		temp_keys_here = 2*temp_keys_req
+		temp_number_sec_drones = 3*temp_keys_req
+		temp_number_shrines = 5
+
+		enemy_probs = enemyprobs3	
+		#enemy_probs.append(('ninja', 5))
+		lev2 = Level_Setting(
+			max_rooms = 8,
+			room_max_size = 12,	#20,
+			room_min_size = 4,	#15,
+			max_room_monsters = 1,
+			level_type = 'modern',
+			enemy_probabilities = enemy_probs,
+			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
+			number_keys = temp_keys_here,
+			keys_required = temp_keys_req, #len(self.bigArray),
+			number_shrines = temp_number_shrines,
+			initial_alarm_level = len(self.bigArray)
+			)
+		
+		self.bigArray.append(lev2)
+
 
 		# Level 3 has swordsmen,  bomen, and axe maniacs.
 		enemy_probs = []
@@ -212,8 +260,8 @@ class Level_Settings:
 			keys_required = temp_keys_req, #len(self.bigArray),
 			number_shrines = temp_number_shrines,
 			initial_alarm_level = len(self.bigArray),
-			color_scheme = 'coldTest',
-			effects = ['cold']	
+			color_scheme = 'coldTest'#,
+			#effects = ['cold']	
 			)
 		
 		self.bigArray.append(lev3)

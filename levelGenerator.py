@@ -2144,7 +2144,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
 		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
-		E = Object_Name('monster', 'swordsman')
+		E = Object_Name('monster', 'albatross')
 		seg_map =      [[0,0,0,0,0,0,0,1],
 				[1,1,1,0,1,1,1,1],
 				[1,1,1,C,1,1,1,1],
@@ -2183,7 +2183,7 @@ class Level_Generator:
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		A = Object_Name('monster', 'strawman')	
 		F = Object_Name('message', "Move next to an enemy and attack them! (#ATTCKUPLEFT#, #ATTCKUP#, #ATTCKUPRIGHT#, #ATTCKRIGHT#, #ATTCKDOWNRIGHT#, #ATTCKDOWN#, #ATTCKDOWNLEFT#, #ATTCKLEFT#)")
-		B = Object_Name('weapon', 'sword')
+		B = Object_Name('weapon', 'shiv')
 		E = Object_Name('message', "Move to the weapon ahead of you and press #PICKUP# to pick it up.")	
 		seg_map =      [[0,0,0,0,0,0,0,1],
 				[0,0,A,0,A,0,0,1],
@@ -2315,7 +2315,7 @@ class Level_Generator:
 		H = Object_Name('message', "Water is fine to swim in. You just can't attack while doing so.")
 		W = Object_Name('water')
 		B = Object_Name('plant')
-		S = Object_Name('weapon', 'sword')
+		S = Object_Name('weapon', 'shiv')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
@@ -2343,7 +2343,7 @@ class Level_Generator:
 		C = Object_Name('door', 'vertical')
 		F = Object_Name('message', "Be warned! Ahead lies your first true foe.")
 		G = Object_Name('message', "Remember your lessons. Avoid their attacks. Let them walk into yours. And good luck.")
-		S = Object_Name('weapon', 'sword')
+		S = Object_Name('weapon', 'shiv')
 		seg_map =      [[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
 				[1,1,1,1,1,1,1,1],
@@ -2360,10 +2360,10 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(4*tut_rm_width, 2*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		C = Object_Name('monster', 'swordsman')
+		C = Object_Name('monster', 'albatross')
 		W = Object_Name('water')
 		F = Object_Name('message', "Observe your next enemy's patterns closely! It is the key to defeating them.")
-		S = Object_Name('weapon', 'sword')
+		S = Object_Name('weapon', 'shiv')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -2408,8 +2408,8 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(4*tut_rm_width, 5*tut_rm_height,2*tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		R = Object_Name('monster', 'rook')
-		C = Object_Name('monster', 'swordsman')
+		R = Object_Name('monster', 'bustard')
+		C = Object_Name('monster', 'albatross')
 		W = Object_Name('water')
 		F = Object_Name('message', "But of course, we can't always take our enemies on one at a time. Sometimes, we get taken by surprise.")
 		seg_map =      [[1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1],
