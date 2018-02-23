@@ -14,6 +14,7 @@ version  0.1.1.0  released ????
  - A little bit of randomization in the enemy distributions of levels 2 and 3.
  - Security drones now have slightly fewer hit points after spotting you.
  - Added a 'time to reinforcements' tracker to the GUI that tracks when more enemies are due. Mainly added for bugtesting purposes, but hey, enjoy it while it's there.
+ - New upgrades:  Daredevil, Fortification
 
 
 
