@@ -287,7 +287,7 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, mouseover = None):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -323,6 +323,9 @@ class Object:
 		#self.raising_alarm = raising_alarm
 		self.alarmer = alarmer
 		self.drops_key = drops_key
+		self.mouseover = mouseover
+		if self.mouseover == None:
+			self.mouseover = self.name + " TODO"
 
 	def move(self, dx, dy):	
 		global objectsArray
@@ -1562,6 +1565,76 @@ class Eagle_AI(BasicMonster):
 
 
 
+#Greenhorn_AI basically acts like Basic AI, but 1. doesn't pick uo food, and 2. only attacks every other turn (which makes a difference when there's swords)
+class Greenhorn_AI(BasicMonster):
+
+	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
+		BasicMonster.__init__(self, weapon, guard_duty, attack_dist, state)
+		# cutting the 'pausing' idea for now, at least for this enemy
+		#self.pausing = True
+		self.just_attacked = False
+
+	# Deciding step is just like BasicMonster, except we ignore food
+	def decideState(self, monster):
+		# Currently planned possible states:
+		# 'guard-duty'			Stay where you are till something comes along
+		# 'head-towards-room'		Try and walk towards a target room (generally the one you think player is in)
+		# 'wander-aimlessly'		Pick adjacent rooms at random to walk into, preferably avoiding the previous room
+		# 'pursue-visible-target'	When the player is near you, go towards them! Includes attacking?	
+		# 'flee-visible-danger'		Run away from a thing you can see (the player, when you're scared of them?)
+	
+		#keeping it pretty simple for now... pursue the player if you see them
+		#if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+
+		# new thing: see if there is a plant here
+		plant_here = False
+		for obj in objectsArray[monster.x][monster.y]:
+			if obj.plant is not None:
+				plant_here = True
+				break
+		# bit of a cheat here - make it so enemies only pick up fruit when you can see them.
+		#if plant_here and monster.fighter.hp < monster.fighter.max_hp and fov_map.fov[monster.x, monster.y]:
+		#	self.state = 'hungry'
+		# el
+		if fov_map.fov[monster.x, monster.y]:
+			self.state = 'pursue-visible-target'
+		elif self.state == 'pursue-visible-target':	#go to room-based targeting
+			self.state = 'wander-aimlessly'		
+			# because we could see the player a second ago, we assule the player has just run 'round the corner' 
+			# and so we think we know what roomthe player is in
+			self.target_room = nearest_points_array[player.x][player.y] 	
+		elif self.state == 'flee-visible-danger':
+			self.state = 'wander-aimlessly'	
+			# as we just ran out of sight of player, prioritise not being in the room they're in	
+			self.previous_room = nearest_points_array[player.x][player.y] 	
+			
+
+	# Engaging player is same as BasicMonster, except you can't attack two turns in a row (even if the weapon would allow it)
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0 and self.just_attacked == False:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			self.just_attacked = True
+
+		# otherwise, walk towards the player if possible.
+		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			self.just_attacked = False
+
+		else:
+			self.just_attacked = False
+			
+
+
 
 class Rogue_AI(BasicMonster):
 
@@ -1702,6 +1775,58 @@ class Rogue_AI(BasicMonster):
 #	
 #				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
 #				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+# "Ninja crane" approaches the player, but at distance 2 they don't come any closer, just attack in the player's direction if able.
+class Ninja_Crane_AI(BasicMonster):
+
+
+	# Tridentor AI is bit more predictable than the BasicMonster AI would be (doesn't randomly choose between the 3 options that would fit),
+	# also tries an attack if there's a step between them and the player... and maybe backs away if an attack is not possible?...
+	def engagePlayer(self, monster, decider):
+		
+		#get data for where player is
+#		abstract_attack_data = None
+		xdiff = player.x - monster.x
+		ydiff = player.y - monster.y
+		xdiffabs = xdiff
+		if xdiff < 0:
+			xdiffabs = -xdiff
+		ydiffabs = ydiff
+		if ydiff < 0:
+			ydiffabs = -ydiff 
+
+		
+		# If the player is one or two steps from me, either to a specified attack, or retreat if I have no charge 
+		if xdiffabs <=2 and ydiffabs <= 2:  # or self.weapon.current_charge < self.weapon.default_usage
+			#if near to the player, and I have charge, then attack!
+			if self.weapon.current_charge >= self.weapon.default_usage:
+				attack_command = 0
+				# Do one of these attacks, based on where player is
+				# For now, I'm happy to make the crane biased toward horizontal attacks
+				attack_array = [[oAo,oWo,oWo,oWo,oDo],
+						[oAo,oAo,oWo,oDo,oDo],
+						[oAo,oAo, 0 ,oDo,oDo],
+						[oAo,oAo,oXo,oDo,oDo],
+						[oAo,oXo,oXo,oXo,oDo]]
+				attack_command = attack_array[ydiff+2][xdiff+2]
+				# alt pattern you might want to do for reasons of symmetry?
+
+
+				#carry out attack
+				if attack_command != 0:
+					abstract_attack_data = self.weapon.do_attack(attack_command)
+						
+				if abstract_attack_data is not None:
+					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+
+		# otherwise, walk towards the player if possible.
+		else:
+
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
 		
 	
 	
@@ -3777,6 +3902,14 @@ def create_monster(x,y, name, guard_duty = False):
 		monster = Object(x, y, 'B', 'boman', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
+	elif name == 'greenhorn':
+		#create a troll
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
+		ai_component = Greenhorn_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, 'G', 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
+
+
 	elif name == 'rook':
 		#create a rook! That's a guy with a spear who only moves in four directions
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
@@ -3785,24 +3918,25 @@ def create_monster(x,y, name, guard_duty = False):
 		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 	elif name == 'albatross':
-		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = BasicMonster(weapon = Weapon_Shiv(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'bustard':
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'crane':
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
-		ai_component = Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		#ai_component = Ninja_Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
+		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'blocker', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'B', 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
 
 
 	elif name == 'dove':

@@ -476,7 +476,7 @@ class Weapon_Spear(Generic_Weapon):
 class Weapon_Sword(Generic_Weapon):
 
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'sword', 2, 2, 1)
+		Generic_Weapon.__init__(self, 'sword', 1, 1, 0)		# right now, there should be no difference between swords and shivs?
 		default_usage = self.default_usage
 		
 		command = ATTCKUP

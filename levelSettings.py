@@ -26,7 +26,7 @@ class Level_Settings:
 		# and, suddenly for some reason, ninjas
 		enemy_probs = []
 		#enemy_probs.append(('strawman', 50))
-		enemy_probs.append(('swordsman', 50))
+		enemy_probs.append(('greenhorn', 50))
 		# enemy_probs.append(('flailing strawman', 25))
 		#enemy_probs.append(('stupid swordsman', 25))
 		enemy_probs.append(('rook', 25))
@@ -102,15 +102,18 @@ class Level_Settings:
 		#	enemy_choice = enemies_probs_set[j]
 		#	enemyprobs1.append(enemy_choice)
 		#	enemies_probs_set.remove(enemy_choice)
-		enemyprobs1.append(('albatross', 10))
-		#enemyprobs1.append(('crane', 10))
-		enemyprobs1.append(('bustard', 10))
+		#enemyprobs1.append(('albatross', 10))
+		enemyprobs1.append(('greenhorn', 10))
+		enemyprobs1.append(('crane', 10))
+		#enemyprobs1.append(('bustard', 10))
 		#enemyprobs1.append(('eagle', 10))
 		enemies_probs_set = [('crane', 5),  ('dove', 10),  ('falcon', 10)]
+		enemies_probs_set.append(('bustard', 10))
 		third_enemy_choice = randint( 0, len(enemies_probs_set)-1)
 		third_enemy = enemies_probs_set[third_enemy_choice]
 		enemyprobs2 = []
-		enemyprobs2.append(('albatross', 10))
+		#enemyprobs2.append(('albatross', 10))
+		enemyprobs1.append(('greenhorn', 10))
 		enemyprobs2.append(('bustard', 10))
 		enemyprobs2.append(third_enemy)
 
@@ -118,7 +121,8 @@ class Level_Settings:
 		enemies_probs_set.append(('eagle', 5))
 
 		enemyprobs3 = []
-		enemyprobs3.append(('albatross', 10))
+		#enemyprobs3.append(('albatross', 10))
+		enemyprobs1.append(('greenhorn', 10))
 		if randint(0,3) == 0:
 			enemyprobs3.append(('bustard', 10))
 		else:
