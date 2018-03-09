@@ -6,7 +6,7 @@ from random import randint
 
 class PowerUp:
 
-	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", code = '???', cost = 3, status =  'dormant'):
+	def __init__(self, name = "Example bonus", tech_description = "Does specific thing under specific circumstance", verbose_description= "A vague and mysterious item, said to confer great fortune on those who can satisfy its capricious whims.", code = '???', cost = 3, status =  'dormant', tags = []):
 #, updates_on_player_attack_choice = False, affects_strength_at_attack_choice = False):
 		self.name = name
 		self.tech_description = tech_description  		# short description of what item does
@@ -17,11 +17,12 @@ class PowerUp:
 		# self.affects_strength_at_attack_choice = affects_strength_at_attack_choice
 		self.activated = False		# generally this is a thing that determines whether to grant a bonus. Won't always be applicable
 		self.status = status		# 'dormant' - not doing anything; 'enabled' = in a situation to potentially do a thing; 'active' - doing a thing
+		self.tags = tags		# including... aggressive for things that increase attack strength, reflexive for things that affect the player inc energy stuff and healing, and supportive for things that don't fit in either category???
 
 class WallHugger(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength.", code='W.H')
+		PowerUp.__init__(self, name = "Wall Hugger", tech_description = "+1 strength when up against a wall", verbose_description = "Whether as cover or as a dead end, a wall at your back will grant you strength.", code='W.H', tags = ['aggressive'])
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has 3 wall segments on one side
@@ -69,7 +70,7 @@ class WallHugger(PowerUp):
 class Mindfulness(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Mindfulness", tech_description = "+1 energy recharge when standing still", verbose_description = "Stop and take a moment to focus on yourself and your surroundings, and you will find yourself energised and better prepared for the challenges ahead.", code='Mnd')
+		PowerUp.__init__(self, name = "Mindfulness", tech_description = "+1 energy recharge when standing still", verbose_description = "Stop and take a moment to focus on yourself and your surroundings, and you will find yourself energised and better prepared for the challenges ahead.", code='Mnd', tags = ['reflexive'])
 
 	#standing still is enough to activate this ability
 	def update_on_standing_still(self, player, objectsArray, map):
@@ -88,7 +89,7 @@ class Mindfulness(PowerUp):
 class NeptunesBlessing(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Neptune's Blessing", tech_description = "+1 strength when next to or in water", verbose_description = "A coral amulet that grants increased strength when near water.", code='N.B')
+		PowerUp.__init__(self, name = "Neptune's Blessing", tech_description = "+1 strength when next to or in water", verbose_description = "A coral amulet that grants increased strength when near water.", code='N.B', tags = ['aggressive'])
 
 	#TODO: 
 	# Activates if there is water on the player's square or hoirzontally/vertically adjacent
@@ -148,7 +149,7 @@ class NeptunesBlessing(PowerUp):
 class Amphibious(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Amphibious", tech_description = "able to attack in water", verbose_description = "Fight in water as easily as on land.", code='Amp')
+		PowerUp.__init__(self, name = "Amphibious", tech_description = "able to attack in water", verbose_description = "Fight in water as easily as on land.", code='Amp', tags = ['supportive'])
 
 
 	def update_on_testing_can_attack(self, error_message):
@@ -168,7 +169,7 @@ class Amphibious(PowerUp):
 class PersonalSpace(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when more than 2 spaces from any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S')
+		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when more than 2 spaces from any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S', tags = ['aggressive'])
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has no walls or doors on any adjacent space (including diagonally)
@@ -286,7 +287,7 @@ class Perfectionist(PowerUp):
 
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Perfectionist", tech_description = "+1 strength when all attacks hit", verbose_description = "Power is nothing without control. Additional strength for attacks with 100%% accuracy.", code='Pef')
+		PowerUp.__init__(self, name = "Perfectionist", tech_description = "+1 strength when all attacks hit", verbose_description = "Power is nothing without control. Additional strength for attacks with 100%% accuracy.", code='Pef', tags = ['aggressive'])
 
 	def update_based_on_player_accuracy(self, all_player_attacks_on_target):
 		if all_player_attacks_on_target:
@@ -307,7 +308,7 @@ class Perfectionist(PowerUp):
 class Leapfrog(PowerUp):
 	
 	def __init__(self):
-		PowerUp.__init__(self, name = "Leapfrog", tech_description = "-1 energy cost for jumping", verbose_description = "Leap through the air with ease!", code='L.F')
+		PowerUp.__init__(self, name = "Leapfrog", tech_description = "-1 energy cost for jumping", verbose_description = "Leap through the air with ease!", code='L.F', tags = ['reflexive'])
 		self.consumed = False
 
 	def upgrade_player_stats_once(self,player):
@@ -324,7 +325,7 @@ class FarReaching(PowerUp):
 	
 	def __init__(self):
 		#PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Mark hasn't implemented this one yet.", code='F.R')
-		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.", code='F.R', cost = 2)
+		PowerUp.__init__(self, name = "Far Reaching", tech_description = "+1 radius for picking up objects", verbose_description = "Experience the joy of picking up nearby objects without having to be literally on top of them.", code='F.R', cost = 2, tags = ['supportive'])
 
 	# most of the work for this one is done in the main game file, ah well.
 	def increase_pickup_radius(self):
@@ -336,7 +337,7 @@ class FarReaching(PowerUp):
 class ScrapingTheBarrel(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Scraping the Barrel", tech_description = "+1 strength when weapon is on 10 durability or less", verbose_description = "Get extra power from a weapon that's close to breaking.", code='StB')
+		PowerUp.__init__(self, name = "Scraping the Barrel", tech_description = "+1 strength when weapon is on 10 durability or less", verbose_description = "Get extra power from a weapon that's close to breaking.", code='StB', tags = ['aggressive'])
 
 	# Activates if player weapon is on 10 or less durability
 	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
@@ -361,7 +362,7 @@ class ScrapingTheBarrel(PowerUp):
 class NewWeaponSmell(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "New Weapon Smell", tech_description = "+1 strength when weapon is on 50 durability or more", verbose_description = "As the wise know, shiny new things are always the best.", code='NWS')
+		PowerUp.__init__(self, name = "New Weapon Smell", tech_description = "+1 strength when weapon is on 50 durability or more", verbose_description = "As the wise know, shiny new things are always the best.", code='NWS', tags = ['aggressive'])
 
 	# Activates if player weapon is on 10 or less durability
 	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
@@ -385,7 +386,7 @@ class NewWeaponSmell(PowerUp):
 class Rejuvenation(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Rejuvenation", tech_description = "1-off full heal and energy recharge", verbose_description = "I shall heal all your wounds!", code='[+]')
+		PowerUp.__init__(self, name = "Rejuvenation", tech_description = "1-off full heal and energy recharge", verbose_description = "I shall heal all your wounds!", code='[+]', tags = ['reflexive'])
 		self.consumed = False
 
 
@@ -401,7 +402,7 @@ class Rejuvenation(PowerUp):
 class InstantaneousStrength(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Instantaneous Strength", tech_description = "+1 strength for this floor", verbose_description = "For the remainder of this floor, I shall enhance your damage in combat!", code='I.S')
+		PowerUp.__init__(self, name = "Instantaneous Strength", tech_description = "+1 strength for this floor", verbose_description = "For the remainder of this floor, I shall enhance your damage in combat!", code='I.S', tags = ['aggressive'])
 		self.activated = True
 		self.level_number = None
 	# Activates if player weapon is on 10 or less durability
@@ -427,7 +428,7 @@ class InstantaneousStrength(PowerUp):
 class DareDevil(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Daredevil", tech_description = "+1 strength when on 1 max health", verbose_description = "A blessing of strength on those one false move from the afterlife", code='D.D')
+		PowerUp.__init__(self, name = "Daredevil", tech_description = "+1 strength when on 1 max health", verbose_description = "A blessing of strength on those one false move from the afterlife", code='D.D', tags = ['aggressive'])
 
 	# Activates if player weapon is on 10 or less durability
 	def update_on_player_attack_choice(self, player, objectsArray, map, player_weapon):
@@ -485,10 +486,34 @@ def Get_Random_Upgrade():
 	upgrade_list.append(Fortification())
 
 
+	# split into three lists - aggressive, reflexive, supportive
+	aggressive_list = []
+	reflexive_list = []
+	supportive_list = []
+	for upgrade in upgrade_list:
+		if 'aggressive' in upgrade.tags:
+			aggressive_list.append(upgrade)
+		if 'reflexive' in upgrade.tags:
+			reflexive_list.append(upgrade)
+		if 'supportive' in upgrade.tags:
+			supportive_list.append(upgrade)
+
+	# roll a D3 to decide what category of thing to return - this hopefully leads to a more balanced variety of upgrades?
+	upgrade_shortlist = []
+	type_choice = randint(0,2)
+	if type_choice == 0:
+		upgrade_shortlist = aggressive_list
+	elif type_choice == 1:
+		upgrade_shortlist = reflexive_list
+	if type_choice == 2:
+		upgrade_shortlist = supportive_list
+	
+
+
+
 	# return a random upgrade from list
-	# choice =  libtcod.random_get_int(0, 0, len(upgrade_list)-1)
-	choice = randint( 0, len(upgrade_list)-1)
-	return upgrade_list[choice]
+	choice = randint( 0, len(upgrade_shortlist)-1)
+	return upgrade_shortlist[choice]
 	#return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
 	#return PersonalSpace()					#return this particular thing, for testing purposes
 
