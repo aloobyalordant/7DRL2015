@@ -203,6 +203,12 @@ Color_Stat_Info=(v_p,v_p,v_p)			# info about not-in-the-world stuff like gaining
 Color_Personal_Action=(v_p,v_p,v_p)		# Things the player does that aren't combat "you pick up the sword" etc
 
 
+
+
+# TODO integrate mouse panel colors with the color handler
+Color_Mouseover_Background = (220,220,230)
+Color_Mouseover_Foreground = (30,30,20)
+
 #sizes and coordinates relevant for the GUI and action screen
 BAR_WIDTH = 20
 PANEL_HEIGHT = 9
@@ -3190,6 +3196,80 @@ def choose_adjacent_room(current_center = 0, previous_center = None, avoid_previ
 	except IndexError:
 		return current_center
 
+def get_mouseover_text():
+	global mouse_coord_x, mouse_coord_y
+	global PANEL_Y, ACTION_SCREEN_X, MESSAGE_PANEL_WIDTH, SCREEN_WIDTH, SCREEN_HEIGHT, PANEL_HEIGHT
+	global camera
+	
+	return_text = "MICE ARE COOL (" + str(mouse_coord_x) + ", " + str(mouse_coord_y) + ")"
+
+	if mouse_coord_y >= PANEL_Y:
+		return_text = get_info_panel_mouseover_text(mouse_coord_x, mouse_coord_y - PANEL_Y)
+	elif mouse_coord_x < MESSAGE_PANEL_WIDTH:
+		return_text = get_message_panel_mouseover_text(mouse_coord_x, mouse_coord_y)
+
+	else:
+		x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
+		y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
+		#I think (x_offset, y_offset) gives the map co-ordinate of the space visible in sequare (0,0) of the action window
+		return_text = get_action_screen_mouseover_text(x_offset + mouse_coord_x, y_offset + mouse_coord_y)
+
+	return return_text
+
+
+
+def get_info_panel_mouseover_text(x,y):
+	global bottom_panel_mouseover_array
+	return_string = "Information Panel"
+	try :
+		return_string = bottom_panel_mouseover_array[x][y]
+	
+	except IndexError:
+		return_string = "Information Panel, Out of Bounds Exception"
+	return return_string
+#	return  "Information Panel (" + str(x) + "," + str(y) + ")"
+
+
+def get_message_panel_mouseover_text(x,y):
+	return "Message Panel (" + str(x) + "," + str(y) + ")"
+
+def get_action_screen_mouseover_text(x,y):
+
+	# It's possible the mouse is outside the map.
+	try:	
+		# Case 1: this part of map has been explored
+		if map[x][y].explored:
+			# Case 1a: It's a wall!
+			if map[x][y].blocked:
+				return "Wall"
+			
+			else:
+				#Case 1b: Area is currently visible
+				if fov_map.fov[x, y]:
+					stack_depth = len(objectsArray[x][y])
+					if stack_depth> 0:
+						return objectsArray[x][y][stack_depth - 1].mouseover
+					else:
+						return "Empty space"
+						#return "dunno (" + str(x) + "," + str(y) + ") (" + str(player.x) + "," + str(player.y) + ")" 
+				else:
+					# Case 1c: Area is explored but not currently visible
+					top_visible_object = None
+					for obj in objectsArray[x][y]:
+						if obj.always_visible:
+							top_visible_object = obj
+					if top_visible_object is not None:
+						return top_visible_object.mouseover
+					else:
+						return "Previously explored area"
+
+		# Case 2: this area has not been explored
+		else: 
+			return "Unexplored area"
+
+	except IndexError:
+		return "Out of play area"
+
 def get_names_under_mouse():
 	global mouse
 	#return a string with the names of all objects under the mouse
@@ -5368,6 +5448,9 @@ def render_all():
 	global fov_map, color_dark_wall, color_light_wall
 	global color_dark_ground, color_light_ground, color_light_ground_alt
 	global fov_recompute, bgColorArray
+	global fontpath, spritepath
+
+
 
 	if fov_recompute:
 		#recompute FOV if needed (the player moved or something)
@@ -5488,10 +5571,13 @@ def render_all():
 	root_console.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 	
 
+
+	
 	
 	# write GUI stuff to "panel"
 	create_GUI_panel()
 	create_message_panel()
+
 
 
 def create_GUI_panel():
@@ -5553,13 +5639,7 @@ def create_GUI_panel():
 	#attack_list = str(player_weapon.command_list)
 	#libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Attacks:")
 	panel.draw_str(attack_panel_x, 3, "Attacks:", fg=attack_panel_default_color, bg=None)
-	## set colors based on weapon durability
-	#if player_weapon.durability <= 0:
-	#		libtcod.console_set_default_foreground(panel, libtcod.orange)
-	#elif player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD:
-	#		libtcod.console_set_default_foreground(panel, libtcod.orange)
-	#else: 
-	#		libtcod.console_set_default_foreground(panel, libtcod.white)
+
 		
 
 
@@ -5582,82 +5662,13 @@ def create_GUI_panel():
 				command_recognised = True
 		if command_recognised == True:
 			panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
-	# Commented out: could have a symbol to mean 'no attack available' here, 
-	# but I think that's a bad idea given various puntuation can get used as actual commands
-	#	else:
-	#		panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, '-', bg=None, fg=attack_panel_default_color)
 
-
-
-#	if ATTCKUPLEFT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKUPLEFT)
-#
-#	if ATTCKUP in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKUP)
-#
-#	if ATTCKUPRIGHT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKUPRIGHT)
-#
-#	if ATTCKLEFT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKLEFT)
-#
-#
-#	if ATTCKRIGHT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKRIGHT)
-#
-#		
-#	if ATTCKDOWNLEFT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKDOWNLEFT)
-#
-#	if ATTCKDOWN in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKDOWN)
-#
-#	if ATTCKDOWNRIGHT in attack_list:
-#			libtcod.console_print_ex(panel, attack_panel_x + attack_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER,
-#		ATTCKDOWNRIGHT)
-#	libtcod.console_set_default_foreground(panel, attack_panel_default_color)
 
 	# Display weapon charge details.
 	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
 	panel.draw_str(int(attack_panel_x) , 6, 'Weight: ' + str(player_weapon.get_default_usage_cost() + 1), bg=None, fg=attack_panel_default_color)
 
-	#uncharged_color = libtcod.blue
-	#insufficient_charge_color = libtcod.red
-	#charge_color = libtcod.green
-	#bonus_charge_color = libtcod.darker_green
-	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Charge:')
-	#if player_weapon.current_charge < player_weapon.default_usage:
-	#	libtcod.console_set_default_foreground(panel, insufficient_charge_color)
-	#	for i in range(player_weapon.current_charge):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-	#else:
-	#	libtcod.console_set_default_foreground(panel, bonus_charge_color)
-	#	for i in range(player_weapon.current_charge - player_weapon.default_usage):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-	#	libtcod.console_set_default_foreground(panel, charge_color)
-	#	for i in range(player_weapon.current_charge - player_weapon.default_usage, player_weapon.current_charge):
-	#		libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-	#
-	#libtcod.console_set_default_foreground(panel, uncharged_color)
-	#for i in range(player_weapon.current_charge, player_weapon.max_charge):
-	#	libtcod.console_print_ex(panel, attack_panel_x + 7 + i, 6, libtcod_BKGND_NONE, libtcod_LEFT,
-	#'*')
 
-
-	
-	#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
-
-#	if player_weapon.current_charge < player_weapon.default_usage:
-#	else:
-#	libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,
-#	'Charge:** ' + str(player_weapon.current_charge) + '/' + str(player_weapon.max_charge) + ' (req:' + str(player_weapon.default_usage) + ')')
 
 	current_text_color = default_text_color
 	if player_weapon.durability <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > 0:
@@ -5683,15 +5694,6 @@ def create_GUI_panel():
 	#libtcod.console_print_ex(panel, player_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT, "Energy:")
 	panel.draw_str(player_panel_x, 1, "Energy:", bg=None, fg=default_text_color)
 	for i in range(player.fighter.max_hp):
-		#if i < player.fighter.wounds:
-		#	libtcod.console_set_default_foreground(panel, wound_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-		#elif i < player.fighter.wounds + player.fighter.hp:			
-		#	libtcod.console_set_default_foreground(panel, energy_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-		#else: 
-		#	libtcod.console_set_default_foreground(panel, non_energy_color)
-		#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
 
 		if i <  player.fighter.hp:			
 			translated_console_set_default_foreground(panel, energy_color)
@@ -5702,21 +5704,6 @@ def create_GUI_panel():
 		else:
 			translated_console_set_default_foreground(panel, wound_color)
 			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '\\')
-
-
-#	else:
-#		libtcod.console_set_default_foreground(panel, adrenaline_color)
-#		libtcod.console_print_ex(panel, player_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT, "ENERGY:")
-#		for i in range(player.fighter.max_hp):
-#			if i < player.fighter.adrenaline_level:
-#				libtcod.console_set_default_foreground(panel, adrenaline_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-#			#elif i < player.fighter.wounds + player.fighter.hp:			
-#			#	libtcod.console_set_default_foreground(panel, adrenaline_color)
-#			#	libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-#			else: 
-#				libtcod.console_set_default_foreground(panel, non_adrenaline_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
 
 
 			
@@ -5744,29 +5731,8 @@ def create_GUI_panel():
 		
 		translated_console_print_ex(panel, int(player_panel_x + player_panel_width/2 + 2*x_adjust), 4 + y_adjust, libtcod_BKGND_NONE, libtcod_CENTER, command_str)
 
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '7')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '8')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 3, libtcod_BKGND_NONE, libtcod_CENTER, '9')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '4')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '.')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 4, libtcod_BKGND_NONE, libtcod_CENTER, '6')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 - 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '1')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '2')
-#	translated_console_print_ex(panel, player_panel_x + player_panel_width/2 + 2, 5, libtcod_BKGND_NONE, libtcod_CENTER, '3')
+	translated_console_print_ex(panel, player_panel_x, 7, libtcod_BKGND_NONE, libtcod_CENTER, "Jump:   " + controlHandler.controlLookup["JUMP"])
 
-
-#	#Display some stuff about jumps, woo!
-#	jump_charged_color = libtcod.orange
-#	jump_uncharged_color = libtcod.red
-#	if  len(player.fighter.jump_array) > 0:
-#		libtcod.console_print_ex(panel, player_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT, "Jumps:")
-#		for i in range(len(player.fighter.jump_array)):
-#			if player.fighter.jump_array[i] == 0:
-#				libtcod.console_set_default_foreground(panel, jump_charged_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-#			else:
-#				libtcod.console_set_default_foreground(panel, jump_uncharged_color)
-#				libtcod.console_print_ex(panel, player_panel_x + 6 + i, 7, libtcod_BKGND_NONE, libtcod_LEFT, '*')
 
 
 	#LEVEL PANEL STUFF
@@ -5812,6 +5778,8 @@ def create_GUI_panel():
 	#display names of objects under the mouse  #commenting out for now!
 	#libtcod.console_set_default_foreground(panel, libtcod.light_gray)
 	#libtcod.console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_names_under_mouse())
+	translated_console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_mouseover_text())
+
 
 
 
@@ -5858,20 +5826,6 @@ def create_GUI_panel():
 	translated_console_set_default_foreground(panel, default_text_color)
 	translated_console_set_default_background(panel, default_background_color)
 				
-
-#default_background_color = 	(vfw,vfw,vfw)	#(0,0,0)
-#default_text_color = 		(vsf,vsf,vsf)	#(255,255,255)
-#color_energy = 			(v_p,v_p,v_p)	#(0,255,255)
-#color_faded_energy = 		(vsf,vsf,vsf)	#	(0,0,255)
-#color_warning = 		(v_p,v_p,v_p)	#	(255,127,0)
-#color_big_alert = 		(v_p,v_p,v_p)	#(255,0,0)
-
-		
-
-#		for power_up in upgrade_array:
-#			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
-#				power_up.upgrade_player_stats_once(player)
-
 
 
 
@@ -6270,6 +6224,100 @@ def initialise_game():
 	translated_console_flush()
 
 
+# Produce an array describing the mouseover text for each part of the bottom "GUI" panel
+def initialise_panel_mouseover():
+	global bottom_panel_mouseover_array
+	global PANEL_HEIGHT, PANEL_WIDTH
+	# First set default "Information Panel" text
+	bottom_panel_mouseover_array = [[ "Information Panel ("  + str(x) + "," + str(y) + ") YO"
+		for y in range(PANEL_HEIGHT) ]
+			for x in range(SCREEN_WIDTH)]
+
+	# Now modify speci
+	for y in range(PANEL_HEIGHT):
+		for x in range(SCREEN_WIDTH):
+			mouseover_text = "Information Panel ("  + str(x) + "," + str(y) + ") YAY"
+
+			if y > 0:
+				# Weapon Subpanel
+				if x <= 21:
+					# -- Weapon Name --
+					if y <= 2:
+						mouseover_text = "Weapon Name"
+
+					# -- Attack Commands --
+					elif y <= 5:
+						mouseover_text = "Attack Commands"
+
+					# -- Weapon Weight --
+					elif y <= 6:
+						mouseover_text = "Weapon Weight"
+
+					# -- Weapon Durability --
+					elif y <= 7:
+						mouseover_text = "Weapon Durability"
+		
+
+				# Player Subpanel
+				elif x <= 41:
+					# -- Health and Energy--	
+					if y <= 2:
+						mouseover_text = "Health and Energy"
+						# -- Energy Bar (which is its own thing) --
+						if y == 1 and x >= 29 and x <= 38:
+							mouseover_text = "Energy Bar"
+
+					# -- Movement Commands -- 
+					elif y <= 5:
+						mouseover_text = "Movement Commands"
+
+					# -- Jump Command --
+					elif y == 7:
+						mouseover_text = "Jump Command"
+							
+
+
+				# Level info subpanel
+				elif x <= 55:
+					
+					# -- Time Elapsed --
+					if y == 1:
+						mouseover_text = "Time Elapsed"
+
+					# -- Current Floor --
+					elif y == 2:
+						mouseover_text = "Current Floor"
+
+					# -- Alarm Level --
+					elif y == 3:
+						mouseover_text = "Alarm Level. Higher means more enemies."
+
+					# -- Keys Gathered / Required --
+					elif y == 4:
+						mouseover_text = "Keys Gathered / Required "
+
+					# -- Favour --
+					elif y == 5:
+						mouseover_text = "Favour"
+
+
+
+					# -- Reinforcements timer   (split across this and the upgrades panel, for reasons) --
+					elif y == 7:
+						mouseover_text = "Reinforcements Timer"
+
+
+				# Upgrades subpanel  (to fix up properly later)
+				else:
+					if y >= 1 and y <= 6:
+						mouseover_text = "Upgrades Panel"
+
+					# -- Reinforcements timer   (split across this and the level info panel, for reasons) --
+					elif y == 7:
+						mouseover_text = "Reinforcements Timer"
+						
+
+			bottom_panel_mouseover_array[x][y] = mouseover_text
 
 
 #libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod	.FONT_LAYOUT_TCOD)
@@ -6290,6 +6338,7 @@ def initialise_game():
 # (I wonder if it's possible to change the fonts on different sub-consoles...)
 # libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
 font_choice = 'terminal16x16.png'
+sprite_choice = 'terminal16x16alt.png'
 
 #But hang on maybe I just need to change the 'altLayout' settings to make my original file work...
 #libtcod.set_font('arial14x14.png', greyscale=True, altLayout=False)
@@ -6306,6 +6355,7 @@ print ('sys.argv[0] =' + sys.argv[0])
 pathname = os.path.dirname(sys.argv[0])       
 print ('path = ' + pathname)
 fontpath = os.path.join(pathname,  font_choice)
+spritepath = os.path.join(pathname,  sprite_choice)
 print ('font file = ' + fontpath)
 libtcod.set_font(fontpath, greyscale=True, altLayout=False)
 
@@ -6320,16 +6370,24 @@ con = libtcod.Console(MAP_WIDTH, MAP_HEIGHT)
 panel = libtcod.Console(SCREEN_WIDTH, PANEL_HEIGHT)
 message_panel = libtcod.Console(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
 pause_menu = libtcod.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
+mouse_panel = libtcod.Console(SCREEN_WIDTH, 3)
 #con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 #panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 #message_panel = libtcod.console_new(SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT)
 #pause_menu = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+translated_console_set_default_background(mouse_panel, Color_Mouseover_Background)
+translated_console_set_default_foreground(mouse_panel, Color_Mouseover_Foreground)
 
 
 # cutting out mouse stuff for now, because it hasn't worked in a while.
 # may come back to it once i have everything working with tdl. but for now, it's not worth porting faulty code
 # mouse = libtcod.Mouse()
 mouse = None
+global mouse_coord_x
+global mouse_coord_y
+mouse_coord_x = 5
+mouse_coord_y = 0
 #TEMP COMMENTING OUT OH GOD
 #key = libtcod.Key()
 key = None
@@ -6340,6 +6398,7 @@ key = None
 
 initialise_game()
 
+initialise_panel_mouseover()
 
 lev_set = game_level_settings.get_setting(dungeon_level)
 
@@ -6425,6 +6484,27 @@ while not translated_console_is_window_closed():
 				if event.type != 'TEXT':
 					#print('HALLO ' + str(event))
 					user_input = event
+			elif event.type == 'MOUSEMOTION' and game_state == 'playing':			
+				(temp_x, temp_y) = event.cell
+				mouse_coord_x =temp_x
+				mouse_coord_y =temp_y
+				#print(mouse_coord)
+				#currency_count = currency_count  + 1
+
+				# print mouseover text for this part of the screen
+				mouse_panel.clear()
+				mouseover_text = get_mouseover_text()
+				translated_console_print_ex(mouse_panel, 1, 1, libtcod_BKGND_NONE, libtcod_LEFT, mouseover_text)
+
+
+
+				#blit the contents of "message_panel" to the root console
+				#libtcod.console_blit(message_panel, 0, 0, SCREEN_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+				# libtcod.console_blit(message_panel, 0, 0, MESSAGE_PANEL_WIDTH, MESSAGE_PANEL_HEIGHT, 0, 0, 0)
+				root_console.blit(mouse_panel, 0, 0, SCREEN_WIDTH, 3, 0, 0)
+
+
+				translated_console_flush()
 		
 		if user_input is not None:
 			break
@@ -6465,6 +6545,9 @@ while not translated_console_is_window_closed():
 	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'upgrade shop dialog' and player_action != 'jump_dialog' :
 		
 		
+
+	#	print(str(mouse_coord_x))
+
 		game_time += 1
 		spawn_timer -= 1
 		update_nav_data()
