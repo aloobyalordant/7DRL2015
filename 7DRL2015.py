@@ -3248,7 +3248,7 @@ def get_action_screen_mouseover_text(x,y):
 				if fov_map.fov[x, y]:
 					stack_depth = len(objectsArray[x][y])
 					if stack_depth> 0:
-						return objectsArray[x][y][stack_depth - 1].mouseover
+						return objectsArray[x][y][stack_depth - 1].name.capitalize() + ": " + objectsArray[x][y][stack_depth - 1].mouseover
 					else:
 						return "Empty space"
 						#return "dunno (" + str(x) + "," + str(y) + ") (" + str(player.x) + "," + str(player.y) + ")" 
@@ -3259,7 +3259,7 @@ def get_action_screen_mouseover_text(x,y):
 						if obj.always_visible:
 							top_visible_object = obj
 					if top_visible_object is not None:
-						return top_visible_object.mouseover
+						return top_visible_object.name.capitalize() + ": " + top_visible_object.mouseover
 					else:
 						return "Previously explored area"
 
@@ -3912,21 +3912,21 @@ def place_objects(room):
 		num = randint(0,18)
 		if num == 0:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine4', default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
 			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_healer.name, default_altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
 		elif num == 1:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine5', default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
 			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_destroyer.name, default_altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			shrine.cost += dungeon_level - 2
 			new_shrine.send_to_back()
 		elif num == 2:
 			(shrine_x, shrine_y) = room.center()
-			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine', default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
+			new_shrine = Object(shrine_x, shrine_y, '&', 'shrine6', default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
 			#new_shrine = Object(shrine_x, shrine_y, '&', 'shrine to ' + god_deliverer.name, default_altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 		
 			objectsArray[shrine_x][shrine_y].append(new_shrine)
 			shrine.shrine.cost += dungeon_level - 2
@@ -3941,28 +3941,28 @@ def create_monster(x,y, name, guard_duty = False):
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component)
+		monster = Object(x, y, 'A', 'strawman', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy. Does no attacks.")
 
 	elif name == 'flailing strawman':
 		# let's create a strawman that can theoretically do damage!
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
 		ai_component = Strawman_AI(weapon = Weapon_Sai())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component)	
+		monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy with a weapon strapped to it. Watch out!")	
 
 	elif name == 'strawman on wheels':
 		# let's create a strawman that can move around!
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_boman, faded_attack_color = color_boman, bleeds = False)
 		ai_component = Strawman_on_wheels_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman on wheels', color_boman, blocks=True, fighter=strawman_component, decider=decider_component)
+		monster = Object(x, y, 'A', 'strawman on wheels', color_boman, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A moving target to test your hand-eye co-ordination.")
 				
 	elif name == 'swordsman':
 		#create an orc
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = BasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Fast and aggressive. Goes down in one hit.")
 
 
 
@@ -3971,7 +3971,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = StupidBasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "I think I took all these out of the game. If you're reading this I guess I was wrong!")
 
 
 	elif name == 'boman':
@@ -3979,7 +3979,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = Boman_AI(weapon = Weapon_Staff(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'boman', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'B', 'boman', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Dangerous up close, with a diagonal attack.")
 
 
 	elif name == 'greenhorn':
@@ -3987,7 +3987,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = Greenhorn_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'G', 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'G', 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
 
 
 	elif name == 'rook':
@@ -3995,20 +3995,20 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Can't move diagonally, but woe betide anyone who takes them head on.")
 
 	elif name == 'albatross':
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = BasicMonster(weapon = Weapon_Shiv(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'S', 'swordsman', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Loves stabbing things.")
 
 
 	elif name == 'bustard':
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
 
 
 	elif name == 'crane':
@@ -4016,7 +4016,7 @@ def create_monster(x,y, name, guard_duty = False):
 		#ai_component = Ninja_Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'B', 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
 
 
 	elif name == 'dove':
@@ -4024,14 +4024,14 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = Dove_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'D', 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'D', 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Looooooves diagonals.")
 
 	elif name == 'eagle':
 		#create a guy with an axe!
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
 		ai_component = Eagle_AI(weapon = Weapon_Halberd(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'E', 'eagle', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'E', 'eagle', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Long range attacker. You probably need to stand back further than you think.")
 
 
 	elif name == 'falcon':
@@ -4039,7 +4039,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
 		ai_component = BasicMonster(weapon = Weapon_Sai(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'F', 'falcon', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'F', 'falcon', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Wields two weapons. One weapon is aimed at you. The other one, who knows.")
 
 
 #	elif name == 'stupid rook':
@@ -4055,7 +4055,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = BasicMonster(weapon = Weapon_Nunchuck(), guard_duty= guard_duty, attack_dist = 2)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'F', 'nunchuck fanatic', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'F', 'nunchuck fanatic', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's frankly a miracle they haven't hit themselves with it yet.")
 
 
 	elif name == 'axe maniac':
@@ -4063,21 +4063,21 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = BasicMonster(weapon = Weapon_Axe(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'M', 'axe maniac', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'M', 'axe maniac', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Bad news.")
 
 	elif name == 'samurai':
 		#create a guy with an axe!
 		fighter_component = Fighter(hp=5, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = Samurai_AI(weapon = Weapon_Katana())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'Z', 'samurai', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'Z', 'samurai', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "A cautious, patient killer.")
 
 	elif name == 'tridentor':
 		#create a guy with an axe!
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
 		ai_component = Tridentor_AI(weapon = Weapon_Trident(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Able to attack in water. Wields a three-pronged weapon.")
 
 
 	elif name == 'rogue':
@@ -4085,7 +4085,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_rogue, faded_attack_color = color_rogue)
 		ai_component = Rogue_AI(weapon = Weapon_Sai(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'K', 'rogue', color_rogue, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'K', 'rogue', color_rogue, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Ah man, I can't remember how the AI for this one worked. Did they like to attack everywhere except where you are? I guess you're about to find out.")
 
 
 
@@ -4094,7 +4094,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component =  Ninja_AI(weapon = Weapon_Hammer())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'H', 'hammer sister', color_boman, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'H', 'hammer sister', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "The secret long lost character.")
 
 
 	elif name == 'ninja':
@@ -4102,7 +4102,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
 		ai_component = Ninja_AI(weapon = Weapon_Dagger())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'N', 'ninja', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'N', 'ninja', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Cautious and sneaky. Doesn't like a fair fight.")
 
 
 	elif name == 'wizard':
@@ -4110,7 +4110,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=10, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
 		ai_component = Wizard_AI(weapon = Weapon_Ring_Of_Power())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'W', 'wizard', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component)
+		monster = Object(x, y, 'W', 'wizard', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Your nemesis, in the flesh at last!")
 
 
 
@@ -4125,7 +4125,7 @@ def create_monster(x,y, name, guard_duty = False):
 			if  dungeon_level == 0:
 				temp_alarm_time += 1
 		alarmer_component = Alarmer(alarm_time = temp_alarm_time, pre_alarm_time = 0, assoc_fighter = strawman_component)
-		monster = Object(x, y, 'O', 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True)
+		monster = Object(x, y, 'O', 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
 
 
 
@@ -4144,7 +4144,7 @@ def create_strawman(x,y, weapon, command):
 	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
 	ai_component = Strawman_AI(get_weapon_from_name(weapon), command)		
 	decider_component = Decider(ai_component)
-	monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component)
+	monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy, blindly attacking with a real weapon. What could go wrong?")
 	return monster
 
 
@@ -4223,7 +4223,7 @@ def make_map():
 	# now create objects from object_data! This code resorting thing is actually getting kind of fun now
 	for od in object_data:
 		if od.name == 'stairs':
-			stairs = Object(od.x, od.y, '<', 'stairs', PLAYER_COLOR, always_visible=True)
+			stairs = Object(od.x, od.y, '<', 'stairs', PLAYER_COLOR, always_visible=True, mouseover = "We took these out of the game")
 			objectsArray[od.x][od.y].append(stairs)
 			stairs.send_to_back()  #so it's drawn below the monsters
 		elif od.name == 'weapon':
@@ -4247,15 +4247,15 @@ def make_map():
 			altar_color = 	default_altar_color	#color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
 				altar_color = alt_altar_color #color_light_ground
-			num = randint( 0, 2) 
-			if num == 0:
+		#	num = randint( 0, 2) 
+		#	if num == 0:
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
-				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
-			elif num == 1:
-				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
+			shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True, mouseover = "Home to a small god. Favour can be exchanged here for a possibly useful upgrade.") 	
+		#	elif num == 1:
+		#		shrine = Object(od.x, od.y, '&', 'shrine2', altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
-			else: 
-				shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
+		#	else: 
+		#		shrine = Object(od.x, od.y, '&', 'shrine3', altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_deliverer.name, altar_color, blocks=False, shrine= Shrine(god_deliverer), always_visible=True) 
 			shrine.shrine.cost += dungeon_level - 2
 			objectsArray[od.x][od.y].append(shrine)
@@ -4285,29 +4285,30 @@ def make_map():
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
 				worldEntitiesList.append(door)
+			door.mouseover = "Walk into this door or attack it to open. (Doors have a chance of sticking.)"
 			if od.name == 'easydoor':		# a door that doesn't stick!!
 				door.door.easy_open = True
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'key':
-			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
+			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
-			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True)
+			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
 			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
-			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True)
+			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
 			objectsArray[od.x][od.y].append(new_plant)
 			worldEntitiesList.append(new_plant)
 		elif od.name == 'message':
 			message_color = color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
 				message_color = color_light_ground
-			floor_message = Object(od.x, od.y, '~', 'message', message_color, blocks=False, floor_message = Floor_Message(od.info))
+			floor_message = Object(od.x, od.y, '~', 'message', message_color, blocks=False, floor_message = Floor_Message(od.info), mouseover = "A helpful message. The writing is too small to read from this distance.")
 			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 		elif od.name == 'decoration':
-			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True)
+			floor_message = Object(od.x, od.y, od.info, 'decoration', default_decoration_color, blocks=False, always_visible=True, mouseover = "Nothing to see here.")
 			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 			decoration_count += 1
@@ -4317,7 +4318,7 @@ def make_map():
 	for ele in elevators:
 		ele.special_door_list = []
 		for ele_door in ele.doors:
-			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True) 
+			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True, mouseover = "Opens for you if you have enough keys. But mainly opens for your enemies.") 
 			map[ele_door.x][ele_door.y].block_sight = True			
 			objectsArray[ele_door.x][ele_door.y].append(door)
 			worldEntitiesList.append(door)
@@ -4709,7 +4710,7 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 	if abstract_attack_data is not None:	
 		for (i,j,val) in abstract_attack_data:
 			# adjust attack for position, and also extra strength from the fighter.
-			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker))
+			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker), mouseover = "A space where " + attacker.name + " just attacked.")
 			temp_attack_list.append(temp_attack)
 	return temp_attack_list
 
@@ -4764,7 +4765,7 @@ def monster_death(monster):
 
 		# Temp hack, probably: if thismonster is an alarmer (i.e. a security drone), make it drop currency?
 
-		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True)
+		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True, mouseover = "Gives you favour, which can be exchanged at shrines to get upgrades.")
 		objectsArray[monster.x][monster.y].append(favour_object) 
 		reorder_objects(monster.x, monster.y)
 
@@ -5081,38 +5082,54 @@ def get_item_from_name(x,y, name):
 	#	dropper = player
 	#name = weapon.name
 	char = '?'
+	mouseover_text = '...'
 	object = None
 	if name == 'sword':
 		char = 's'
+		mouseover_text = "A lightweight, short range, versatile weapon. Stabby stabby."
 	elif name == 'dagger':
 		char = 'd' 
+		mouseover_text = "Like a sword, if a sword was heavier and did more damage. Yes, this is the opposite of how things actually work."
 	elif name == 'bo staff':
 		char = 'b'
+		mouseover_text = "Surprisingly good for what looks like a giant stick."		
 	elif name == 'spear':
 		char = 'l'
+		mouseover_text = "A weapon with great reach but only in cardinal directions."	
 	elif name == 'sai':
 		char = 'f'
+		mouseover_text = "Great for attacking two enemies at once, as long as they're not standing next to each other."	
 	elif name == 'nunchaku':
 		char = 'n'
+		mouseover_text = "Easy to learn. Impossible to master."	
 	elif name == 'axe':
 		char = 'x'
+		mouseover_text = "Slow and destructive, like an overfilled shopping trolley."	
 	elif name == 'katana':
 		char = 'k'
+		mouseover_text = "Flexibility. Precision. Rotational symmetry."
 	elif name == 'hammer':
 		char = 'h'
+		mouseover_text = "I can't remember what the hammer does."
 	elif name == 'trident':
 		char = 't'
+		mouseover_text = "Everyone's favourite undersea weapon with three pointy bits."
 	elif name == 'broom':
 		char = 'b'
+		mouseover_text = "Attacks three adjacent spaces in a cardinal direction. Great in crowds."
 	elif name == 'pike':
 		char = 'p'
+		mouseover_text = "Great for attacking diagonally and nothing else."
 	elif name == 'halberd':
 		char = 'h'
+		mouseover_text = "Long range only weapon. Equally terrifying for you and your opponent."
 	elif name == 'shiv':
 		char = 's'
+		mouseover_text = "A lightweight, short range, versatile weapon."
 	elif name == 'ring of power':
 		char = 'o'
-	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True)
+		mouseover_text = "Ancient weapon of mass destruction. Currently seeking new collaborators."
+	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True, mouseover = mouseover_text)
 	return object
 
 
@@ -5778,7 +5795,7 @@ def create_GUI_panel():
 	#display names of objects under the mouse  #commenting out for now!
 	#libtcod.console_set_default_foreground(panel, libtcod.light_gray)
 	#libtcod.console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_names_under_mouse())
-	translated_console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_mouseover_text())
+	#translated_console_print_ex(panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, get_mouseover_text())
 
 
 
@@ -6148,7 +6165,7 @@ def initialise_game():
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
-	player = Object(0, 0, '@', 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component)
+	player = Object(0, 0, '@', 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
 	camera = Location(player.x, player.y)
 
 
@@ -6247,33 +6264,33 @@ def initialise_panel_mouseover():
 
 					# -- Attack Commands --
 					elif y <= 5:
-						mouseover_text = "Attack Commands"
+						mouseover_text = "Attack Commands: Press these keys to attack."
 
 					# -- Weapon Weight --
 					elif y <= 6:
-						mouseover_text = "Weapon Weight"
+						mouseover_text = "Weapon Weight: Attacking costs this much energy. (You can always attack when at max energy, even if your max energy is less than this value.)"
 
 					# -- Weapon Durability --
 					elif y <= 7:
-						mouseover_text = "Weapon Durability"
+						mouseover_text = "Weapon Durability: Reduces by 1 when you hit something, and by 2 when your attack clashes off another attack. When it reaches 0, your weapon breaks."
 		
 
 				# Player Subpanel
 				elif x <= 41:
 					# -- Health and Energy--	
 					if y <= 2:
-						mouseover_text = "Health and Energy"
+						mouseover_text = "Energy: Attacking, jumping and getting hit uses up energy. Otherwise, energy recharges by 1 each turn. Getting hit also reduces max energy. When your max energy reaches 0, you die."
 						# -- Energy Bar (which is its own thing) --
 						if y == 1 and x >= 29 and x <= 38:
 							mouseover_text = "Energy Bar"
 
 					# -- Movement Commands -- 
 					elif y <= 5:
-						mouseover_text = "Movement Commands"
+						mouseover_text = "Movement Commands: Press these keys to move."
 
 					# -- Jump Command --
 					elif y == 7:
-						mouseover_text = "Jump Command"
+						mouseover_text = "Jump Command: Press this key to jump 2 spaces in any direction (uses 4 energy by default)."
 							
 
 
@@ -6290,31 +6307,31 @@ def initialise_panel_mouseover():
 
 					# -- Alarm Level --
 					elif y == 3:
-						mouseover_text = "Alarm Level. Higher means more enemies."
+						mouseover_text = "Alarm Level: Higher level means more enemies. Increases by 2 when a security drone becomes alert. Destroying an alert security drone reduces alarm level by 1. Destroying all drones reduces it to 0."
 
 					# -- Keys Gathered / Required --
 					elif y == 4:
-						mouseover_text = "Keys Gathered / Required "
+						mouseover_text = "Keys Gathered / Required: Collect enough keys on this floor to gain access to the next floor. Keys are often held or guarded by security drones. "
 
 					# -- Favour --
 					elif y == 5:
-						mouseover_text = "Favour"
+						mouseover_text = "Favour: Can be exchanged at shrines for powerful upgrades. Get favour tokens by destroying security drones."
 
 
 
 					# -- Reinforcements timer   (split across this and the upgrades panel, for reasons) --
 					elif y == 7:
-						mouseover_text = "Reinforcements Timer"
+						mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
 
 
 				# Upgrades subpanel  (to fix up properly later)
 				else:
 					if y >= 1 and y <= 6:
-						mouseover_text = "Upgrades Panel"
+						mouseover_text = "Upgrades Panel: Powerful upgrades to help you in your quest. Upgrades can be purchased at shrines in exchange for Favour."
 
 					# -- Reinforcements timer   (split across this and the level info panel, for reasons) --
 					elif y == 7:
-						mouseover_text = "Reinforcements Timer"
+						mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
 						
 
 			bottom_panel_mouseover_array[x][y] = mouseover_text
@@ -6494,7 +6511,7 @@ while not translated_console_is_window_closed():
 				# print mouseover text for this part of the screen
 				mouse_panel.clear()
 				mouseover_text = get_mouseover_text()
-				translated_console_print_ex(mouse_panel, 1, 1, libtcod_BKGND_NONE, libtcod_LEFT, mouseover_text)
+				translated_console_print_ex(mouse_panel, 1, 0, libtcod_BKGND_NONE, libtcod_LEFT, mouseover_text)
 
 
 
