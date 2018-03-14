@@ -3987,7 +3987,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = Greenhorn_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'G', 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
+		monster = Object(x, y, 261, 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
 
 
 	elif name == 'rook':
@@ -4005,10 +4005,10 @@ def create_monster(x,y, name, guard_duty = False):
 
 
 	elif name == 'bustard':
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
+		monster = Object(x, y, 274, 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
 
 
 	elif name == 'crane':
@@ -4016,7 +4016,7 @@ def create_monster(x,y, name, guard_duty = False):
 		#ai_component = Ninja_Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
+		monster = Object(x, y, 264, 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
 
 
 	elif name == 'dove':
@@ -4024,7 +4024,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
 		ai_component = Dove_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'D', 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Looooooves diagonals.")
+		monster = Object(x, y, 260, 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Looooooves diagonals.")
 
 	elif name == 'eagle':
 		#create a guy with an axe!
@@ -4125,7 +4125,7 @@ def create_monster(x,y, name, guard_duty = False):
 			if  dungeon_level == 0:
 				temp_alarm_time += 1
 		alarmer_component = Alarmer(alarm_time = temp_alarm_time, pre_alarm_time = 0, assoc_fighter = strawman_component)
-		monster = Object(x, y, 'O', 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
+		monster = Object(x, y, 275, 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
 
 
 
@@ -5207,8 +5207,11 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 
 
 def message(new_msg, color = default_text_color):
+	global game_time
 
-	print(str(color))
+	#print(str(color))
+
+	msg_time = game_time
 
 	# Turn hashtag shortcuts into actual key commands
 	new_msg = translateCommands(new_msg)
@@ -5222,7 +5225,7 @@ def message(new_msg, color = default_text_color):
 			del game_msgs[0]
 
 		#add the new line as a tuple, with the text and the color
-		game_msgs.append( (line, color) )
+		game_msgs.append( (line, color, msg_time) )
 
 
 # searches through a string for strings of the form '#COMMAND#, and replaces them with the result of looking up COMMAND in the control handler.
@@ -5854,6 +5857,7 @@ def create_GUI_panel():
 
 # Here is where all the messages go
 def create_message_panel():
+	global game_time
 
 	#GUI STUFF
 	#prepare to render the GUI panel
@@ -5862,8 +5866,15 @@ def create_message_panel():
 	
 	#print the game messages, one line at a time
 	y = 0
-	for (line, color) in game_msgs:
+	for (line, color, msg_time) in game_msgs:
 		translated_console_set_default_foreground(message_panel, color)
+		
+		# highlight recent messages
+		if msg_time >= game_time:
+			translated_console_set_default_background(message_panel, color)
+			translated_console_set_default_foreground(message_panel, default_background_color)
+			
+
 		translated_console_print_ex(message_panel, 1, y, libtcod_BKGND_NONE, libtcod_LEFT, line)
 		#libtcod.console_print_ex(message_panel, MSG_X, y, libtcod_BKGND_NONE, libtcod_LEFT, line)
 		y += 1 
@@ -6165,7 +6176,7 @@ def initialise_game():
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
-	player = Object(0, 0, '@', 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
+	player = Object(0, 0, 273, 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
 	camera = Location(player.x, player.y)
 
 
@@ -6355,7 +6366,7 @@ def initialise_panel_mouseover():
 # (I wonder if it's possible to change the fonts on different sub-consoles...)
 # libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
 font_choice = 'terminal16x16.png'
-sprite_choice = 'terminal16x16alt.png'
+sprite_choice = 'terminal16x16plusSprites.png'
 
 #But hang on maybe I just need to change the 'altLayout' settings to make my original file work...
 #libtcod.set_font('arial14x14.png', greyscale=True, altLayout=False)
@@ -6374,7 +6385,7 @@ print ('path = ' + pathname)
 fontpath = os.path.join(pathname,  font_choice)
 spritepath = os.path.join(pathname,  sprite_choice)
 print ('font file = ' + fontpath)
-libtcod.set_font(fontpath, greyscale=True, altLayout=False)
+libtcod.set_font(spritepath, greyscale=True, altLayout=False)
 
 
 

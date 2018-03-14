@@ -402,7 +402,7 @@ class Rejuvenation(PowerUp):
 class InstantaneousStrength(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Instantaneous Strength", tech_description = "+1 strength for this floor", verbose_description = "For the remainder of this floor, I shall enhance your damage in combat!", code='I.S', tags = ['aggressive'])
+		PowerUp.__init__(self, name = "Instantaneous Strength", tech_description = "+1 strength for this floor", verbose_description = "For the remainder of this floor, I shall enhance your damage in combat!", code='I.S', cost = 2, tags = ['aggressive'])
 		self.activated = True
 		self.level_number = None
 	# Activates if player weapon is on 10 or less durability
