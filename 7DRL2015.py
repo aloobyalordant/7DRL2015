@@ -113,7 +113,7 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
-STARTING_CURRENCY = 2
+STARTING_CURRENCY = 0 #2
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -3218,17 +3218,6 @@ def get_mouseover_text():
 
 
 
-def get_info_panel_mouseover_text(x,y):
-	global bottom_panel_mouseover_array
-	return_string = "Information Panel"
-	try :
-		return_string = bottom_panel_mouseover_array[x][y]
-	
-	except IndexError:
-		return_string = "Information Panel, Out of Bounds Exception"
-	return return_string
-#	return  "Information Panel (" + str(x) + "," + str(y) + ")"
-
 
 def get_message_panel_mouseover_text(x,y):
 	return "Message Panel (" + str(x) + "," + str(y) + ")"
@@ -4216,7 +4205,11 @@ def make_map():
 
 	TEMP_player_previous_center = None
 
-	alarm_level = 1
+	# TODO actually make starting alarm level depend on what floor you're on.
+	if dungeon_level > 1:
+		alarm_level = 1
+	else:
+		alarm_level = 0
 	key_count = 0
 	decoration_count = 0
 
@@ -4293,7 +4286,7 @@ def make_map():
 			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
-			new_water = Object(od.x, od.y, '~', 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
+			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
 			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
@@ -4805,6 +4798,7 @@ def monster_death(monster):
 def next_level():
 	global colorHandler
 	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array, color_handler
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
 
 	# doing some test saving
 	save_game()
@@ -4836,6 +4830,21 @@ def next_level():
 		currency_count = STARTING_CURRENCY
 		upgrade_array = []
 	
+		# Also reveal a bunch of UI stuff
+		SHOW_WEAPON_NAME = True 
+		SHOW_ATTACK_COMMANDS = True 
+		SHOW_WEAPON_WEIGHT = True 
+		SHOW_WEAPON_DURABILITY = True 
+		SHOW_ENERGY = True 
+		SHOW_MOVE_COMMANDS = True 
+		SHOW_JUMP_COMMAND = True 
+		SHOW_TIME_ELAPSED = True 
+		SHOW_CURRENT_FLOOR = True 
+		SHOW_ALARM_LEVEL = False 
+		SHOW_KEYS = False 
+		SHOW_FAVOUR = False 
+		SHOW_REINFORCEMENTS = False 
+		SHOW_UPGRADES = False
 		# give player a test upgrade?
 		#new_upgrade = Get_Test_Upgrade()
 		#upgrade_array.append(new_upgrade)
@@ -4960,7 +4969,8 @@ def next_level():
 # Going back to 'faster with higher alarm'; 
 # I have some ideas about how to make it more exicitng to avoid alarms so am going to make alarm level more of a threat?
 def decide_spawn_time(enemy_spawn_rate,alarm_level):
-	return int(4*enemy_spawn_rate/alarm_level)
+	temp_alarm_level = max(alarm_level, 1)
+	return int(4*enemy_spawn_rate/temp_alarm_level)
 
 #	# spawn very rarely (i mean, ideally not at all but whatevs) if alarm level is 0.
 #	if alarm_level == 0:
@@ -5608,6 +5618,7 @@ def create_GUI_panel():
 	global controlHandler
 	global upgrade_array
 	global spawn_timer
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 
@@ -5644,49 +5655,49 @@ def create_GUI_panel():
 		attack_panel_default_color = color_tridentor
 
 
-	#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
-	if len(player_weapon.name) <= attack_panel_width - 10:
-		# libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
-	#'Weapon: ' + str(player_weapon.name).upper())
-		panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
-
-	else:
-		#libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
-	#str(player_weapon.name).upper())
-		panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
+	if SHOW_WEAPON_NAME:
+		#libtcod.console_set_default_foreground(panel, attack_panel_default_color)
+		if len(player_weapon.name) <= attack_panel_width - 10:
+			# libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
+		#'Weapon: ' + str(player_weapon.name).upper())
+			panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
+	
+		else:
+			#libtcod.console_print_ex(panel, attack_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
+		#str(player_weapon.name).upper())
+			panel.draw_str(attack_panel_x, 1, ('Weapon: ' + str(player_weapon.name).upper()), fg=attack_panel_default_color, bg=None)
 
 	# list some attacks out.
-	#attack_list = str(player_weapon.command_list)
-	#libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Attacks:")
-	panel.draw_str(attack_panel_x, 3, "Attacks:", fg=attack_panel_default_color, bg=None)
+	if SHOW_ATTACK_COMMANDS	:
+		#attack_list = str(player_weapon.command_list)
+		#libtcod.console_print_ex(panel, attack_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Attacks:")
+		panel.draw_str(attack_panel_x, 3, "Attacks:", fg=attack_panel_default_color, bg=None)
 
-		
+		#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
+		command_display_list = []
+		command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPLEFT"],ATTCKUPLEFT))
+		command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["ATTCKUP"],ATTCKUP))
+		command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPRIGHT"],ATTCKUPRIGHT))
+		command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["ATTCKRIGHT"],ATTCKRIGHT))
+		command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNRIGHT"],ATTCKDOWNRIGHT))
+		command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["ATTCKDOWN"],ATTCKDOWN))
+		command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNLEFT"],ATTCKDOWNLEFT))
+		command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["ATTCKLEFT"],ATTCKLEFT))
 
-
-	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
-	command_display_list = []
-	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPLEFT"],ATTCKUPLEFT))
-	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["ATTCKUP"],ATTCKUP))
-	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["ATTCKUPRIGHT"],ATTCKUPRIGHT))
-	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["ATTCKRIGHT"],ATTCKRIGHT))
-	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNRIGHT"],ATTCKDOWNRIGHT))
-	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["ATTCKDOWN"],ATTCKDOWN))
-	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["ATTCKDOWNLEFT"],ATTCKDOWNLEFT))
-	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["ATTCKLEFT"],ATTCKLEFT))
-
-	for(x_adjust, y_adjust, command_str, attck_str) in  command_display_list:
-		# only display the command if an attack exists for it? that's the idea anyway.
-		command_recognised = False
-		for (com, data, usage) in player_weapon.command_items:
-			if com == attck_str:
-				command_recognised = True
-		if command_recognised == True:
-			panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
+		for(x_adjust, y_adjust, command_str, attck_str) in  command_display_list:
+			# only display the command if an attack exists for it? that's the idea anyway.
+			command_recognised = False
+			for (com, data, usage) in player_weapon.command_items:
+				if com == attck_str:
+					command_recognised = True
+			if command_recognised == True:
+				panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
 
 
 	# Display weapon charge details.
-	#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
-	panel.draw_str(int(attack_panel_x) , 6, 'Weight: ' + str(player_weapon.get_default_usage_cost() + 1), bg=None, fg=attack_panel_default_color)
+	if SHOW_WEAPON_WEIGHT:
+		#libtcod.console_print_ex(panel, attack_panel_x, 6, libtcod_BKGND_NONE, libtcod_LEFT,	'Weight: ' + str(player_weapon.get_default_usage_cost() + 1))
+		panel.draw_str(int(attack_panel_x) , 6, 'Weight: ' + str(player_weapon.get_default_usage_cost() + 1), bg=None, fg=attack_panel_default_color)
 
 
 
@@ -5699,7 +5710,8 @@ def create_GUI_panel():
 		current_text_color = color_big_alert
 	#libtcod.console_print_ex(panel, attack_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
 	#'Durability: ' + str(player_weapon.durability))
-	panel.draw_str(int(attack_panel_x) , 7, 'Durability: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
+	if SHOW_WEAPON_DURABILITY:
+		panel.draw_str(int(attack_panel_x) , 7, 'Durability: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
 
 
 	#PLAYER PANEL STUFF
@@ -5712,18 +5724,20 @@ def create_GUI_panel():
 #	non_adrenaline_color = libtcod.darker_green
 #	if player.fighter.adrenaline_mode == False:
 	#libtcod.console_print_ex(panel, player_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT, "Energy:")
-	panel.draw_str(player_panel_x, 1, "Energy:", bg=None, fg=default_text_color)
-	for i in range(player.fighter.max_hp):
 
-		if i <  player.fighter.hp:			
-			translated_console_set_default_foreground(panel, energy_color)
-			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
-		elif i < player.fighter.max_hp - player.fighter.wounds:
-			translated_console_set_default_foreground(panel, non_energy_color)
-			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
-		else:
-			translated_console_set_default_foreground(panel, wound_color)
-			translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '\\')
+	if SHOW_ENERGY:
+		panel.draw_str(player_panel_x, 1, "Energy:", bg=None, fg=default_text_color)
+		for i in range(player.fighter.max_hp):
+
+			if i <  player.fighter.hp:			
+				translated_console_set_default_foreground(panel, energy_color)
+				translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '*')
+			elif i < player.fighter.max_hp - player.fighter.wounds:
+				translated_console_set_default_foreground(panel, non_energy_color)
+				translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '.')
+			else:
+				translated_console_set_default_foreground(panel, wound_color)
+				translated_console_print_ex(panel, player_panel_x + 7 + i, 1, libtcod_BKGND_NONE, libtcod_LEFT, '\\')
 
 
 			
@@ -5732,68 +5746,76 @@ def create_GUI_panel():
 	#libtcod.light_red, libtcod.darker_red)
 
 	#display some sweet moves!
-	#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
-	command_display_list = []
-	command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["MOVEUPLEFT"]))
-	command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["MOVEUP"]))
-	command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["MOVEUPRIGHT"]))
-	command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["MOVERIGHT"]))
-	command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNRIGHT"]))
-	command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["MOVEDOWN"]))
-	command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNLEFT"]))
-	command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["MOVELEFT"]))
-	command_display_list.append((0,0,controlHandler.singleCharacterControlLookup["STANDSTILL"]))
-
-	translated_console_set_default_foreground(panel, default_text_color)
-	translated_console_print_ex(panel, player_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Moves:")
-	for(x_adjust, y_adjust, command_str) in  command_display_list:
-		#panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
+	if SHOW_MOVE_COMMANDS:
+		#Here's a little bit of hackery to  make this code  rewrite a bit less tedious or at least more interesting.
+		command_display_list = []
+		command_display_list.append((-1,-1,controlHandler.singleCharacterControlLookup["MOVEUPLEFT"]))
+		command_display_list.append((0,-1,controlHandler.singleCharacterControlLookup["MOVEUP"]))
+		command_display_list.append((1,-1,controlHandler.singleCharacterControlLookup["MOVEUPRIGHT"]))
+		command_display_list.append((1,0,controlHandler.singleCharacterControlLookup["MOVERIGHT"]))
+		command_display_list.append((1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNRIGHT"]))
+		command_display_list.append((0,1,controlHandler.singleCharacterControlLookup["MOVEDOWN"]))
+		command_display_list.append((-1,1,controlHandler.singleCharacterControlLookup["MOVEDOWNLEFT"]))
+		command_display_list.append((-1,0,controlHandler.singleCharacterControlLookup["MOVELEFT"]))
+		command_display_list.append((0,0,controlHandler.singleCharacterControlLookup["STANDSTILL"]))
+	
+		translated_console_set_default_foreground(panel, default_text_color)
+		translated_console_print_ex(panel, player_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT, "Moves:")
+		for(x_adjust, y_adjust, command_str) in  command_display_list:
+			#panel.draw_char(int(attack_panel_x + attack_panel_width/2 + 2*x_adjust) , 4 + y_adjust, command_str, bg=None, fg=attack_panel_default_color)
 		
-		translated_console_print_ex(panel, int(player_panel_x + player_panel_width/2 + 2*x_adjust), 4 + y_adjust, libtcod_BKGND_NONE, libtcod_CENTER, command_str)
+			translated_console_print_ex(panel, int(player_panel_x + player_panel_width/2 + 2*x_adjust), 4 + y_adjust, libtcod_BKGND_NONE, libtcod_CENTER, command_str)
 
-	translated_console_print_ex(panel, player_panel_x, 7, libtcod_BKGND_NONE, libtcod_CENTER, "Jump:   " + controlHandler.controlLookup["JUMP"])
+	if SHOW_JUMP_COMMAND:
+		translated_console_print_ex(panel, player_panel_x, 7, libtcod_BKGND_NONE, libtcod_CENTER, "Jump:   " + controlHandler.controlLookup["JUMP"])
 
 
 
 	#LEVEL PANEL STUFF
 	translated_console_set_default_foreground(panel, default_text_color)
-	translated_console_print_ex(panel, level_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Time:   ' + str(game_time))
-	translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Floor:  ' + str(dungeon_level))
-	translated_console_print_ex(panel, level_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Alarm:  ' + str(alarm_level))
-	translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Keys:   ' + str(key_count) + '/' + str(lev_set.keys_required))
-	translated_console_print_ex(panel, level_panel_x, 5, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Favour: ' + str(currency_count))
+	if SHOW_TIME_ELAPSED:
+		translated_console_print_ex(panel, level_panel_x, 1, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Time:   ' + str(game_time))
+	if SHOW_CURRENT_FLOOR:
+		translated_console_print_ex(panel, level_panel_x, 2, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Floor:  ' + str(dungeon_level))
+	if SHOW_ALARM_LEVEL:
+		translated_console_print_ex(panel, level_panel_x, 3, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Alarm:  ' + str(alarm_level))
+	if SHOW_KEYS:
+		translated_console_print_ex(panel, level_panel_x, 4, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Keys:   ' + str(key_count) + '/' + str(lev_set.keys_required))
+	if SHOW_FAVOUR:
+		translated_console_print_ex(panel, level_panel_x, 5, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Favour: ' + str(currency_count))
 
 
 	#testing testing
 	#translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
 	#'Player action ' + str(player_action))
-	translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
-	'Reinforcements in ' + str(spawn_timer))
+	if SHOW_REINFORCEMENTS:
+		translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Reinforcements in ' + str(spawn_timer))
 
-	if favoured_by_healer:
-		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Favoured by ' + god_healer.name)
-
-	elif favoured_by_destroyer:
-		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Favoured by ' + god_destroyer.name)
-
-	elif tested_by_destroyer:
-		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Tested by ' + god_destroyer.name + '(' + str(destroyer_test_count) + ')')
-
-	elif favoured_by_deliverer:	# actually for the deliverer you probably never get this message, right? If the mission is to complete level quickly?
-		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Favoured by ' + god_deliverer.name)
-
-	elif tested_by_deliverer:
-		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Tested by ' + god_deliverer.name + '(' + str(deliverer_test_count) + ')')
+#	if favoured_by_healer:
+#		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+#		'Favoured by ' + god_healer.name)
+#
+#	elif favoured_by_destroyer:
+#		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+#		'Favoured by ' + god_destroyer.name)
+#
+#	elif tested_by_destroyer:
+#		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+#		'Tested by ' + god_destroyer.name + '(' + str(destroyer_test_count) + ')')
+#
+#	elif favoured_by_deliverer:	# actually for the deliverer you probably never get this message, right? If the mission is to complete level quickly?
+#		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+#		'Favoured by ' + god_deliverer.name)
+#
+#	elif tested_by_deliverer:
+#		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
+#		'Tested by ' + god_deliverer.name + '(' + str(deliverer_test_count) + ')')
 
 	#display names of objects under the mouse  #commenting out for now!
 	#libtcod.console_set_default_foreground(panel, libtcod.light_gray)
@@ -5805,43 +5827,44 @@ def create_GUI_panel():
 
 
 	# Surprise upgrade panel stuff!
-	upgrade_count = len(upgrade_array)
-	if upgrade_count > 0 and upgrade_count < 22:
-		translated_console_print_ex_center(panel, SCREEN_WIDTH - int(upgrade_panel_width/2) -2, 1, libtcod_BKGND_NONE, libtcod_CENTER,
-		'Upgrades:')
+	if SHOW_UPGRADES:
+		upgrade_count = len(upgrade_array)
+		if upgrade_count > 0 and upgrade_count < 22:
+			translated_console_print_ex_center(panel, SCREEN_WIDTH - int(upgrade_panel_width/2) -2, 1, libtcod_BKGND_NONE, libtcod_CENTER,
+			'Upgrades:')
 
-	upg_offset = 0
-	if upgrade_count > 15 and upgrade_count < 22:
-		upg_offset = -1
-	elif upgrade_count >= 22:
-		upg_offset = -2
+		upg_offset = 0
+		if upgrade_count > 15 and upgrade_count < 22:
+			upg_offset = -1
+		elif upgrade_count >= 22:
+			upg_offset = -2
 
-	for j in range (10):  # (int((upgrade_count+3)/3)):
-		if 3+j + upg_offset < PANEL_HEIGHT:
-			for i in range (3):
-				if 3*j + i < upgrade_count:
+		for j in range (10):  # (int((upgrade_count+3)/3)):
+			if 3+j + upg_offset < PANEL_HEIGHT:
+				for i in range (3):
+					if 3*j + i < upgrade_count:
 
-					temp_upgrade = upgrade_array[3*j + i]
-					if temp_upgrade.status == 'dormant':
-						translated_console_set_default_foreground(panel, default_text_color)
-						translated_console_set_default_background(panel, default_background_color)
-					elif temp_upgrade.status == 'enabled':
-						translated_console_set_default_foreground(panel, color_energy)
-						translated_console_set_default_background(panel, default_background_color)
-					elif temp_upgrade.status == 'active':
-						translated_console_set_default_foreground(panel, default_background_color)
-						translated_console_set_default_background(panel, color_energy)
-					else: 
-						translated_console_set_default_foreground(panel, default_text_color)
-						translated_console_set_default_background(panel, default_background_color)
-				#	if temp_upgrade.activated:
-				#		translated_console_set_default_foreground(panel, default_background_color)
-				#		translated_console_set_default_background(panel, color_energy)
-				#	else: 
-				#		translated_console_set_default_foreground(panel, default_text_color)
-				#		translated_console_set_default_background(panel, default_background_color)
-
-					translated_console_print_ex(panel, upgrade_panel_x + i*4, 3+j+upg_offset, libtcod_BKGND_NONE, 						libtcod_CENTER,	temp_upgrade.code)
+						temp_upgrade = upgrade_array[3*j + i]
+						if temp_upgrade.status == 'dormant':
+							translated_console_set_default_foreground(panel, default_text_color)
+							translated_console_set_default_background(panel, default_background_color)
+						elif temp_upgrade.status == 'enabled':
+							translated_console_set_default_foreground(panel, color_energy)
+							translated_console_set_default_background(panel, default_background_color)
+						elif temp_upgrade.status == 'active':
+							translated_console_set_default_foreground(panel, default_background_color)
+							translated_console_set_default_background(panel, color_energy)
+						else: 
+							translated_console_set_default_foreground(panel, default_text_color)
+							translated_console_set_default_background(panel, default_background_color)
+					#	if temp_upgrade.activated:
+					#		translated_console_set_default_foreground(panel, default_background_color)
+					#		translated_console_set_default_background(panel, color_energy)
+					#	else: 
+					#		translated_console_set_default_foreground(panel, default_text_color)
+					#		translated_console_set_default_background(panel, default_background_color)
+	
+						translated_console_print_ex(panel, upgrade_panel_x + i*4, 3+j+upg_offset, libtcod_BKGND_NONE, 							libtcod_CENTER,	temp_upgrade.code)
 	
 	translated_console_set_default_foreground(panel, default_text_color)
 	translated_console_set_default_background(panel, default_background_color)
@@ -6134,6 +6157,7 @@ def load_game():
 
 def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
 	current_big_message = 'You weren\'t supposed to see this'
 
 	spawn_timer = 0
@@ -6159,7 +6183,7 @@ def initialise_game():
 
 	setColorScheme()
 
-	alarm_level = 1
+	alarm_level = 0 #1
 	god_healer = God(god_type = God_Healer())
 	favoured_by_healer = False
 	god_destroyer = God(god_type = God_Destroyer())
@@ -6245,6 +6269,30 @@ def initialise_game():
 		print (str(Color_Interesting_In_World))
 
 
+
+
+
+	# Decide which bits of GUI to show mouseover for
+
+
+	SHOW_WEAPON_NAME = False
+	SHOW_ATTACK_COMMANDS = False
+	SHOW_WEAPON_WEIGHT = False
+	SHOW_WEAPON_DURABILITY = False
+	SHOW_ENERGY = False
+	SHOW_MOVE_COMMANDS = True
+	SHOW_JUMP_COMMAND = False
+	SHOW_TIME_ELAPSED = True
+	SHOW_CURRENT_FLOOR = False
+	SHOW_ALARM_LEVEL = False 
+	SHOW_KEYS = False
+	SHOW_FAVOUR = False
+	SHOW_REINFORCEMENTS = False
+	SHOW_UPGRADES = False
+
+
+
+
 	#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
 	#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 	#print('6')
@@ -6252,101 +6300,123 @@ def initialise_game():
 	translated_console_flush()
 
 
-# Produce an array describing the mouseover text for each part of the bottom "GUI" panel
-def initialise_panel_mouseover():
-	global bottom_panel_mouseover_array
+
+
+def get_info_panel_mouseover_text(x,y):
+
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
 	global PANEL_HEIGHT, PANEL_WIDTH
+	#global bottom_panel_mouseover_array
+	#return_string = "Information Panel"
+	#try :
+	#	return_string = bottom_panel_mouseover_array[x][y]
+	
+	#except IndexError:
+	#	return_string = "Information Panel, Out of Bounds Exception"
+	#return return_string
+#	return  "Information Panel (" + str(x) + "," + str(y) + ")"
+
+
+	if x in range(SCREEN_WIDTH) and y in range(PANEL_HEIGHT):
+
+# Produce an array describing the mouseover text for each part of the bottom "GUI" panel
+#def initialise_panel_mouseover():
+#	global bottom_panel_mouseover_array
+#	global PANEL_HEIGHT, PANEL_WIDTH
 	# First set default "Information Panel" text
-	bottom_panel_mouseover_array = [[ "Information Panel ("  + str(x) + "," + str(y) + ") YO"
-		for y in range(PANEL_HEIGHT) ]
-			for x in range(SCREEN_WIDTH)]
+#	bottom_panel_mouseover_array = [[ "Information Panel ("  + str(x) + "," + str(y) + ") YO"
+#		for y in range(PANEL_HEIGHT) ]
+#			for x in range(SCREEN_WIDTH)]
+#
+#	# Now modify speci
+#	for y in range(PANEL_HEIGHT):
+#		for x in range(SCREEN_WIDTH):
+		mouseover_text = "Information Panel"
 
-	# Now modify speci
-	for y in range(PANEL_HEIGHT):
-		for x in range(SCREEN_WIDTH):
-			mouseover_text = "Information Panel ("  + str(x) + "," + str(y) + ") YAY"
+		if y > 0:
+			# Weapon Subpanel
+			if x <= 21:
+				# -- Weapon Name --
+				if y <= 2 and SHOW_WEAPON_NAME:
+					mouseover_text = "Weapon Name"
 
-			if y > 0:
-				# Weapon Subpanel
-				if x <= 21:
-					# -- Weapon Name --
-					if y <= 2:
-						mouseover_text = "Weapon Name"
+				# -- Attack Commands --
+				elif y <= 5 and SHOW_ATTACK_COMMANDS:
+					mouseover_text = "Attack Commands: Press these keys to attack."
 
-					# -- Attack Commands --
-					elif y <= 5:
-						mouseover_text = "Attack Commands: Press these keys to attack."
+				# -- Weapon Weight --
+				elif y <= 6 and SHOW_WEAPON_WEIGHT:
+					mouseover_text = "Weapon Weight: Attacking costs this much energy. (You can always attack when at max energy, even if your max energy is less than this value.)"
 
-					# -- Weapon Weight --
-					elif y <= 6:
-						mouseover_text = "Weapon Weight: Attacking costs this much energy. (You can always attack when at max energy, even if your max energy is less than this value.)"
-
-					# -- Weapon Durability --
-					elif y <= 7:
-						mouseover_text = "Weapon Durability: Reduces by 1 when you hit something, and by 2 when your attack clashes off another attack. When it reaches 0, your weapon breaks."
+				# -- Weapon Durability --
+				elif y <= 7 and SHOW_WEAPON_DURABILITY:
+					mouseover_text = "Weapon Durability: Reduces by 1 when you hit something, and by 2 when your attack clashes off another attack. When it reaches 0, your weapon breaks."
 		
 
-				# Player Subpanel
-				elif x <= 41:
-					# -- Health and Energy--	
-					if y <= 2:
-						mouseover_text = "Energy: Attacking, jumping and getting hit uses up energy. Otherwise, energy recharges by 1 each turn. Getting hit also reduces max energy. When your max energy reaches 0, you die."
-						# -- Energy Bar (which is its own thing) --
-						if y == 1 and x >= 29 and x <= 38:
-							mouseover_text = "Energy Bar"
+			# Player Subpanel
+			elif x <= 41:
+				# -- Health and Energy--	
+				if y <= 2 and SHOW_ENERGY:
+					mouseover_text = "Energy: Attacking, jumping and getting hit uses up energy. Otherwise, energy recharges by 1 each turn. Getting hit also reduces max energy. When your max energy reaches 0, you die."
+					# -- Energy Bar (which is its own thing) --
+					if y == 1 and x >= 29 and x <= 38:
+						mouseover_text = "Energy Bar"
 
-					# -- Movement Commands -- 
-					elif y <= 5:
-						mouseover_text = "Movement Commands: Press these keys to move."
+				# -- Movement Commands -- 
+				elif y <= 5 and SHOW_MOVE_COMMANDS:
+					mouseover_text =  translateCommands("Movement Commands: Press these keys to move, or #STANDSTILL# to stand still.")
 
-					# -- Jump Command --
-					elif y == 7:
-						mouseover_text = "Jump Command: Press this key to jump 2 spaces in any direction (uses 4 energy by default)."
+				# -- Jump Command --
+				elif y == 7 and SHOW_JUMP_COMMAND:
+					mouseover_text = "Jump Command: Press this key to jump 2 spaces in any direction (uses 4 energy by default)."
 							
 
 
-				# Level info subpanel
-				elif x <= 55:
-					
-					# -- Time Elapsed --
-					if y == 1:
-						mouseover_text = "Time Elapsed"
+			# Level info subpanel
+			elif x <= 55:
+				
+				# -- Time Elapsed --
+				if y == 1 and SHOW_TIME_ELAPSED:
+					mouseover_text = "Time Elapsed"
 
-					# -- Current Floor --
-					elif y == 2:
-						mouseover_text = "Current Floor"
+				# -- Current Floor --
+				elif y == 2 and SHOW_CURRENT_FLOOR:
+					mouseover_text = "Current Floor"
 
-					# -- Alarm Level --
-					elif y == 3:
-						mouseover_text = "Alarm Level: Higher level means more enemies. Increases by 2 when a security drone becomes alert. Destroying an alert security drone reduces alarm level by 1. Destroying all drones reduces it to 0."
+				# -- Alarm Level --
+				elif y == 3 and SHOW_ALARM_LEVEL:
+					mouseover_text = "Alarm Level: Higher level means more enemies. Increases by 2 when a security drone becomes alert. Destroying an alert security drone reduces alarm level by 1. Destroying all drones reduces it to 0."
 
-					# -- Keys Gathered / Required --
-					elif y == 4:
-						mouseover_text = "Keys Gathered / Required: Collect enough keys on this floor to gain access to the next floor. Keys are often held or guarded by security drones. "
+				# -- Keys Gathered / Required --
+				elif y == 4 and SHOW_KEYS:
+					mouseover_text = "Keys Gathered / Required: Collect enough keys on this floor to gain access to the next floor. Keys are often held or guarded by security drones. "
 
-					# -- Favour --
-					elif y == 5:
-						mouseover_text = "Favour: Can be exchanged at shrines for powerful upgrades. Get favour tokens by destroying security drones."
-
-
-
-					# -- Reinforcements timer   (split across this and the upgrades panel, for reasons) --
-					elif y == 7:
-						mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
+				# -- Favour --
+				elif y == 5 and SHOW_FAVOUR:
+					mouseover_text = "Favour: Can be exchanged at shrines for powerful upgrades. Get favour tokens by destroying security drones."
 
 
-				# Upgrades subpanel  (to fix up properly later)
-				else:
-					if y >= 1 and y <= 6:
-						mouseover_text = "Upgrades Panel: Powerful upgrades to help you in your quest. Upgrades can be purchased at shrines in exchange for Favour."
 
-					# -- Reinforcements timer   (split across this and the level info panel, for reasons) --
-					elif y == 7:
-						mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
+				# -- Reinforcements timer   (split across this and the upgrades panel, for reasons) --
+				elif y == 7 and SHOW_REINFORCEMENTS:
+					mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
+
+
+			# Upgrades subpanel  (to fix up properly later)
+			else:
+				if y >= 1 and y <= 6 and SHOW_UPGRADES:
+					mouseover_text = "Upgrades Panel: Powerful upgrades to help you in your quest. Upgrades can be purchased at shrines in exchange for Favour."
+
+				# -- Reinforcements timer   (split across this and the level info panel, for reasons) --
+				elif y == 7 and SHOW_REINFORCEMENTS:
+					mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
 						
 
-			bottom_panel_mouseover_array[x][y] = mouseover_text
+		#bottom_panel_mouseover_array[x][y] = mouseover_text
+		return mouseover_text
 
+	else:
+		return "Information Panel, Out of Bounds Exception"
 
 #libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod	.FONT_LAYOUT_TCOD)
 
@@ -6426,7 +6496,7 @@ key = None
 
 initialise_game()
 
-initialise_panel_mouseover()
+# initialise_panel_mouseover()
 
 lev_set = game_level_settings.get_setting(dungeon_level)
 
@@ -7649,6 +7719,40 @@ while not translated_console_is_window_closed():
 		if ready_for_next_level == True:
 			ready_for_next_level = False
 			next_level()
+
+
+		# Reveal parts of the UI based on some early-game triggers. Another part where I don't know where it goes.
+		if (not SHOW_WEAPON_NAME or not SHOW_ATTACK_COMMANDS) and player_weapon.name is not 'unarmed':
+			SHOW_WEAPON_NAME = True
+			SHOW_ATTACK_COMMANDS = True
+		if (not SHOW_ENERGY or not SHOW_WEAPON_WEIGHT) and (player.fighter.hp < STARTING_ENERGY - 4  or player.fighter.wounds > 0 or player.y <= 45):
+			SHOW_WEAPON_WEIGHT= True
+			SHOW_ENERGY = True
+		if not SHOW_WEAPON_DURABILITY and (player_weapon.durability <= 30):
+			SHOW_WEAPON_DURABILITY = True
+		# TODO Don't know how to handle showing JUmp commands yet!
+		if not SHOW_JUMP_COMMAND and player.y <= 24:
+			SHOW_JUMP_COMMAND = True
+		if not SHOW_CURRENT_FLOOR and dungeon_level > 0:
+			SHOW_CURRENT_FLOOR = True
+		if not SHOW_ALARM_LEVEL and alarm_level > 0:
+			SHOW_ALARM_LEVEL = True
+		if not SHOW_KEYS and key_count > 0:
+			SHOW_KEYS = True
+		if not SHOW_FAVOUR and currency_count > 0:
+			SHOW_FAVOUR = True
+		if not SHOW_REINFORCEMENTS and alarm_level > 0:
+			SHOW_REINFORCEMENTS = True
+		if not SHOW_UPGRADES and len(upgrade_array) > 0:
+			SHOW_UPGRADES = True
+
+#SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
+
+#
+
+
+
+
 	
 		# reorder_objects()	#TODO probably put this somewhere else?
 		#print('4.5')
@@ -7661,7 +7765,7 @@ while not translated_console_is_window_closed():
 		for upgrade in upgrade_array:
 			upgrade.status = 'dormant'
 
-#
+
 
 
 	elif game_state == 'playing' and player_action == 'pickup_dialog' or player_action == 'upgrade shop dialog':
