@@ -3698,6 +3698,8 @@ def handle_keys(user_input_event):
 							message('A small god appears before you.', Color_Interesting_In_World)
 							message_string = '\"For a small display of faith, I will grant you the boon of ' + current_shrine.upgrade.name +'!\"'
 							message(message_string, Color_Message_In_World)
+							message_string = '[' + current_shrine.upgrade.name +':' + current_shrine.upgrade.tech_description +']'
+							message(message_string, Color_Personal_Action)
 							message_string = '\"' + current_shrine.upgrade.verbose_description +'\"'
 							message(message_string, Color_Message_In_World)
 							message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
@@ -4846,8 +4848,8 @@ def next_level():
 		SHOW_REINFORCEMENTS = False 
 		SHOW_UPGRADES = False
 		# give player a test upgrade?
-		#new_upgrade = Get_Test_Upgrade()
-		#upgrade_array.append(new_upgrade)
+		new_upgrade = Get_Test_Upgrade()
+		upgrade_array.append(new_upgrade)
 
 
 
@@ -6338,15 +6340,15 @@ def get_info_panel_mouseover_text(x,y):
 			if x <= 21:
 				# -- Weapon Name --
 				if y <= 2 and SHOW_WEAPON_NAME:
-					mouseover_text = "Weapon Name"
+					mouseover_text = "Your weapon: " + player_weapon.name + " [Uses " + str(player_weapon.default_usage +1) + " energy, does " + str(player_weapon.default_attack_strength) + " damage]. "	#Ideally a pithy summary goes here...
 
 				# -- Attack Commands --
 				elif y <= 5 and SHOW_ATTACK_COMMANDS:
-					mouseover_text = "Attack Commands: Press these keys to attack."
+					mouseover_text = "Attack Commands: Press these keys to attack. (Attacking uses " + str(player_weapon.default_usage + 1) + " energy)"
 
 				# -- Weapon Weight --
 				elif y <= 6 and SHOW_WEAPON_WEIGHT:
-					mouseover_text = "Weapon Weight: Attacking costs this much energy. (You can always attack when at max energy, even if your max energy is less than this value.)"
+					mouseover_text = "Weapon Weight: Attacking with " + player_weapon.name + " costs this much energy. (You can always attack when at max energy.)"
 
 				# -- Weapon Durability --
 				elif y <= 7 and SHOW_WEAPON_DURABILITY:
@@ -6361,6 +6363,16 @@ def get_info_panel_mouseover_text(x,y):
 					# -- Energy Bar (which is its own thing) --
 					if y == 1 and x >= 29 and x <= 38:
 						mouseover_text = "Energy Bar"
+						energy_index = x - 29
+						if energy_index < player.fighter.hp:
+							mouseover_text = "Available Energy: This is spent when you attack (" + str(player_weapon.default_usage + 1) +" energy) or jump (" + str(player.fighter.jump_recharge_time) + " energy). Recharges by 1 each turn."
+						elif energy_index < player.fighter.max_hp - player.fighter.wounds:
+							mouseover_text = "Consumed Energy: This will recharge by 1 each turn."
+						else: 
+							mouseover_text = "Wound: You take wounds whenever you get hit. Each wound reduces your maximum energy by 1. When your maximum energy reaches 0, you die. Wounds can be healed by picking up fruit."
+
+
+
 
 				# -- Movement Commands -- 
 				elif y <= 5 and SHOW_MOVE_COMMANDS:
@@ -6368,7 +6380,7 @@ def get_info_panel_mouseover_text(x,y):
 
 				# -- Jump Command --
 				elif y == 7 and SHOW_JUMP_COMMAND:
-					mouseover_text = "Jump Command: Press this key to jump 2 spaces in any direction (uses 4 energy by default)."
+					mouseover_text = "Jump Command: Press this key to jump 2 spaces in any direction (uses " + str(player.fighter.jump_recharge_time) + " energy)."
 							
 
 
@@ -6406,6 +6418,32 @@ def get_info_panel_mouseover_text(x,y):
 			else:
 				if y >= 1 and y <= 6 and SHOW_UPGRADES:
 					mouseover_text = "Upgrades Panel: Powerful upgrades to help you in your quest. Upgrades can be purchased at shrines in exchange for Favour."
+					# Figure out which index of upgrade the mouse is hovering over
+					# First figure out the index valu mod 3.
+					upgrade_number = 0
+					if x > 60 and x <= 63:
+						upgrade_number = 1
+					elif x > 63:
+						upgrade_number = 2
+					# Then add the requisite multiple of 3, based on y value and also number of upgrades (because upgrades get moved around a bit based on how many there are)	
+					upgrade_count = len(upgrade_array)	
+					upg_offset = 0
+					if upgrade_count > 15 and upgrade_count < 22:
+						upg_offset = 1
+					elif upgrade_count >= 22:
+						upg_offset = 2
+					upgrade_number += (3*(y-3 + upg_offset))
+			
+					# Get details of the upgrade with specified index, if it exists.
+					if upgrade_number >= 0 and upgrade_number < len(upgrade_array):
+						mouseover_text = upgrade_array[upgrade_number].name.capitalize() + ": " + upgrade_array[upgrade_number].tech_description
+
+
+
+
+
+
+
 
 				# -- Reinforcements timer   (split across this and the level info panel, for reasons) --
 				elif y == 7 and SHOW_REINFORCEMENTS:

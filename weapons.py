@@ -45,13 +45,14 @@ ATTCKDOWNALT	 = "ATTCKDOWNALT"
 
 # A generic class for weapons, that hopefully I can make everything an extension of
 class Generic_Weapon:
-	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50):
+	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50, default_attack_strength = 1):
 		self.name = name
 		self.max_charge = max_charge
 		self.current_charge = current_charge
 		self.default_usage = default_usage
 		self.durability = durability
 		self.just_attacked = False
+		self.default_attack_strength = default_attack_strength
 		self.command_items = []
 		#self.command_list = 'acdeqswxz'
 
@@ -747,7 +748,7 @@ class Weapon_Dagger(Generic_Weapon):
 
 
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'dagger', 1, 1, 1)
+		Generic_Weapon.__init__(self, 'dagger', 1, 1, 1, default_attack_strength = 2)
 		default_usage = self.default_usage
 
 		
