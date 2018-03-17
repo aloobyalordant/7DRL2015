@@ -561,7 +561,7 @@ class Door:
 
 #Let's make a bunch of flowers that grow and then replenish your health or whatever, sure.
 class Flower:
-	def __init__(self, flower_type = 'tulip', state = 'seed', bloom_timer = DEFAULT_BLOOM_TIME, name = 'fruit', symbol = 'o'):
+	def __init__(self, flower_type = 'tulip', state = 'seed', bloom_timer = DEFAULT_BLOOM_TIME, name = 'fruit', symbol = 291):
 		self.flower_type = flower_type
 		self.state = state			# possible states: seed, growing, blooming, trampled. Maybe burnt, later?
 		self.bloom_timer = bloom_timer
@@ -1053,6 +1053,11 @@ class BasicMonster:
 			self.state = 'guard-duty'
 		self.target_x = player.x
 		self.target_y = player.y
+		self.scared_of_water = False
+		phobia_choice = randint(0,1)
+		if phobia_choice == 1:
+			self.scared_of_water = True
+
 
 	def decide(self):
 		#a basic monster takes its turn. If you can see it, it can see you
@@ -1154,7 +1159,7 @@ class BasicMonster:
 	# Part of Step 3: Do the things that you do when going towards a target room rather than a specific grid reference
 	def moveTowardsRoom(self, monster, decider):
 		# Choose an option that gets you closest to where you want to go
-		((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True)
+		((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True, avoid_water = self.scared_of_water)
 
 		# Move if possible
 		block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = True,  care_about_fighters = True) 
@@ -1203,7 +1208,7 @@ class BasicMonster:
 
 		# otherwise, walk towards the player if possible.
 		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
-			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None, avoid_water = self.scared_of_water)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
 	# Part of Step 3: do the things you can do when you've decided you want food!
@@ -1295,7 +1300,7 @@ class Boman_AI(BasicMonster):
 		elif monster.distance_to(player) > 1: 	
 			
 			#take list of possible good moves, then prioritise diagonal ones
-			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True)
+			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True,  avoid_water = self.scared_of_water)
 			shorterlist = []
 			for (dx,dy) in  move_shortlist:
 				if dx != 0 and dy != 0:
@@ -1415,7 +1420,7 @@ class Crane_AI(BasicMonster):
 		elif (math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2 or (randint(0,2) == 0)) and (max(math.fabs(xdiff),math.fabs(ydiff)) > 1 ):
 			# cutting the 'pausing' idea for now, at least for this enemy.
 			if not self.pausing:
-				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None,  avoid_water = self.scared_of_water)
 				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 #				self.pausing = True
 #			else:
@@ -1451,7 +1456,7 @@ class Dove_AI(BasicMonster):
 		elif math.fabs(xdiff) > 2 or math.fabs(ydiff) > 2:
 			
 			#take list of possible good moves, then prioritise diagonal ones
-			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True)
+			move_shortlist = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_shortlist = True,  avoid_water = self.scared_of_water)
 			shorterlist = []
 			for (dx,dy) in  move_shortlist:
 				if dx != 0 and dy != 0:
@@ -1632,7 +1637,7 @@ class Greenhorn_AI(BasicMonster):
 
 		# otherwise, walk towards the player if possible.
 		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
-			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None,  avoid_water = self.scared_of_water)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 			self.just_attacked = False
 
@@ -1830,13 +1835,19 @@ class Ninja_Crane_AI(BasicMonster):
 		# otherwise, walk towards the player if possible.
 		else:
 
-			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None,   avoid_water = self.scared_of_water)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 		
 	
 	
 class Tridentor_AI(BasicMonster):
+
+	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
+		BasicMonster.__init__(self, weapon, guard_duty, attack_dist, state)
+		# cutting the 'pausing' idea for now, at least for this enemy
+		#self.pausing = True
+		self.scared_of_water = False
 
 
 	# Tridentor AI is bit more predictable than the BasicMonster AI would be (doesn't randomly choose between the 3 options that would fit),
@@ -1888,12 +1899,12 @@ class Tridentor_AI(BasicMonster):
 
 			# otherwise, close the distance to player 
 			elif monster.distance_to(player) > 1: 
-				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+				(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None,  avoid_water = self.scared_of_water)
 				decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 		# otherwise, walk towards the player if possible.
 		else:
 
-			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None)
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None, avoid_water = self.scared_of_water)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
 
@@ -3061,7 +3072,7 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 
 
 
-def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False, request_shortlist = False):
+def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False, request_shortlist = False, avoid_water = False):
 	# Make a list of possible moves (in future this might be set as a parameter)
 	possible_moves = [(+1,0), (0,-1), (0,+1), (-1,0)]
 	if rook_moves == False:
@@ -3076,7 +3087,7 @@ def next_step_based_on_target(current_x, current_y, target_x = None, target_y = 
 	shortest_fighter_dist = current_dist + 1	
 	shortlist = []
 	for (dx,dy) in possible_moves:
-		block =  is_blocked(current_x +dx, current_y + dy, care_about_doors = False, care_about_fighters = True)	#hmmm... what's our take on doors here?
+		block =  is_blocked(current_x +dx, current_y + dy, care_about_doors = False, care_about_fighters = True, avoid_water = avoid_water)	#hmmm... what's our take on doors here?
 		if block == False:
 			temp_dist = distance_from_target(current_x +dx, current_y + dy, target_x, target_y, target_center, aiming_for_center, rook_moves)
 			if temp_dist < shortest_dist:	#oh hey new minimum
@@ -3285,6 +3296,7 @@ def get_names_under_mouse():
 #def handle_keys():
 def handle_keys(user_input_event):
 	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_action_before_pause, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme
+	global SHOW_FAVOUR
 
 
 	# key = translated_console_wait_for_keypress(True)
@@ -3437,6 +3449,8 @@ def handle_keys(user_input_event):
 			else:
 				something_changed = True
 				message('You do not have enough favour!', Color_Not_Allowed)
+				if not SHOW_FAVOUR:
+					SHOW_FAVOUR = True
 		elif key_char == 'n':
 			something_changed = True
 			message('You decide to abstain from ' + current_shrine.upgrade.name + '.', Color_Stat_Info)
@@ -4110,7 +4124,7 @@ def create_monster(x,y, name, guard_duty = False):
 		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color =color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		temp_alarm_time = 4
+		temp_alarm_time = lev_set.security_timer
 		if dungeon_level < 2:	# make security drones a bit easier on the tutorial and level 1
 			temp_alarm_time +=  + 2
 			if  dungeon_level == 0:
@@ -4271,12 +4285,12 @@ def make_map():
 			#number_alarmers += 1			#Now doing this elsewhere..
 		elif  od.name == 'door'or od.name == 'easydoor':
 			if od.info == 'horizontal':
-				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
+				door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
 				worldEntitiesList.append(door)
 			elif od.info == 'vertical':
-				door = Object(od.x, od.y, '+', 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
+				door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
 				map[od.x][od.y].block_sight = True
 				objectsArray[od.x][od.y].append(door)
 				worldEntitiesList.append(door)
@@ -4285,14 +4299,14 @@ def make_map():
 				door.door.easy_open = True
 			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 		elif od.name == 'key':
-			new_key = Object(od.x, od.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
+			new_key = Object(od.x, od.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
 			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
-			new_plant = Object(od.x, od.y, 'U', flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
+			new_plant = Object(od.x, od.y, 289, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
 			objectsArray[od.x][od.y].append(new_plant)
 			worldEntitiesList.append(new_plant)
 		elif od.name == 'message':
@@ -4562,7 +4576,7 @@ def update_nav_data():
 	#nav_data_changed = False		# temp hack, will probably break things
 	
 	
-def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, care_about_fighters = False, generally_ignore_fighters = False):
+def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, care_about_fighters = False, generally_ignore_fighters = False, avoid_water = False):
 	#first test the map tile
 	if map[x][y].blocked:
 		return True
@@ -4585,6 +4599,9 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, ca
 		#		print "blocky swordsman"
 		#		return True
 			else:
+				return True
+		elif avoid_water:
+			if object.name == "water":
 				return True
 
 	return False
@@ -4778,7 +4795,7 @@ def monster_death(monster):
 
 	#monster may drop a key?
 	if monster.drops_key == True:
-		new_key = Object(monster.x,monster.y, '*', 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
+		new_key = Object(monster.x,monster.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
 		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
 		reorder_objects(monster.x, monster.y)
@@ -4848,8 +4865,8 @@ def next_level():
 		SHOW_REINFORCEMENTS = False 
 		SHOW_UPGRADES = False
 		# give player a test upgrade?
-		new_upgrade = Get_Test_Upgrade()
-		upgrade_array.append(new_upgrade)
+		#new_upgrade = Get_Test_Upgrade()
+		#upgrade_array.append(new_upgrade)
 
 
 
@@ -5097,7 +5114,7 @@ def get_item_from_name(x,y, name):
 	mouseover_text = '...'
 	object = None
 	if name == 'sword':
-		char = 's'
+		char = 302
 		mouseover_text = "A lightweight, short range, versatile weapon. Stabby stabby."
 	elif name == 'dagger':
 		char = 'd' 
@@ -5127,7 +5144,7 @@ def get_item_from_name(x,y, name):
 		char = 't'
 		mouseover_text = "Everyone's favourite undersea weapon with three pointy bits."
 	elif name == 'broom':
-		char = 'b'
+		char = 292
 		mouseover_text = "Attacks three adjacent spaces in a cardinal direction. Great in crowds."
 	elif name == 'pike':
 		char = 'p'

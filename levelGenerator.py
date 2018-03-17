@@ -128,6 +128,8 @@ class Rect:
 		self.y1 = y
 		self.x2 = x + w-1
 		self.y2 = y + h-1
+		self.width = w
+		self.height = h
 
 	def center(self):
 		center_x = int((self.x1 + self.x2) / 2)
@@ -838,7 +840,14 @@ class Level_Generator:
 		total_enemy_prob = lev_set.total_enemy_prob
 		enemy_probabilities = lev_set.enemy_probabilities
 
-		
+
+
+		# Making this enemy distribution stuff a bit more complicated to allow for applying min and max's.
+		# Start with an initial distribution of enemies based just on probabilities.
+		# Also keep track of other spaces we could add guards.
+		placement_list = []
+		free_space_list = []		
+		room_guard_count = 0
 		for x in range(room.x1, room.x2+1):
 			for y in range(room.y1, room.y2+1):
 				#only place it if the tile is not blocked
@@ -846,20 +855,49 @@ class Level_Generator:
 
 					# now roll the dice to decide if an enemy spawns here
 					if randint(1,guard_numerator) <= guard_denominator:	
+						# Mark this as a place we intend to add a guard
+						placement_list.append((x,y))
+						room_guard_count += 1
+					else:
+						# Mark this as a free place where we could add eneies, if we need more
+						free_space_list.append((x,y))
+
+		# Update placement_list by removing items at random if we have too many guards:
+		if lev_set.max_room_monsters is not None: 
+			while lev_set.max_room_monsters < room_guard_count:
+				# take out random guard locations
+				place_deletion_choice = randint(0, len(placement_list) - 1)
+				place_to_delete = placement_list[place_deletion_choice]
+				placement_list.remove(place_to_delete)
+				room_guard_count -= 1
+
+
+		# Upfate placement list by adding more spaces from the free space list if we don't have enough guards		
+		if lev_set.min_room_monsters is not None: 
+			while lev_set.min_room_monsters > room_guard_count and len(free_space_list) > 0:
+				# add random guard locations
+				place_addition_choice = randint(0, len(free_space_list) - 1)
+				place_to_add = free_space_list[place_addition_choice]
+				placement_list.append(place_to_add)
+				free_space_list.remove(place_to_add)
+				room_guard_count += 1
+
 		
-						enemy_name = 'none'
-						num = randint(0, total_enemy_prob)
-						for (name, prob) in enemy_probabilities:
-							#print '(' + name + ',' + str(prob) + ')'
-							if num <= prob:
-								enemy_name = name
-								break
-							else:
-								num -= prob
-			
-						#monster = create_monster(x,y,name)
-						#objects.append(monster)
-						object_data.append(Object_Datum(x,y,'monster', name))
+
+		# Add anenemy to each of the specified places
+		for (x,y) in placement_list:
+			enemy_name = 'none'
+			num = randint(0, total_enemy_prob)
+			for (name, prob) in enemy_probabilities:
+			#print '(' + name + ',' + str(prob) + ')'
+				if num <= prob:
+					enemy_name = name
+					break
+				else:
+					num -= prob	
+			#monster = create_monster(x,y,name)
+			#objects.append(monster)
+			object_data.append(Object_Datum(x,y,'monster', name))
 
 
 	# add misc other objects (water + fruit, currently) to rooms
@@ -1625,10 +1663,19 @@ class Level_Generator:
 
 
 
-		room_min_size = lev_set.room_min_size
-		room_max_size = lev_set.room_max_size		
+#		room_min_size = lev_set.room_min_size
+#		room_max_size = lev_set.room_max_size		
 		max_map_height = lev_set.max_map_height
 		max_map_width = lev_set.max_map_width
+
+		# Update: room max / min sizes are based on dice from level settings??
+
+		(a,b) = lev_set.room_size_first_dice
+		(c,d) = lev_set.room_size_second_dice
+		room_min_size = a + c
+		room_max_size = b + d	
+
+
 
 		#let's.... *start* by making some elevators
 		#print 'adding elevators...'
@@ -1674,35 +1721,76 @@ class Level_Generator:
 			# pick a random room from the maximal potential rooms list
 			choice = randint(0, len(maximal_potential_rooms)-1)
 			temp_new_room = maximal_potential_rooms[choice]
-			# for variety, vary the room size a little 
-			# I am cheating and just randomly trimming the edges.
-			# only trim if the room isn't too small already though
-			if temp_new_room.x2-temp_new_room.x1 < 4:
-				trim_left = 0
-				trim_right = 0
-			else:
-				trim_left = randint(0, 1)
-				trim_right = randint(0, 1)
-			if temp_new_room.y2-temp_new_room.y1 < 4:
-				trim_top = 0
-				trim_bottom = 0
-			else :
-				trim_top = randint(0, 1)
-				trim_bottom = randint(0, 1)
-			new_room = Rect(temp_new_room.x1+trim_left, temp_new_room.y1+trim_top, temp_new_room.x2-temp_new_room.x1+1-trim_left-trim_right, temp_new_room.y2-temp_new_room.y1+1-trim_top-trim_bottom)
+
+			# Ok this is scary, but for the first time in a long time I'm going to change something about the level generation.
+			# Previously: always take a maximum room, with each side possibly "trimmed".
+
+			# Now: choose room size according to a distribution, then fit it in somewhere in this "maximal" box.
+			#preferred_room_height = randint(4, room_max_size)	# todo: actually make this a 2 dice kind of distribution
+			#preferred_room_width = randint(4, room_max_size)	# todo: actually make this a 2 dice kind of distribution
+	
+
+			(a,b) = lev_set.room_size_first_dice
+			(c,d) = lev_set.room_size_second_dice
+			preferred_room_height = randint(a, b) + randint(c,d)	
+			preferred_room_width =  randint(a, b) + randint(c,d)	
+
+
+
+			# If room height or width is larger than the currently allowed size, shrink them.
+			if preferred_room_width > temp_new_room.x2-temp_new_room.x1:
+				preferred_room_width = temp_new_room.x2-temp_new_room.x1
+			if preferred_room_height > temp_new_room.y2-temp_new_room.y1:
+				preferred_room_height = temp_new_room.y2-temp_new_room.y1
+			# Now position the room at a random position that fits within this box  (i.e. choose starting x and starting y independently at random from the options that will fit))
+			preferred_room_x1 = randint(temp_new_room.x1, temp_new_room.x2 - preferred_room_width)
+			preferred_room_y1 = randint(temp_new_room.y1, temp_new_room.y2 - preferred_room_height)
+
+			new_room = Rect(preferred_room_x1, preferred_room_y1,  preferred_room_width, preferred_room_height)
+
+			# Former "maximal with trimmed sides" code below:
+#
+#			# for variety, vary the room size a little 
+#			# I am cheating and just randomly trimming the edges.
+#			# only trim if the room isn't too small already though
+#			if temp_new_room.x2-temp_new_room.x1 < 4:
+#				trim_left = 0
+#				trim_right = 0
+#			else:
+#				trim_left = randint(0, 1)
+#				trim_right = randint(0, 1)
+#			if temp_new_room.y2-temp_new_room.y1 < 4:
+#				trim_top = 0
+#				trim_bottom = 0
+#			else :
+#				trim_top = randint(0, 1)
+#				trim_bottom = randint(0, 1)
+#			new_room = Rect(temp_new_room.x1+trim_left, temp_new_room.y1+trim_top, temp_new_room.x2-temp_new_room.x1+1-trim_left-trim_right, temp_new_room.y2-temp_new_room.y1+1-trim_top-trim_bottom)
 			#TODO: if room is close to the border, move it along.
+
+
+
+
+
+
+
+
 			#Put this new room into the map
 			self.create_room(new_room, map, center_points, nearest_points_array, background_map = background_map)
 			rooms.append(new_room)
 			#self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 		
-			# decide whether or not this room has doors. FOR NOW JUST A 1/8 CHANCE OF HAVING DOORS
-			(doorNumerator, doorDenominator) = lev_set.door_probability
-			if randint(1, doorDenominator) <= doorNumerator:
-				doorhavers.append(True)
+			# decide whether or not this room has doors.
+			# Door probability is based on level settings.
+			# Don't require doors if it's a narrow room (hopefully this leads to more "windy corridors" ?
+			if new_room.width > 3 and new_room.height > 3:
+				(doorNumerator, doorDenominator) = lev_set.door_probability
+				if randint(1, doorDenominator) <= doorNumerator:
+					doorhavers.append(True)
+				else:
+					doorhavers.append(False)
 			else:
 				doorhavers.append(False)
-
 
 
 			#Now update the maximal room list to remove rooms that clash with the new room amd replace them with their remainders

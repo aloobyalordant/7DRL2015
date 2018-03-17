@@ -41,6 +41,7 @@ class Level_Settings:
 			enemy_probabilities = enemy_probs,
 			#keys_required = len(self.bigArray),
 			keys_required = 3,		# special for the tutorial
+			security_timer = 8,		# special for the tutorial
 			initial_alarm_level = 0
 			)
 
@@ -156,7 +157,8 @@ class Level_Settings:
 			room_min_size = 5,	
 			max_map_height = 25,
 			max_map_width = 50,
-			max_room_monsters = 1,
+			min_room_monsters = 0,
+			max_room_monsters = 3,
 			level_type = 'classic',
 			enemy_probabilities = enemy_probs,
 			number_sec_drones = randint(1,3) + randint(1,3),	#2d3 drones? let's see #len(self.bigArray),
@@ -165,7 +167,8 @@ class Level_Settings:
 			number_shrines = 4,
 			guard_probability = (1,35),			# 1 in 35 chance of a given space having a guard on
 			initial_alarm_level = 0,
-			door_probability = (7,8)
+			door_probability = (7,8),
+			security_timer = 7
 			)
 		self.bigArray.append(levsr)
 		
@@ -185,7 +188,8 @@ class Level_Settings:
 			max_rooms = 8,
 			room_max_size = 12,	#20,
 			room_min_size = 4,	#15,
-			max_room_monsters = 1,
+			min_room_monsters = 0,
+			max_room_monsters = 4,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
 			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
@@ -193,7 +197,8 @@ class Level_Settings:
 			keys_required = temp_keys_req, #len(self.bigArray),
 			number_shrines = temp_number_shrines,
 			initial_alarm_level = len(self.bigArray),
-			door_probability = (5,8)
+			door_probability = (5,8),
+			security_timer = 6
 			)
 		
 		self.bigArray.append(lev1)
@@ -231,14 +236,14 @@ class Level_Settings:
 			max_rooms = 8,
 			room_max_size = 12,	#20,
 			room_min_size = 4,	#15,
-			max_room_monsters = 1,
 			level_type = 'modern',
 			enemy_probabilities = enemy_probs,
 			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
 			number_keys = temp_keys_here,
 			keys_required = temp_keys_req, #len(self.bigArray),
 			number_shrines = temp_number_shrines,
-			initial_alarm_level = len(self.bigArray)
+			initial_alarm_level = len(self.bigArray),
+			security_timer = 5
 			)
 		
 		self.bigArray.append(lev2)
@@ -256,7 +261,6 @@ class Level_Settings:
 		temp_number_shrines = 5
 		lev3 = Level_Setting(
 			level_type = 'modern',
-			max_room_monsters = 1,
 			enemy_probabilities = enemy_probs,
 			#enemy_spawn_rate = 20
 			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
@@ -316,7 +320,6 @@ class Level_Settings:
 			room_max_size = 20,
 			room_min_size = 10,
 			max_rooms = 8,
-			max_room_monsters = 5,
 			enemy_probabilities = enemy_probs,
 			number_sec_drones  = temp_number_sec_drones, # len(self.bigArray),
 			number_keys = temp_keys_here,
@@ -338,7 +341,6 @@ class Level_Settings:
 			room_max_size = 20,
 			room_min_size = 15,
 			max_rooms = 10,
-			max_room_monsters = 10,
 			boss = 'wizard',
 			final_level = True,
 			number_sec_drones = len(self.bigArray),
@@ -419,11 +421,13 @@ class Level_Settings:
 					lev_set.enemy_probabilities.append(('tridentor', 30))
 
 			if 'large rooms' in lev_set.effects:
-				lev_set.room_max_size = 20
-				lev_set.room_min_size = 15
+				#lev_set.room_max_size = 20
+				#lev_set.room_min_size = 15
+				lev_set.room_size_second_dice = (10,10)
 			elif 'small rooms' in lev_set.effects:
-				lev_set.room_max_size = 7
-				lev_set.room_min_size = 4
+				#lev_set.room_max_size = 7
+				#lev_set.room_min_size = 4
+				lev_set.room_size_first_dice = (2,2)
 
 	def get_setting(self, level_num):
 		return self.bigArray[level_num]			
@@ -433,13 +437,14 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = MAX_ROOM_MONSTERS,  enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, number_keys = 0, keys_required = 0, number_shrines = 1, guard_probability = (1,25), initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = [], door_probability = (1,8)):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = None,  min_room_monsters = 1, enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, number_keys = 0, keys_required = 0, number_shrines = 1, guard_probability = (1,25), initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = [], door_probability = (1,8), security_timer = 4, room_size_first_dice = (3,7), room_size_second_dice = (3,7)):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
 		self.room_min_size = room_min_size
 		self.max_rooms = max_rooms
 		self.max_room_monsters = max_room_monsters
+		self.min_room_monsters = min_room_monsters
 		if enemy_probabilities is not None:
 			self.enemy_probabilities = enemy_probabilities
 		else:
@@ -463,5 +468,8 @@ class Level_Setting:
 		self.color_scheme = color_scheme
 		self.effects = effects
 		self.door_probability = door_probability # prob of (a,b) means individual rooms have an a in b chance of having doors
+		self.security_timer = security_timer 	# how long security drones take before  they spot you
+		self.room_size_first_dice = room_size_first_dice   # dice (a,b) takes random values between a and b inclusive;
+		self.room_size_second_dice = room_size_second_dice # room height or width is determined by rolling two dice and adding together
 	
 		
