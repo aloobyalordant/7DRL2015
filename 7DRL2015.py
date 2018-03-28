@@ -178,6 +178,7 @@ color_rook = 		(v_e,v_e,v_e)	#	(0,0,128)		#libtcod.darker_blue
 color_axe_maniac =	(v_e,v_e,v_e)	#	 (128,0,0)		#libtcod.darker_red
 color_tridentor = 	(v_e,v_e,v_e)	#	(0,0, 255)		#libtcod.blue
 color_ninja = 		(v_e,v_e,v_e)	#	(0,0,0)		#libtcod.black
+color_faerie = 	(v_e,v_e,v_e)	#	(0,0, 255)		#libtcod.blue
 color_wizard = 		(v_e,v_e,v_e)	#	(95, 0, 128)			#libtcod.darker_purple
 color_alarmer_idle =	(vsw,vsw,vsw)
 color_alarmer_suspicious = (v_p,v_p,v_p)
@@ -4130,11 +4131,11 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'faerie':
 		#create a faerie that floats around the dugeon!
-		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
-		ai_component = Faerie_AI(weapon = Weapon_Trident(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_faerie, faded_attack_color = color_faerie)
+		ai_component = Faerie_AI(weapon = Weapon_Unarmed(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
 		decider_component = Decider(ai_component)
 		# faeries don't block, right?
-		monster = Object(x, y, 312, 'faerie', color_tridentor, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
+		monster = Object(x, y, 312, 'faerie', color_faerie, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
 
 
 	elif name == 'rogue':
@@ -4842,9 +4843,11 @@ def monster_death(monster):
 		reorder_objects(monster.x, monster.y)
 
 	# faeires drop favour? that's what we're doing at the mo.
+	# actually for now no. I'll figure out what to do with faeries later
 	if monster.name == 'faerie': 
-		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True, mouseover = "Gives you favour, which can be exchanged at shrines to get upgrades.")
-		objectsArray[monster.x][monster.y].append(favour_object) 
+		message('Oh no!', color_warning)
+		#favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True, mouseover = "Gives you favour, which can be exchanged at shrines to get upgrades.")
+		#objectsArray[monster.x][monster.y].append(favour_object) 
 		reorder_objects(monster.x, monster.y)
 
 
@@ -6113,7 +6116,7 @@ def clear_onscreen_objects():
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
 	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, alt_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
-	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
+	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_faerie, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
 	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
 	
@@ -6155,6 +6158,7 @@ def setColorScheme(colorScheme = 'default'):
 	color_tridentor = levelColors['color_tridentor']
 	color_rogue = levelColors['color_rogue']
 	color_ninja = levelColors['color_ninja']
+	color_faerie = levelColors['color_faerie']
 	color_wizard = levelColors['color_wizard']
 	color_alarmer_idle = levelColors['color_alarmer_idle']
 	color_alarmer_suspicious = levelColors['color_alarmer_suspicious']

@@ -80,6 +80,7 @@ class ColorHandler:
 			('color_tridentor',(0,0,191)),	#	(0,0, 255)),	#	(0,0, 255)		#libtcod.blue
 			('color_rogue',(0,64, 64)),	
 			('color_ninja',(0,0,0)),	#	(0,0,0)		#libtcod.black
+			('color_faerie',(203,75,22)),	#	(0,0,0)		#libtcod.black
 			('color_wizard',(95, 0, 128)),	#	(95, 0, 128)			#libtcod.darker_purple
 			('color_alarmer_idle',(0,0,191)),
 			('color_alarmer_suspicious',(255, 255, 255)),
