@@ -293,7 +293,7 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, mouseover = None):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, mouseover = None):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -329,14 +329,15 @@ class Object:
 		#self.raising_alarm = raising_alarm
 		self.alarmer = alarmer
 		self.drops_key = drops_key
+		self.phantasmal = phantasmal
 		self.mouseover = mouseover
 		if self.mouseover == None:
 			self.mouseover = self.name + " TODO"
 
-	def move(self, dx, dy):	
+	def move(self, dx, dy, ignore_doors = False):	
 		global objectsArray
 									#TODO will need to update objectarry
-		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = False):
+		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = ignore_doors):
 			#move by the given amount
 			old_x = self.x
 			old_y = self.y
@@ -1907,6 +1908,48 @@ class Tridentor_AI(BasicMonster):
 			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None, avoid_water = self.scared_of_water)
 			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 	
+
+
+#  A lovely faerie that wanders around and would never harm anyone! and, eventually, will hopefully give you a  bonus if you can catch it
+class Faerie_AI(BasicMonster):
+
+	# faeries aren't scared of water. They can fly!
+	def __init__(self, weapon, guard_duty  = False, attack_dist = 1, state = 'wander-aimlessly'):
+		BasicMonster.__init__(self, weapon, guard_duty, attack_dist, state)
+		# cutting the 'pausing' idea for now, at least for this enemy
+		#self.pausing = True
+		self.scared_of_water = False
+
+	#Basically a faerie always wonders round aimlessly and never bothers about any of that "engage the player" stuff
+	def decideState(self, monster):
+		self.state = 'wander-aimlessly'
+		self.previous_room = nearest_points_array[player.x][player.y] 	
+
+	# movement is basically the same as for BasicMonster, except hopefully we can ignore doors? maybe?
+	def moveTowardsRoom(self, monster, decider):
+		# Choose an option that gets you closest to where you want to go
+		((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True, avoid_water = self.scared_of_water)
+
+		# Move if possible
+		block = is_blocked(monster.x+dx, monster.y+dy, care_about_doors = False,  care_about_fighters = True) 
+		if block == False: 
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+		#if there's actually nothing to do, give up and try going somewhere new?
+		if return_message == "No good options": 
+			self.state = 'wander-aimlessly'
+			self.target_room = AI_choose_adjacent_room(self)
+				
+		# if other fighters are blocking the way, eventually get impatient and go elsewhere
+		elif return_message == "Fighter blocking best option":  #get annoyed by blocky coworker
+			self.ally_in_the_way_o_meter = self.ally_in_the_way_o_meter + 3	
+			# Why 3? To avoid cycling back and forth when there's someone in the way
+			# Try going somewhere else if you've been blocked like this for a while
+			if self.ally_in_the_way_o_meter > self.impatience_threshold_for_allies_being_in_the_way:
+				self.state = 'wander-aimlessly'
+				self.target_room = AI_choose_adjacent_room(self)
+
+
 
 
 class Wizard_AI:
@@ -4078,11 +4121,20 @@ def create_monster(x,y, name, guard_duty = False):
 		monster = Object(x, y, 'Z', 'samurai', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "A cautious, patient killer.")
 
 	elif name == 'tridentor':
-		#create a guy with an axe!
+		#create a n aquatic enemy!
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
 		ai_component = Tridentor_AI(weapon = Weapon_Trident(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
 		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Able to attack in water. Wields a three-pronged weapon.")
+
+
+	elif name == 'faerie':
+		#create a faerie that floats around the dugeon!
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
+		ai_component = Faerie_AI(weapon = Weapon_Trident(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
+		decider_component = Decider(ai_component)
+		# faeries don't block, right?
+		monster = Object(x, y, 312, 'faerie', color_tridentor, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True, always_visible = True)
 
 
 	elif name == 'rogue':
@@ -4309,6 +4361,14 @@ def make_map():
 			new_plant = Object(od.x, od.y, 289, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
 			objectsArray[od.x][od.y].append(new_plant)
 			worldEntitiesList.append(new_plant)
+		elif od.name == 'tree':
+			new_tree = Object(od.x, od.y, 306, 'tree', default_door_color, blocks = True,  always_visible=True, mouseover = "Sturdy and wooden.")
+			objectsArray[od.x][od.y].append(new_tree)
+			worldEntitiesList.append(new_tree)
+		elif od.name == 'grass':
+			new_grass = Object(od.x, od.y, 308 + randint(0,2), 'grass', default_flower_color, blocks = False,  always_visible=False, mouseover = "It sways as if in an outdoor breeze.")
+			objectsArray[od.x][od.y].append(new_grass)
+			worldEntitiesList.append(new_grass)
 		elif od.name == 'message':
 			message_color = color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
@@ -4588,7 +4648,7 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, ca
 			if object.door is not None:
 				if care_about_doors == True:
 					return 'closed-door'
-				elif generally_ignore_doors == False:
+				if generally_ignore_doors == False:
 					return True
 			elif object.fighter is not None:
 				if care_about_fighters == True:
@@ -4780,6 +4840,13 @@ def monster_death(monster):
 		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True, mouseover = "Gives you favour, which can be exchanged at shrines to get upgrades.")
 		objectsArray[monster.x][monster.y].append(favour_object) 
 		reorder_objects(monster.x, monster.y)
+
+	# faeires drop favour? that's what we're doing at the mo.
+	if monster.name == 'faerie': 
+		favour_object = Object(monster.x, monster.y, '$', 'favour token', color_tridentor, blocks = False,  always_visible=True, mouseover = "Gives you favour, which can be exchanged at shrines to get upgrades.")
+		objectsArray[monster.x][monster.y].append(favour_object) 
+		reorder_objects(monster.x, monster.y)
+
 
 
 	else:	
@@ -5593,6 +5660,11 @@ def render_all():
 
 						# DRAW ALL THE THINGS
 						object.draw()
+	
+					# trying to add a pattern on empty space. This is buggy.
+					#if len(objectsArray[x][y]) == 0:
+					#	if fov_map.fov[x, y] == True and not map[x][y].blocked:
+					#		con.draw_char(x - x_offset, y - y_offset, 305, bg=None, fg = default_decoration_color)
 
 		#	for object in objects:
 		#		if libtcod.map_is_in_fov(fov_map, object.x, object.y) == True:
@@ -6814,7 +6886,7 @@ while not translated_console_is_window_closed():
 									if valid_target == True:
 										potential_punch_list.append((object, victim))
 								#try to open if there's a (non-elevator) door in this square
-								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
+								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y and not object.phantasmal:
 									potential_open_list.append((object, victim))
 									#print str(victim.name)
 
@@ -6955,7 +7027,14 @@ while not translated_console_is_window_closed():
 
 		for object in mover_list:
 			md = object.decider.decision.move_decision
-			object.move(md.dx, md.dy)			#TODO NOTE: hey this is going to be interesting
+		#	if object.phantasmal:
+		#		print("phantasmagorical")
+			if object.phantasmal == True:
+				object.move(md.dx, md.dy, ignore_doors = True)	
+			else:
+				object.move(md.dx, md.dy)
+				
+		#TODO NOTE: hey this is going to be interesting
 		#	# also maybe trample some plants while you're here
 		#	for other_object in objectsArray[object.x][object.y]:	
 		#		if other_object.plant is not None:

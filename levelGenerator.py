@@ -807,7 +807,62 @@ class Level_Generator:
 		(shrine_x, shrine_y) = shrine_room.center()
 		object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
 		self.decorate_room(shrine_room, lev_set, map, object_data, dungeon_level,symbol = '+')
+		self.plant_grass_in_room(shrine_room, lev_set, map, object_data, shrine_x, shrine_y)
 		# TODO hey I bet in future we're going to want to control what upgrades the shrines have, and what sort of distribution of upgrade types you can get
+
+
+	def plant_grass_in_room(self, shrine_room, lev_set, map, object_data, shrine_x, shrine_y):
+		growth_rounds = 10
+		spread_prob_num= 1	# prob 1 in 2
+		spread_prob_denom= 2	# prob 1 in 2
+		#grass goes through 7 stages:
+		# 0: no grass here
+		# 1: seed planted here
+		# 2: growing
+		# 3: dispersing
+		# 4: dispersing
+		# 5: no longer dispersing
+		# 6: dying (but new seeds can be planted)
+		
+		grass_array = [[ 0
+			for y in range(shrine_room.height) ]
+				for x in range(shrine_room.width) ]
+		# put flowering grass at shrine center
+		grass_array[shrine_x - shrine_room.x1][shrine_y - shrine_room.y1] = 3
+
+		for round in range(growth_rounds):
+			# cells in stage 0 or 6 can be seeded by adjacent cells in stage 3 or 4
+			for y in range(shrine_room.height):
+				for x in range(shrine_room.width):
+					if grass_array[x][y] == 0 or grass_array[x][y] == 6:
+						if x > 0:
+							if grass_array[x-1][y] in range(3,5) and randint(1,spread_prob_denom)<= spread_prob_num:
+								grass_array[x][y] = 1
+						if y > 0:
+							if grass_array[x][y-1] in range(3,5) and randint(1,spread_prob_denom)<= spread_prob_num:
+								grass_array[x][y] = 1
+						if x < shrine_room.width-1:
+							if grass_array[x+1][y] in range(3,5) and randint(1,spread_prob_denom)<= spread_prob_num:
+								grass_array[x][y] = 1
+						if y < shrine_room.height-1:
+							if grass_array[x][y+1] in range(3,5) and randint(1,spread_prob_denom)<= spread_prob_num:
+								grass_array[x][y] = 1
+
+			# now age all the grass (and kill the grass in stage 6):
+			for y in range(shrine_room.height):
+				for x in range(shrine_room.width):
+					if  grass_array[x][y] > 0:
+						 grass_array[x][y] =  grass_array[x][y] + 1
+					if grass_array[x][y] > 6:
+						 grass_array[x][y] = 0
+
+		# ok now that that's all done, add grass in the places where the array says there is grass
+		for y in range(shrine_room.height):
+			for x in range(shrine_room.width):
+				if  grass_array[x][y] > 0 and  grass_array[x][y] < 5:
+					object_data.append(Object_Datum(shrine_room.x1 + x,shrine_room.y1 + y, 'grass'))
+
+
 
 
 	# place some intial enemies on guard duty to rooms
@@ -884,7 +939,7 @@ class Level_Generator:
 
 		
 
-		# Add anenemy to each of the specified places
+		# Add an enemy to each of the specified places
 		for (x,y) in placement_list:
 			enemy_name = 'none'
 			num = randint(0, total_enemy_prob)
@@ -1091,6 +1146,34 @@ class Level_Generator:
 				x = randint(room.x1+1, room.x2-1)
 				y = randint(room.y1+1, room.y2-1)
 				object_data.append(Object_Datum(x,y,'plant', 'tulip'))
+
+
+
+			#And let's also add some honest to god trees in the corners! Maybe
+			# Only add trees in big rooms
+			if room.x2 - room.x1 > 2 and room.y2 - room.y1 > 2:
+				room_corners = [(room.x1,room.y1),(room.x1,room.y2),(room.x2,room.y1),(room.x2,room.y2)]
+				for (x,y) in room_corners:
+					if not self.is_occupied(x,y,map, object_data):
+						# see if we are in an actual corner, i.e. exactly one vertical neighbor blocked, exactly one horizontal neighbor blocked
+						try:
+							if ((map[x-1][y].blocked and not  map[x+1][y].blocked)or(not map[x-1][y].blocked and map[x+1][y].blocked)) and ((map[x][y-1].blocked and not  map[x][y+1].blocked)or(not map[x][y-1].blocked and map[x][y+1].blocked)) :
+								# Finally, toss a coin to see if we should actually put a tree here.
+								if randint(0,1) == 1:
+									object_data.append(Object_Datum(x,y, 'tree'))
+	
+						except IndexError:		#todo: check that this is the right thing to catch...
+							print('')		
+
+
+			# Aaaaaaaand some faeries? this probbably shouldn't go here	
+			if randint(0,1) == 0:
+				faerie_x= randint(room.x1,room.x2) 
+				faerie_y= randint(room.y1,room.y2) 
+				if not self.is_occupied(faerie_x,faerie_y,map, object_data):
+					object_data.append(Object_Datum(faerie_x,faerie_y,'monster', 'faerie'))		
+				
+
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.
 	def decorate_room(self, room, lev_set, map, object_data, dungeon_level,symbol = '~'):
@@ -1743,8 +1826,17 @@ class Level_Generator:
 			if preferred_room_height > temp_new_room.y2-temp_new_room.y1:
 				preferred_room_height = temp_new_room.y2-temp_new_room.y1
 			# Now position the room at a random position that fits within this box  (i.e. choose starting x and starting y independently at random from the options that will fit))
-			preferred_room_x1 = randint(temp_new_room.x1, temp_new_room.x2 - preferred_room_width)
-			preferred_room_y1 = randint(temp_new_room.y1, temp_new_room.y2 - preferred_room_height)
+			# preferred_room_x1 = randint(temp_new_room.x1, temp_new_room.x2 - preferred_room_width)
+			# preferred_room_y1 = randint(temp_new_room.y1, temp_new_room.y2 - preferred_room_height)
+
+			# Update: make the room be in one corner of the possibility box.  (hopefully this will mitigate narrow rooms?)
+
+			preferred_room_x1 = temp_new_room.x1
+			if randint(0,1) == 0:
+				preferred_room_x1 = temp_new_room.x2 - preferred_room_width
+			preferred_room_y1 = temp_new_room.y1
+			if randint(0,1) == 0:
+				preferred_room_y1 = temp_new_room.y2 - preferred_room_height
 
 			new_room = Rect(preferred_room_x1, preferred_room_y1,  preferred_room_width, preferred_room_height)
 
