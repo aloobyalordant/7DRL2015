@@ -4134,7 +4134,7 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Faerie_AI(weapon = Weapon_Trident(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
 		decider_component = Decider(ai_component)
 		# faeries don't block, right?
-		monster = Object(x, y, 312, 'faerie', color_tridentor, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True, always_visible = True)
+		monster = Object(x, y, 312, 'faerie', color_tridentor, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
 
 
 	elif name == 'rogue':

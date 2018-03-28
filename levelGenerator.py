@@ -807,7 +807,8 @@ class Level_Generator:
 		(shrine_x, shrine_y) = shrine_room.center()
 		object_data.append(Object_Datum(shrine_x,shrine_y, 'shrine', 'healer'))
 		self.decorate_room(shrine_room, lev_set, map, object_data, dungeon_level,symbol = '+')
-		self.plant_grass_in_room(shrine_room, lev_set, map, object_data, shrine_x, shrine_y)
+		# commented out for now: plant grass around the shrine
+		#self.plant_grass_in_room(shrine_room, lev_set, map, object_data, shrine_x, shrine_y)
 		# TODO hey I bet in future we're going to want to control what upgrades the shrines have, and what sort of distribution of upgrade types you can get
 
 
@@ -1167,7 +1168,7 @@ class Level_Generator:
 
 
 			# Aaaaaaaand some faeries? this probbably shouldn't go here	
-			if randint(0,1) == 0:
+			if randint(0,10) == 0:
 				faerie_x= randint(room.x1,room.x2) 
 				faerie_y= randint(room.y1,room.y2) 
 				if not self.is_occupied(faerie_x,faerie_y,map, object_data):
@@ -1961,6 +1962,16 @@ class Level_Generator:
 				if conflict == False:
 					new_maximal_potential_rooms.append(long_list[i])
 
+
+			# here's an extra thing - only pass rooms if they're bigger than a certain size?
+			long_list = new_maximal_potential_rooms
+			new_maximal_potential_rooms = []
+			long_len = len(long_list)
+			for i in range(0, long_len):
+				if long_list[i].width >= 3 and  long_list[i].height >= 3: # TODO: make minimum room size be a settable thing
+					new_maximal_potential_rooms.append(long_list[i])				
+
+
 			# do final update of the maximal potential rooms list.
 			maximal_potential_rooms = new_maximal_potential_rooms
 
@@ -1992,8 +2003,9 @@ class Level_Generator:
 				else:
 					# are they adjacent?
 					adjacent = False
-					dist = 4 #the max distance we can have between two rooms for them to count as 'adjacent'.
+					dist = 6 #the max distance we can have between two rooms for them to count as 'adjacent'.
 							# basically dist+1 should be just enough to squeeze a tiny room in between?
+						 # TODO tie this measure to minimum room size
 					#is room i to the left of room j?
 					if rooms[j].x1 > rooms[i].x2 and rooms[j].x1 - rooms[i].x2 <= dist and rooms[i].y2 > rooms[j].y1 and rooms[j].y2 > rooms[i].y1:
 						adjacent = True
