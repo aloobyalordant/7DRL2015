@@ -4135,7 +4135,7 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Faerie_AI(weapon = Weapon_Unarmed(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
 		decider_component = Decider(ai_component)
 		# faeries don't block, right?
-		monster = Object(x, y, 312, 'faerie', color_faerie, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
+		monster = Object(x, y, 312, 'faerie', PLAYER_COLOR, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
 
 
 	elif name == 'rogue':
@@ -4208,7 +4208,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map():
-	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList
+	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters
 
 	lev_gen = Level_Generator()
 
@@ -4216,6 +4216,7 @@ def make_map():
 	level_data = lev_gen.make_level(dungeon_level, lev_set)
 
 	number_alarmers = 0		# how many things in the level do stuff with the alarm? If this becomes 0, all alarms stuff
+	total_monsters = 0
 
 	map = level_data.map
 	background_map = level_data.background_map
@@ -4300,6 +4301,7 @@ def make_map():
 			if dungeon_level == 0:
 				if od.info == 'security drone':
 					monster.drops_key = True
+			total_monsters += 1
 		elif od.name == 'strawman':
 			strawman = create_strawman(od.x,od.y,od.info, od.more_info)
 			objectsArray[od.x][od.y].append(strawman)
@@ -4801,7 +4803,7 @@ def player_death(player):
 	#player.color = libtcod.dark_red
  
 def monster_death(monster):
-	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_alarmers, alarm_level
+	global garbage_list, favoured_by_healer, tested_by_destroyer, favoured_by_destroyer, tested_by_deliverer, favoured_by_deliverer, destroyer_test_count, deliverer_test_count, number_alarmers, alarm_level, total_monsters
 	# drop the weapon the monster was carrying, if it had one.
 	if monster.decider:
 		if monster.decider.ai:
@@ -4880,6 +4882,8 @@ def monster_death(monster):
 			favoured_by_healer = False
 
 
+	# update the monster count
+	total_monsters -= 1
 
 
 
@@ -4887,7 +4891,7 @@ def monster_death(monster):
 def next_level():
 	global colorHandler
 	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array, color_handler
-	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
 
 	# doing some test saving
 	save_game()
@@ -4933,6 +4937,7 @@ def next_level():
 		SHOW_KEYS = False 
 		SHOW_FAVOUR = False 
 		SHOW_REINFORCEMENTS = False 
+		SHOW_TOTAL_MONSTERS = True
 		SHOW_UPGRADES = False
 		# give player a test upgrade?
 		#new_upgrade = Get_Test_Upgrade()
@@ -5711,8 +5716,8 @@ def create_GUI_panel():
 	global game_level_settings, dungeon_level
 	global controlHandler
 	global upgrade_array
-	global spawn_timer
-	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
+	global spawn_timer, total_monsters
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES, SHOW_TOTAL_MONSTERS
 
 	lev_set = game_level_settings.get_setting(dungeon_level)
 
@@ -5890,6 +5895,12 @@ def create_GUI_panel():
 	if SHOW_REINFORCEMENTS:
 		translated_console_print_ex(panel, level_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
 		'Reinforcements in ' + str(spawn_timer))
+
+
+
+	if SHOW_TOTAL_MONSTERS == True:
+		translated_console_print_ex(panel, level_panel_x, 8, libtcod_BKGND_NONE, libtcod_LEFT,
+		'Enemies: ' + str(total_monsters))
 
 #	if favoured_by_healer:
 #		translated_console_print_ex(panel, level_panel_x + BAR_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER,
@@ -6252,7 +6263,7 @@ def load_game():
 
 def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme
-	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
 	current_big_message = 'You weren\'t supposed to see this'
 
 	spawn_timer = 0
@@ -6383,6 +6394,7 @@ def initialise_game():
 	SHOW_KEYS = False
 	SHOW_FAVOUR = False
 	SHOW_REINFORCEMENTS = False
+	SHOW_TOTAL_MONSTERS = False
 	SHOW_UPGRADES = False
 
 
@@ -6399,7 +6411,7 @@ def initialise_game():
 
 def get_info_panel_mouseover_text(x,y):
 
-	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
 	global PANEL_HEIGHT, PANEL_WIDTH
 	#global bottom_panel_mouseover_array
 	#return_string = "Information Panel"
@@ -6505,6 +6517,9 @@ def get_info_panel_mouseover_text(x,y):
 				# -- Reinforcements timer   (split across this and the upgrades panel, for reasons) --
 				elif y == 7 and SHOW_REINFORCEMENTS:
 					mouseover_text = "Reinforcements Timer: More enemies will arrive when this reaches 0. Enemies are also summoned whenever the alarm level is raised."
+
+				elif y == 8 and SHOW_TOTAL_MONSTERS:
+					mouseover_text = "Enemies: The total number of enemies currently in the level."
 
 
 			# Upgrades subpanel  (to fix up properly later)
@@ -7881,6 +7896,8 @@ while not translated_console_is_window_closed():
 			SHOW_FAVOUR = True
 		if not SHOW_REINFORCEMENTS and alarm_level > 0:
 			SHOW_REINFORCEMENTS = True
+		if not SHOW_TOTAL_MONSTERS and alarm_level > 0:
+			SHOW_TOTAL_MONSTERS = True
 		if not SHOW_UPGRADES and len(upgrade_array) > 0:
 			SHOW_UPGRADES = True
 
