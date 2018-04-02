@@ -294,7 +294,7 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, mouseover = None):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, mouseover = None):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -336,6 +336,7 @@ class Object:
 			self.mouseover = self.name + " TODO"
 
 		self.getting_burned = getting_burned
+		self.aflame = aflame
 
 	def move(self, dx, dy, ignore_doors = False):	
 		global objectsArray
@@ -367,8 +368,11 @@ class Object:
 
 
 		# Here's a special thing. Fire randomizes its appearance every time it gets drawn in the attack step
-		if render_mode is not None and render_mode == 'attack-step' and self.name == 'fire':
-			self.char = 317 + randint(0,1)
+		if render_mode is not None and render_mode == 'attack-step':
+			if self.name == 'fire':
+				self.char = 317 + randint(0,1)
+			elif self.name == 'firepit':
+				self.char = 333 + randint(0,1)
 
 		#if True:	# temporary hack to test enemy naviation
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
@@ -2989,6 +2993,21 @@ class BasicAttack:
 					translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
 					target.door.take_damage(self.damage)
 
+				elif target.name == 'firepit':
+					message('Fire shit happens!', Color_Interesting_Combat)
+					for x in range (target.x - 2, target.x+3):
+						for y in range (target.y - 2, target.y + 3):
+							if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and not map[x][y].blocked:
+								new_fire = Object(x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
+								objectsArray[x][y].append(new_fire)
+								for other_object in objectsArray[x][y]:
+									if other_object.door:
+										other_object.aflame = True
+										worldEntitiesList.append(other_object)	#ugh what is this code
+						
+					
+					garbage_list.append(target)
+
 				if target.alarmer is not None:
 					target.alarmer.get_hit()
 
@@ -4370,8 +4389,11 @@ def make_map():
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
 		elif od.name == 'fire':
-			new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+			new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
 			objectsArray[od.x][od.y].append(new_fire)
+		elif od.name == 'firepit':
+			new_firepit = Object(od.x, od.y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+			objectsArray[od.x][od.y].append(new_firepit)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
 			new_plant = Object(od.x, od.y, 289, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
@@ -5679,7 +5701,7 @@ def render_all(render_mode = None):
 										# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
 										con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
 							#Draw fire for things on fire
-							if object.getting_burned:
+							if object.getting_burned or object.aflame:
 								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = fire_color)
 				
 
@@ -7021,6 +7043,8 @@ while not translated_console_is_window_closed():
 								somethingInWay = True
 							if ob.fighter:
 								jumpee = ob	
+							if ob.name == 'fire' and jumpee is None:
+								jumpee = ob
 						if somethingInWay == True:
 							message("There's a door in the way!", Color_Not_Allowed )
 					if somethingInWay == False:
@@ -7029,7 +7053,10 @@ while not translated_console_is_window_closed():
 							player.move(tempx, tempy)
 						else:
 							if jumpee is not None:
-								message ("You leap over the " + jumpee.name + "\'s head!", Color_Personal_Action)
+								if ob.name == 'fire':
+									message ("You leap through the flames!", Color_Personal_Action)
+								else:
+									message ("You leap over the " + jumpee.name + "\'s head!", Color_Personal_Action)
 						player.fighter.make_jump()
 						player.move(jd.dx, jd.dy)
 						player_just_jumped = True
@@ -7629,17 +7656,21 @@ while not translated_console_is_window_closed():
 		# Make things get burned if they are standing on fire
 		for object in worldEntitiesList:
 			object.getting_burned = False
-			if object.fighter:
+			if object.fighter or object.door:
 				# check to see if there is fire here
 				for other_object in objectsArray[object.x][object.y]:
 					if other_object.name == 'fire':
 						object.getting_burned = True
-				if object.getting_burned:
+				if object.getting_burned or object.aflame:
 					if object is player:
 						message('You get burned!', Color_Dangerous_Combat)
 					else:
 						message('The ' + object.name.capitalize() + ' gets burned!', Color_Boring_Combat)
-					object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
+
+					if object.fighter:
+						object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
+					elif object.door: 
+						object.door.take_damage(1)
 					#translated_console_set_char_background(con, object.x, object.y, fire_color, libtcod_BKGND_SET)
 
 				

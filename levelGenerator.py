@@ -1175,6 +1175,11 @@ class Level_Generator:
 				if not self.is_occupied(faerie_x,faerie_y,map, object_data):
 					object_data.append(Object_Datum(faerie_x,faerie_y,'monster', 'faerie'))		
 				
+			elif rando_choice <= 5:  # rando_choice == 1:
+				firepit_x= randint(room.x1,room.x2) 
+				firepit_y= randint(room.y1,room.y2) 
+				if not self.is_occupied(firepit_x,firepit_y,map, object_data):
+					object_data.append(Object_Datum(firepit_x,firepit_y,'firepit'))	
 			else:  # rando_choice == 1:
 				fire_x= randint(room.x1,room.x2) 
 				fire_y= randint(room.y1,room.y2) 
