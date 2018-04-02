@@ -1168,12 +1168,22 @@ class Level_Generator:
 
 
 			# Aaaaaaaand some faeries? this probbably shouldn't go here	
-			if randint(0,10) == 0:
+			rando_choice = randint(0,10)
+			if rando_choice == 0:
 				faerie_x= randint(room.x1,room.x2) 
 				faerie_y= randint(room.y1,room.y2) 
 				if not self.is_occupied(faerie_x,faerie_y,map, object_data):
 					object_data.append(Object_Datum(faerie_x,faerie_y,'monster', 'faerie'))		
 				
+			else:  # rando_choice == 1:
+				fire_x= randint(room.x1,room.x2) 
+				fire_y= randint(room.y1,room.y2) 
+				if not self.is_occupied(fire_x,fire_y,map, object_data):
+					object_data.append(Object_Datum(fire_x,fire_y,'fire'))	
+
+
+
+
 
 
 	# Create pretty decorations on the border of the room! Let's see if it looks any good.

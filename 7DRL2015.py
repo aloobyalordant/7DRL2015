@@ -294,7 +294,7 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, mouseover = None):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, mouseover = None):  #raising_alarm = False):
 		self.x = x
 		self.y = y
 		self.char = char
@@ -335,6 +335,8 @@ class Object:
 		if self.mouseover == None:
 			self.mouseover = self.name + " TODO"
 
+		self.getting_burned = getting_burned
+
 	def move(self, dx, dy, ignore_doors = False):	
 		global objectsArray
 									#TODO will need to update objectarry
@@ -353,7 +355,7 @@ class Object:
 			
 
 
-	def draw(self):
+	def draw(self, render_mode = None):
 		global camera
 
 		#x_offset = camera.x-SCREEN_WIDTH/2
@@ -362,6 +364,11 @@ class Object:
 		y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
 		#only show if it's visible to the player; or it's set to "always visible" and on an explored tile
 		# also don't draw it if it's set to 'currently invisible'
+
+
+		# Here's a special thing. Fire randomizes its appearance every time it gets drawn in the attack step
+		if render_mode is not None and render_mode == 'attack-step' and self.name == 'fire':
+			self.char = 317 + randint(0,1)
 
 		#if True:	# temporary hack to test enemy naviation
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
@@ -3013,6 +3020,10 @@ class BasicAttack:
 
 
 
+
+
+
+
 def process_nearest_center_points():
 	global center_points, nearest_points_array
 	
@@ -4358,7 +4369,9 @@ def make_map():
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
-			objectsArray[od.x][od.y].append(new_water)
+		elif od.name == 'fire':
+			new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+			objectsArray[od.x][od.y].append(new_fire)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
 			new_plant = Object(od.x, od.y, 289, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
@@ -5567,7 +5580,7 @@ def restartynscreen():
 	# libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
-def render_all():
+def render_all(render_mode = None):
 
 	global fov_map, color_dark_wall, color_light_wall
 	global color_dark_ground, color_light_ground, color_light_ground_alt
@@ -5665,9 +5678,14 @@ def render_all():
 									if object.attack is not None and other_object.fighter is not None:
 										# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
 										con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
+							#Draw fire for things on fire
+							if object.getting_burned:
+								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = fire_color)
+				
+
 
 						# DRAW ALL THE THINGS
-						object.draw()
+						object.draw(render_mode = render_mode)
 	
 					# trying to add a pattern on empty space. This is buggy.
 					#if len(objectsArray[x][y]) == 0:
@@ -6126,7 +6144,7 @@ def clear_onscreen_objects():
 
 def setColorScheme(colorScheme = 'default'):
 	global colorHandler
-	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, alt_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color
+	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, alt_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color, fire_color
 	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_faerie, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
 	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
@@ -6159,6 +6177,10 @@ def setColorScheme(colorScheme = 'default'):
 	# collectiable e.g. weapons and plants and keys
 	default_flower_color = levelColors['default_flower_color']
 	default_weapon_color = levelColors['default_weapon_color']
+
+
+	fire_color = levelColors['fire_color']
+
 
 	# enemies, including player
 	PLAYER_COLOR = levelColors['PLAYER_COLOR']
@@ -6856,6 +6878,7 @@ while not translated_console_is_window_closed():
 		#				object.decider.decide()
 
 		for object in worldEntitiesList:
+			object.getting_burned = False
 			if object.decider:
 				object.decider.decide()
 
@@ -7404,7 +7427,7 @@ while not translated_console_is_window_closed():
 		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
 		# libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
 		#print('2')
-		render_all()
+		render_all(render_mode = 'attack-step')
 		translated_console_flush()
 		#put in a pause before drawing the other stuff?
 		time.sleep(0.05)
@@ -7596,6 +7619,29 @@ while not translated_console_is_window_closed():
 #		#				if object.attack.existing == False:
 #		#					deletionList.append(object)
 #						reorder_objects(x,y) 
+
+
+
+
+
+
+
+		# Make things get burned if they are standing on fire
+		for object in worldEntitiesList:
+			object.getting_burned = False
+			if object.fighter:
+				# check to see if there is fire here
+				for other_object in objectsArray[object.x][object.y]:
+					if other_object.name == 'fire':
+						object.getting_burned = True
+				if object.getting_burned:
+					if object is player:
+						message('You get burned!', Color_Dangerous_Combat)
+					else:
+						message('The ' + object.name.capitalize() + ' gets burned!', Color_Boring_Combat)
+					object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
+					#translated_console_set_char_background(con, object.x, object.y, fire_color, libtcod_BKGND_SET)
+
 				
 
 		# deleting attacks that have happened

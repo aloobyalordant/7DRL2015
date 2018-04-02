@@ -97,43 +97,82 @@ class Level_Settings:
 
 		# Let's try having a set of the new 'basic' enemies, and then select three of them at random for each level
 		#enemies_probs_set = [ ('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
-		enemyprobs1 = []
-		#for i in range (0,2):
-		#	j = randint( 0, len(enemies_probs_set)-1)
-		#	enemy_choice = enemies_probs_set[j]
-		#	enemyprobs1.append(enemy_choice)
-		#	enemies_probs_set.remove(enemy_choice)
-		#enemyprobs1.append(('albatross', 10))
-		enemyprobs1.append(('greenhorn', 10))
-		enemyprobs1.append(('crane', 10))
-		#enemyprobs1.append(('bustard', 10))
-		#enemyprobs1.append(('eagle', 10))
-		enemies_probs_set = [('crane', 5),  ('dove', 10),  ('falcon', 10)]
-		enemies_probs_set.append(('bustard', 10))
-		third_enemy_choice = randint( 0, len(enemies_probs_set)-1)
-		third_enemy = enemies_probs_set[third_enemy_choice]
-		enemyprobs2 = []
-		#enemyprobs2.append(('albatross', 10))
-		enemyprobs1.append(('greenhorn', 10))
-		enemyprobs2.append(('bustard', 10))
-		enemyprobs2.append(third_enemy)
-
-		enemies_probs_set.remove(third_enemy)
-		enemies_probs_set.append(('eagle', 5))
-
-		enemyprobs3 = []
-		#enemyprobs3.append(('albatross', 10))
-		enemyprobs1.append(('greenhorn', 10))
-		if randint(0,3) == 0:
-			enemyprobs3.append(('bustard', 10))
-		else:
-			enemyprobs3.append(third_enemy)
-
-		fourth_enemy_choice = randint( 0, len(enemies_probs_set)-1)
-		fourth_enemy = enemies_probs_set[fourth_enemy_choice]
-		enemyprobs3.append(fourth_enemy)
+#		enemyprobs1 = []
+#		#for i in range (0,2):
+#		#	j = randint( 0, len(enemies_probs_set)-1)
+#		#	enemy_choice = enemies_probs_set[j]
+#		#	enemyprobs1.append(enemy_choice)
+#		#	enemies_probs_set.remove(enemy_choice)
+#		#enemyprobs1.append(('albatross', 10))
+#		enemyprobs1.append(('greenhorn', 10))
+#		enemyprobs1.append(('crane', 10))
+#		#enemyprobs1.append(('bustard', 10))
+#		#enemyprobs1.append(('eagle', 10))
+#		enemies_probs_set = [('crane', 5),  ('dove', 10),  ('falcon', 10), ('bustard', 10)]
+#		third_enemy_choice = randint( 0, len(enemies_probs_set)-1)
+#		third_enemy = enemies_probs_set[third_enemy_choice]
+#		enemyprobs2 = []
+#		#enemyprobs2.append(('albatross', 10))
+#		enemyprobs1.append(('greenhorn', 10))
+#		#enemyprobs2.append(('bustard', 10))
+#		enemyprobs2.append(third_enemy)
+#
+#		enemies_probs_set.remove(third_enemy)
+#		enemies_probs_set.append(('eagle', 5))
+#
+#		enemyprobs3 = []
+#		#enemyprobs3.append(('albatross', 10))
+#		enemyprobs1.append(('greenhorn', 10))
+#		if randint(0,3) == 0:
+#			enemyprobs3.append(('bustard', 10))
+#		else:
+#			enemyprobs3.append(third_enemy)
+#
+#		fourth_enemy_choice = randint( 0, len(enemies_probs_set)-1)
+#		fourth_enemy = enemies_probs_set[fourth_enemy_choice]
+#		enemyprobs3.append(fourth_enemy)
 
 		
+
+
+
+		# Ok so. Let's try and clean up that enemy probabilities 
+		
+		# Initially: It could be a greenhorn and crane, it could be a greenhorn and a bustard!
+		enemyprobs1 = []
+		enemybench = []		# enemies not currently being used, but that we might soon
+		if randint(0,1) == 0:
+			enemyprobs1 = [('greenhorn', 20), ('crane',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
+			enemybench = [('bustard',10), ('dove', 10),  ('falcon', 10)]
+		else:
+			enemyprobs1 = [('greenhorn', 20), ('bustard',10)] 
+			enemybench = [('crane', 10), ('dove', 10),  ('falcon', 10)]
+
+		# For level 2: Take one enemy out (probably not the greenhorn?), and add one new one from the bench
+		# Actually... let's not do that. let's keep all the enemies from level &, and just add one more
+		enemyprobs2 = list(enemyprobs1)
+		#if randint(0,2) == 0:
+		#	enemy_to_drop = enemyprobs2[0]
+		#else:
+		#	enemy_to_drop = enemyprobs2[0]
+		enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
+		#enemyprobs2.remove(enemy_to_drop)
+		enemyprobs2.append(enemy_to_add)
+		enemybench.remove(enemy_to_add)
+
+		
+
+		# Now add the eagle to the bench! And drop a random enemy, and add a new one from the bench
+		enemybench.append(('eagle',5))
+		enemyprobs3 = list(enemyprobs2)
+		enemy_to_drop = enemyprobs3[randint(0, len(enemyprobs3) - 1)]
+		enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
+		enemyprobs3.remove(enemy_to_drop)
+		enemyprobs3.append(enemy_to_add)
+		enemybench.remove(enemy_to_add)
+
+
+
 
 		#for i in range (0,2):
 		#	j = randint( 0, len(enemies_probs_set)-1)

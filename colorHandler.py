@@ -66,6 +66,8 @@ class ColorHandler:
 			# collectiable e.g. weapons and plants and keys
 			('default_flower_color',(50,150,0)),	#(50,150,0)
 			('default_weapon_color',(50,50,50)),	#(50,50,50) #libtcod.grey
+
+			('fire_color',(255,0,0)),	#(50,50,50) #libtcod.grey
 			# enemies, including player
 			('PLAYER_COLOR',(255, 255, 255)),	#(255, 255, 255)
 			#color_sneaky_enemy
