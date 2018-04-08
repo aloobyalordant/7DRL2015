@@ -97,7 +97,7 @@ class ColorHandler:
 			newDictionary['color_light_ground_alt'] = (210, 110,100)	#(235, 120, 80)	#(219, 126, 61)	#	(200, 180, 50)
 			newDictionary['default_altar_color'] = (235, 120, 80)
 			newDictionary['alt_altar_color'] = (243, 195, 134)
-			newDictionary['default_door_color'] = (102, 28, 25)
+			newDictionary['default_door_color'] =  (102, 28, 25)  #(102, 28, 25)
 			newDictionary['default_message_color'] = (230, 00, 230)
 			newDictionary['default_decoration_color'] =(200, 106, 41)
 			newDictionary['color_alarmer_alarmed'] =(250,0,0)	#	(2

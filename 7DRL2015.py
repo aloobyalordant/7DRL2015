@@ -4807,7 +4807,7 @@ def process_player_attack(actionCommand):
 			message('Error: cannot attack', Color_Not_Allowed)
 			return 'invalid-move'
 
-def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
+def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0, direction = None):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
 	temp_attack_list = []
@@ -6350,7 +6350,7 @@ def initialise_game():
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
-	player = Object(0, 0, 273, 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
+	player = Object(0, 0, 320, 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
 	camera = Location(player.x, player.y)
 
 
