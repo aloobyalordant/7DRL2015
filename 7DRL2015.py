@@ -4707,26 +4707,26 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, ca
 
 
 
-def player_move_or_attack(dx, dy):
-	global fov_recompute
- 
-	#the coordinates the player is moving to/attacking
-	x = player.x + dx
-	y = player.y + dy
- 
-	#try to find an attackable object there
-	target = None
-	for object in objectsArray[x][y]:
-		if object.fighter:
-			target = object
-			break
- 
-	#attack if target found, move otherwise
-	if target is not None:
-		player.fighter.attack(target)
-	else:
-		player.move(dx, dy)
-		fov_recompute = True
+#def player_move_or_attack(dx, dy):
+#	global fov_recompute
+# 
+#	#the coordinates the player is moving to/attacking
+#	x = player.x + dx
+#	y = player.y + dy
+# 
+#	#try to find an attackable object there
+#	target = None
+#	for object in objectsArray[x][y]:
+#		if object.fighter:
+#			target = object
+#			break
+# 
+#	#attack if target found, move otherwise
+#	if target is not None:
+#		player.fighter.attack(target)
+#	else:
+#		player.move(dx, dy)
+#		fov_recompute = True
 
 
 

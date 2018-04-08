@@ -294,7 +294,11 @@ class Level_Generator:
 				for y in range(max_map_height) ]
 					for x in range(max_map_width) ]
 			
-			self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+
+			# return first level, either the tutorial or test room, depending
+			self.first_level(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			# self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			#self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			player_start_x = 11
 			player_start_y = 61
 			#max_map_width = lev_set.max_map_width + 1
@@ -2311,6 +2315,8 @@ class Level_Generator:
 		self.create_elevator(elev2, map, spawn_points, center_points, nearest_points_array, object_data,  elevators, 'Small-Elevator-Right', background_map)
 
 
+
+
 	def new_tutorial(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
 
@@ -2908,4 +2914,46 @@ class Level_Generator:
 
 
 
+
+	def test_room(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
+
+
+		tut_rm_width = 8
+		tut_rm_height = 8
+
+		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
+		self.create_room(new_room, map, center_points, nearest_points_array)
+		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
+		#D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
+		D = Object_Name('weapon', 'sword')
+		E = Object_Name('monster', 'greenhorn')
+		F = Object_Name('fire')
+		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,0,0,1,1,1,1],
+				[1,1,1,C,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,1,1],
+				[0,0,0,0,0,0,0,F,0,0,0,E,1,1],
+				[0,0,0,D,0,0,0,0,0,0,0,0,1,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,1,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,1,1]]
+		#seg_map = self.rotateSegment(seg_map)
+
+		#old_room = new_room
+#		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
+#		(new_x, new_y) = new_room.center()
+#		(prev_x, prev_y) = old_room.center()
+		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,7*tut_rm_height, object_data)
+
+
+	def first_level(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
+
+		test_mode = True
+
+		if test_mode:
+			 self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+		else:
+			 self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+
+
+	
 
