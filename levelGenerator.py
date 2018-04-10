@@ -2947,7 +2947,7 @@ class Level_Generator:
 
 	def first_level(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
-		test_mode = False
+		test_mode = True
 
 		if test_mode:
 			 self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
