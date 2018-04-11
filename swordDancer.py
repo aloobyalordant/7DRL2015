@@ -466,6 +466,26 @@ class Object:
 				self.decider.ai.stun()
 
 
+	def getPreliminaryEvents(self):
+		return []
+
+	def getMovementPhaseEvents(self):
+		return []
+
+	def getAttackPhaseEvents(self):
+		return []
+
+	def getDamgePhaseEvents(self):
+		return []
+
+	def getMiscPhaseEvents(self):
+		return []
+
+	def getFinalPreDrawEvents(self):
+		return []
+
+	def getFinalPostDrawEvents(self):
+		return []
 
 
 
@@ -474,10 +494,10 @@ class Object:
 class Fire(Object):
 
 	def __init__(self, x, y):  #raising_alarm = False):
-	
+		global AttackPhaseEvents
 		Object.__init__(self, x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "WUH WOH.")
-
-#		Object.__init__(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
+		argset = (self.x,self.y)
+		AttackPhaseEvents.append((self.burnThings, argset))
 
 
 	def getActionEvent(self):
@@ -487,6 +507,18 @@ class Fire(Object):
 	def getActionEventDetails(self):
 		argset = (self.x,self.y)
 		return [(self.spread, argset), (self.burnThings, argset)]
+
+
+	def createActionEventDetails(self):
+		global AttackPhaseEvents, MiscPhaseEvents
+		argset = (self.x,self.y)
+
+
+		AttackPhaseEvents.append((self.burnThings, argset))
+		MiscPhaseEvents.append((self.spread, argset))
+		
+		#return [(self.spread, argset), (self.burnThings, argset)]
+		
 
 
 	def burnThings(self, argset):
@@ -503,7 +535,8 @@ class Fire(Object):
 					object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
 				elif object.door: 
 					object.door.take_damage(1)
-				
+				elif object.name == 'firepit':
+					object.take_damage(1)				
 
 
 
@@ -538,6 +571,46 @@ class Fire(Object):
 
 		#Object.__init__(self, x=x, y=y, char = 217, name = 'fire', color = , blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, mouseover = 'Too burny!')
 
+
+
+class Firepit(Object):
+	
+	def __init__(self, x, y):
+
+		Object.__init__(self, x, y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+
+
+
+	def take_damage(self, damage_val):
+		if damage_val > 0:
+			#explode!
+			arg_set = (self.x, self.y)
+			MiscPhaseEvents.append((self.explode, arg_set))
+
+	def explode(self, arg_set):
+#		global objectsArray, worldEntitiesList
+		message('boom')
+		message('The ' + self.name + ' explodes', Color_Boring_Combat)
+		for x in range (self.x - 2, self.x+3):
+			for y in range (self.y - 2, self.y + 3):
+				if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and ((x-self.x)*(x-self.x)) + ((y-self.y)*(y-self.y)) <= 4 and not map[x][y].blocked:
+					fire_already_here = False
+					for ob in objectsArray[x][y]:
+						if ob.name == 'fire':
+							fire_already_here = True
+					if not fire_already_here:
+						#new_fire = Object(x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
+						new_fire = Fire(x,y)
+						#new_fire = Fire(x,y)
+						objectsArray[x][y].append(new_fire)
+						worldEntitiesList.append(new_fire)
+
+						for other_object in objectsArray[x][y]:
+							if other_object.door:
+								other_object.aflame = True
+								worldEntitiesList.append(other_object)	#ugh what is this code
+						
+		garbage_list.append(self)
 
 
 ####################################
@@ -3111,20 +3184,27 @@ class BasicAttack:
 					target.door.take_damage(self.damage)
 
 				elif target.name == 'firepit':
-					message('Fire shit happens!', Color_Interesting_Combat)
-					for x in range (target.x - 2, target.x+3):
-						for y in range (target.y - 2, target.y + 3):
-							if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and not map[x][y].blocked:
-								new_fire = Object(x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
-								#new_fire = Fire(x,y)
-								objectsArray[x][y].append(new_fire)
-								for other_object in objectsArray[x][y]:
-									if other_object.door:
-										other_object.aflame = True
-										worldEntitiesList.append(other_object)	#ugh what is this code
+					#target.take_damage(self.damage)
+					target.explode((self.owner.x,self.owner.y))	#temp hack hack hack
+
+
+					#new_fire = Fire(self.owner.x,self.owner.y)
+					#objectsArray[self.owner.x][self.owner.y].append(new_fire)
+					#worldEntitiesList.append(new_fire)
+					#message('Fire shit happens!', Color_Interesting_Combat)
+					#for x in range (target.x - 2, target.x+3):
+					#	for y in range (target.y - 2, target.y + 3):
+					#		if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and not map[x][y].blocked:
+					#			new_fire = Object(x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
+					#			#new_fire = Fire(x,y)
+					#			objectsArray[x][y].append(new_fire)
+					#			for other_object in objectsArray[x][y]:
+					#				if other_object.door:
+					#					other_object.aflame = True
+					#					worldEntitiesList.append(other_object)	#ugh what is this code
 						
 					
-					garbage_list.append(target)
+					#garbage_list.append(target)
 
 				if target.alarmer is not None:
 					target.alarmer.get_hit()
@@ -4512,7 +4592,8 @@ def make_map():
 			objectsArray[od.x][od.y].append(new_fire)
 			worldEntitiesList.append(new_fire)
 		elif od.name == 'firepit':
-			new_firepit = Object(od.x, od.y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+			#new_firepit = Object(od.x, od.y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+			new_firepit = Firepit(od.x,od.y)
 			objectsArray[od.x][od.y].append(new_firepit)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
@@ -6801,6 +6882,16 @@ mouse_coord_y = 0
 key = None
 
 
+
+PreliminaryEvents = []
+MovementPhaseEvents = []
+AttackPhaseEvents = []
+DamgePhaseEvents = []
+MiscPhaseEvents = []
+FinalPreDrawEvents = []
+FinalPostDrawEvents = []
+
+
 #TEMP COMMENTING OUT OH GOD
 # libtcod.sys_set_fps(LIMIT_FPS) 
 
@@ -6834,7 +6925,18 @@ internal_loop_count = 0
 cold_energy_parity = 0
 
 
+
+
+
+
+
+
+
+
 garbage_list = []
+
+
+
 
 # Main loop!
 while not translated_console_is_window_closed():
@@ -8073,13 +8175,33 @@ while not translated_console_is_window_closed():
 
 
 
+		# How we expect object types to go:
+		# PreliminaryEvents
+		# MovementPhaseEvents
+		# AttackPhaseEvents
+		# DamgePhaseEvents
+		# MiscPhaseEvents
+		# FinalPreDrawEvents
+		# FinalPostDrawEvents
+
+
+
+		PreliminaryEvents = []
+		MovementPhaseEvents = []
+		AttackPhaseEvents = []
+		DamgePhaseEvents = []
+		MiscPhaseEvents = []
+		FinalPreDrawEvents = []
+		FinalPostDrawEvents = []
+
 		super_cool_action_event_list = []
 
 		# Do some  fire spreading maybe? This is mainly just as a test.
 		spreading_fire_list = []
 		for ob in worldEntitiesList:
 			if ob.name == 'fire':
-				super_cool_action_event_list = super_cool_action_event_list + ob.getActionEventDetails()
+				ob.createActionEventDetails()
+				#super_cool_action_event_list = super_cool_action_event_list + ob.getActionEventDetails()
 				#super_cool_action_event_list.append(ob.getActionEvent())
 
 
@@ -8087,9 +8209,34 @@ while not translated_console_is_window_closed():
 		#for fire in spreading_fire_list: 
 		#	fire.spread()
 
-		for (function, argset) in super_cool_action_event_list:
-			if function is not None:
-				function(argset)
+		loop_count_sanity_check = 0
+		while(len(AttackPhaseEvents) + len(MiscPhaseEvents) > 0):
+
+			loop_count_sanity_check += 1
+
+			currentAttackPhaseEvents = list(AttackPhaseEvents)
+			AttackPhaseEvents = []		#clear these attacks so new things can be added
+			for (function, argset) in currentAttackPhaseEvents:
+				if function is not None:
+					function(argset)
+
+			render_all()
+			translated_console_flush()
+	
+	
+			currentMiscPhaseEvents = list(MiscPhaseEvents)
+			MiscPhaseEvents = []
+			for (function, argset) in currentMiscPhaseEvents:
+				if function is not None:
+					function(argset)
+
+			render_all()
+			translated_console_flush()
+
+			if loop_count_sanity_check > 500:
+				print("warning! Attack Phase/ Misc Phase looped over 500 times")
+				break
+
 
 
 
