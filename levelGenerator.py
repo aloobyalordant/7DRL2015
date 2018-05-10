@@ -2923,20 +2923,21 @@ class Level_Generator:
 
 		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
+		C = Object_Name('door')	# a door that may stick!
 		#D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
 		D = Object_Name('weapon', 'sword')
-		E = Object_Name('monster', 'greenhorn')
+		E = Object_Name('monster', 'crane')
 		F = Object_Name('fire')
 		G = Object_Name('firepit')
+		H = Object_Name('plant')
 		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
-				[1,1,1,C,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+				[1,1,1,C,0,0,0,0,0,0,0,0,0,0,0,0,C,0,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[0,0,0,0,0,G,0,G,0,G,0,G,0,G,0,G,0,0,G,0,E,1,1],
+				[0,0,0,0,0,G,0,E,0,0,0,G,0,G,0,G,0,0,G,0,E,1,1],
 				[0,0,0,D,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1]]
+				[1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1],
+				[1,0,0,0,0,0,0,0,0,C,H,C,0,0,0,C,H,C,0,0,0,1,1]]
 		#seg_map = self.rotateSegment(seg_map)
 
 		#old_room = new_room

@@ -21,6 +21,8 @@ SCREEN_WIDTH = 70
 SCREEN_HEIGHT = 39
 
 LIMIT_FPS = 20
+frame_pause = 0.05
+frame_attack_pause = 0.1
 
 VERSION_STRING = 'Version 0.0.1.0.0'
 
@@ -314,12 +316,13 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, door = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, immune_to_fire = False, mouseover = None):  #raising_alarm = False):
+	def __init__(self, x, y, char, name, color, blocks=False, jumpable = True, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, immune_to_fire = False, exists_in_map = True, mouseover = None, tags = set()):  #raising_alarm = False): # door = None, 
 		self.x = x
 		self.y = y
 		self.char = char
 		self.name = name
 		self.blocks = blocks
+		self.jumpable = jumpable
 		self.color = color
 		self.always_visible = always_visible
 		self.fighter = fighter
@@ -338,15 +341,17 @@ class Object:
 		self.floor_message = floor_message
 		if self.floor_message:
 			self.floor_message.owner = self
-		self.door = door
-		if self.door:
-			self.door.owner = self
+		#self.door = door
+		#if self.door:
+		#	self.door.owner = self
 		self.plant = plant
 		if self.plant:
 			self.plant.owner = self
 		self.currently_invisible = currently_invisible	# I am introducing this as a hack 
 								#to make elevator doors go away. Instead of actually going away, 									#they'll be made invisible, not blocking and not blocking light
 								# (different from being invisible). Video games!
+		self.exists_in_map = exists_in_map
+
 		#self.raising_alarm = raising_alarm
 		self.alarmer = alarmer
 		self.drops_key = drops_key
@@ -354,30 +359,162 @@ class Object:
 		self.mouseover = mouseover
 		if self.mouseover == None:
 			self.mouseover = self.name + " TODO"
+		self.tags = tags
 
 		self.getting_burned = getting_burned
 		self.aflame = aflame
 		self.immune_to_fire = immune_to_fire
 
-	def move(self, dx, dy, ignore_doors = False):	
-		global objectsArray
-									#TODO will need to update objectarry
-		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = ignore_doors):
-			#move by the given amount
-			old_x = self.x
-			old_y = self.y
-			new_x = self.x + dx
-			new_y = self.y + dy
-			self.x = new_x
-			self.y = new_y
-			# print('HI! iM AT (' + str(old_x) + ',' + str(old_y) + ') and want to go to (' + str(new_x) + ',' + str(new_y) + ')')
-			# Update objectsArray so that self is in the right list
-			objectsArray[new_x][new_y].append(self)
-			objectsArray[old_x][old_y].remove(self)
+
+#	# TODO: ultimately this move should be deprecated? Use attemptMove instead
+#	def move(self, dx, dy, ignore_doors = False):	
+#		global objectsArray, FinalPreDrawEvents
+#									#TODO will need to update objectarry
+#		if not is_blocked(self.x + dx, self.y + dy, generally_ignore_doors = ignore_doors):
+#			#move by the given amount
+#			old_x = self.x
+#			old_y = self.y
+#			new_x = self.x + dx
+#			new_y = self.y + dy
+#			self.x = new_x
+#			self.y = new_y
+#			# print('HI! iM AT (' + str(old_x) + ',' + str(old_y) + ') and want to go to (' + str(new_x) + ',' + str(new_y) + ')')
+#			# Update objectsArray so that self is in the right list
+#			objectsArray[new_x][new_y].append(self)
+#			objectsArray[old_x][old_y].remove(self)
+
+
+
+	# MovementPhase event
+	def attemptMove(self, dx, dy):
+		global objectsArray, fov_recompute #, FinalPreDrawEvents
+		old_x = self.x
+		old_y = self.y
+		new_x = self.x + dx
+		new_y = self.y + dy
+	
+
+
+		# check to see if there are objects in the new space that block
+		blocking_object = None
+		for obj in objectsArray[new_x][new_y]:
+			if obj.blocks:
+				blocking_object = obj
+				obj.getWalkedInto(self)
+
+		if blocking_object == None:
+			#test to see if there is just a straight up wall blocking.
+			if map[new_x][new_y].blocked:
+				# don't walk
+				# if this was the player, tell them they walked into a wall
+				if self is player:
+					message ("You walk into a wall.", Color_Personal_Action)
+			else:
+				# do the actual movement
+				self.x = new_x
+				self.y = new_y
+				objectsArray[new_x][new_y].append(self)
+				objectsArray[old_x][old_y].remove(self)
+				# in addition, recalculate fov and report objects here if the player has just moved
+				if self is player:
+					argset = (new_x, new_y)
+					FinalPreDrawEvents.append((report_objects_here, argset))
+					fov_recompute = True
+
+
+	# MovementPhase event
+	def attemptJump(self, dx, dy):
+		global fov_recompute
+
+		# check for obstacles.
+
+		blockedByWall = False
+		nearestObstacle = None
+		old_x = self.x
+		old_y = self.y
+		target_x = self.x + dx
+		target_y = self.y + dy
+		final_x = target_x
+		final_y = target_y
+		# for now this only works on straight line or diagonal jumps. If we start having knights move jumps or something, we'll have to rethink
+		if math.fabs(dx) == 0 or math.fabs(dy) == 0 or math.fabs(dx) == math.fabs(dy):
+			xSign = getSign(dx)
+			ySign = getSign(dy)
+			i = 1;
+			while i <= max(math.fabs(dx), math.fabs(dy)):
 			
+				# check the next space out
+				space_x = self.x + i*xSign
+				space_y = self.y + i*ySign
+				if map[space_x][space_y].blocked:
+					blockedByWall = True
+					final_x = self.x + (i-1)*xSign
+					final_y = self.y + (i-1)*ySign
+					break
+				else:
+					# check for blocking, objects
+					for obj in objectsArray[space_x][space_y]:
+						# blocking objects are only a problem if they'renot jumpable, or they're where we're trying to get to
+						if obj.blocks and (not obj.jumpable or i == max(math.fabs(dx), math.fabs(dy))):
+							nearestObstacle = obj
+							final_x = self.x + (i-1)*xSign
+							final_y = self.y + (i-1)*ySign
+							break
+				# Hey I forgot to increase i!
+				i += 1
+
+		if final_x != self.x or final_y != self.y:
+			# do the actual movement
+			self.x = final_x
+			self.y = final_y
+			objectsArray[final_x][final_y].append(self)
+			objectsArray[old_x][old_y].remove(self)
+			# in addition,  recalculate fov and report objects here if the player has just moved
+			if self is player:
+				argset = (final_x, final_y)
+				FinalPreDrawEvents.append((report_objects_here, argset))
+				fov_recompute = True
+
+		
+		# Now that we know where the player will end up and what they'll jump over, we can tell them about it
+		# first describe some of the things you jump over
+		if final_x != old_x or final_y != old_y:
+			xSign = getSign(dx)
+			ySign = getSign(dy)
+			i = 1
+			while i < max(math.fabs(final_x - old_x), math.fabs(final_y - old_y)):
+				# report on interesting things here, which you are jumping o'er 
+				
+				space_x = old_x + i*xSign
+				space_y = old_y + i*ySign
+				print ("leaping through " + str(space_x) + "," + str(space_y))
+				for obj in objectsArray[space_x][space_y]:
+					if obj.fighter:
+						message ("You leap over the " + obj.name + "\'s head!", Color_Personal_Action)
+					elif ob.name == 'fire':
+						message ("You leap through the flames!", Color_Personal_Action)
+				i+=1
 
 
-	def draw(self, render_mode = None):
+		# Now, if we didn't quite get where we wanted, report on what we jumped into
+		if final_x != target_x or final_y != target_y:
+			if nearestObstacle is not None:
+				message ("You collide with the " + nearestObstacle.name + "!", Color_Personal_Action)
+			else: 
+				message ("You leap gracefully into a wall.", Color_Personal_Action)
+
+		return
+
+	def attemptPickup(self, args):
+		(items_to_pickup) = args
+		for item in items_to_pickup:
+			if item.exists_in_map:
+
+
+				item.getPickedUp(self)
+
+
+	def draw(self, render_mode = None, bg_color = None):
 		global camera
 
 		#x_offset = camera.x-SCREEN_WIDTH/2
@@ -399,10 +536,7 @@ class Object:
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 
 			#set the color and then draw the character that represents this object at its position
-		#	libtcod.console_set_default_foreground(con, self.color)
-		#	libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod_BKGND_NONE)
-		#	libtcod.console_put_char(con, self.x - x_offset, self.y - y_offset, self.char, libtcod_BKGND_NONE)
-			con.draw_char(self.x - x_offset, self.y - y_offset, self.char, bg=None, fg = self.color)
+			con.draw_char(self.x - x_offset, self.y - y_offset, self.char, bg=bg_color, fg = self.color)
 
 	def clear(self):
 		global camera
@@ -419,8 +553,8 @@ class Object:
 	#		libtcod.console_put_char_ex(con, self.x, self.y, '.', libtcod.white, libtcod.dark_blue)
 
 
-	def move_towards(self, target_x, target_y):
-		print('Error! argument Object.move_towards called. Mark was pretty sure this method wasn\'t being used, and it would have  caused wierd bugs as currently written anyway, so he commented it out. Maybe let him know that that happened?')
+#	def move_towards(self, target_x, target_y):
+#		print('Error! argument Object.move_towards called. Mark was pretty sure this method wasn\'t being used, and it would have  caused wierd bugs as currently written anyway, so he commented it out. Maybe let him know that that happened?')
 	#	#vector from this object to the target, and distance
 	#	dx = target_x - self.x
 	#	dy = target_y - self.y
@@ -455,6 +589,8 @@ class Object:
 	def send_to_front(self):
 		#make this object be drawn last, so all others appear below it if they're in the same tile.
 		global objectsArray
+
+
 		objectsArray[self.x][self.y].remove(self)
 		objectsArray[self.x][self.y].append(self)
 
@@ -466,28 +602,272 @@ class Object:
 				self.decider.ai.stun()
 
 
-	def getPreliminaryEvents(self):
-		return []
 
-	def getMovementPhaseEvents(self):
-		return []
+	def createActionEventDetails(self):
+		global 	PreliminaryEvents, MovementPhaseEvents, AttackPhaseEvents, DamagePhaseEvents, MiscPhaseEvents, FinalPreDrawEvents, FinalPostDrawEvents
+		return
 
-	def getAttackPhaseEvents(self):
-		return []
+#	def getPreliminaryEvents(self):
+#		return []
+#
+#	def getMovementPhaseEvents(self):
+#		return []
+#
+#	def getAttackPhaseEvents(self):
+#		return []
+#
+#	def getDamgePhaseEvents(self):
+#		return []
+#
+#	def getMiscPhaseEvents(self):
+#		return []
+#
+#	def getFinalPreDrawEvents(self):
+#		return []
+#
+#	def getFinalPostDrawEvents(self):
+#		return []
 
-	def getDamgePhaseEvents(self):
-		return []
 
-	def getMiscPhaseEvents(self):
-		return []
+	def getHit(self,attack):
+		print (self.name + ' getting hit')
+		if self.fighter:
+			self.fighter.take_damage(attack.damage)
+			# highlight in the appropriate color
+			# Commenting THIS line out because it caused an enemy to get hit twice. Bad times!
+			#self.send_to_front()
+			#self.draw(bg_color = attack.color)
+		return
 
-	def getFinalPreDrawEvents(self):
-		return []
 
-	def getFinalPostDrawEvents(self):
-		return []
+	def getWalkedInto(self,walker):
+		return
+	
+
+	def getPickedUp(self,picker):
+		global player_weapon, objectsArray
+
+		# things can only be picked up if they are in the map
+		if self.exists_in_map :
+
+			if self.weapon == True:
+
+				# TODO:maybe make dropping old weapons happen?
+
+				# picker gets a new weapon! Yay! 
+				new_weapon = get_weapon_from_item(self, picker.fighter.bonus_max_charge)
+
+				if picker is player:
+					old_weapon = get_item_from_weapon(player_weapon)
+					# messaging!
+					if str(old_weapon.name) == "unarmed":
+						message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+					else:
+						message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action)
+					player_weapon = new_weapon
+
+				else:
+					old_weapon = get_item_from_weapon(picker.weapon)
+					# messaging!
+					if str(old_weapon.name) == "unarmed":
+						localMessage('The ' + picker.owner.name +  ' picks up the ' + new_weapon.name + '.', Color_Personal_Action, picker.owner.x, picker.owner.y, Color_Interesting_In_World) 
+					else:
+						localMessage('The ' + picker.owner.name + ' throws away their ' + old_weapon.name + ' and picks up the ' + new_weapon.name + '.', picker.owner.x, picker.owner.y, Color_Interesting_In_World)
+					picker.weapon = new_weapon
 
 
+
+			elif self.plant is not None:
+				self.plant.tread()
+				if picker is player:
+					message('You pick up the ' + self.name + ' and eat it.', Color_Personal_Action)
+					self.plant.harvest(player)
+					garbage_list.append(self)
+				elif picker.fighter:
+					localMessage('The ' + picker.name + ' picks up the ' + self.name + ' and eats it.', picker.x, picker.y, Color_Personal_Action)
+					self.plant.harvest(picker)
+					garbage_list.append(self)
+
+			# take this item off the map
+			self.exists_in_map = False
+			objectsArray[self.x][self.y].remove(self)
+
+
+
+		#	new_weapon = get_weapon_from_item(weapons_found[keynum-1], player.fighter.bonus_max_charge)
+		#	old_weapon = get_item_from_weapon(player_weapon)
+		#	player_weapon = new_weapon
+		#	objectsArray[weapons_found[keynum-1].x][weapons_found[keynum-1].y].remove(weapons_found[keynum-1])
+		#	# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
+		#	#drop_weapon(old_weapon)
+		#	weapon_found = True
+		#	if str(old_weapon.name) == "unarmed":
+		#		message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+		#	else:
+		#		message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action)
+
+
+		return
+
+
+	def remove_from_game(self):
+		global garbage_list
+		self.blocks = False
+		self.fighter = None
+		self.decider = None
+		self.clear()
+		self.send_to_back()
+		garbage_list.append(self)
+
+	
+	def modern_move(self, args):
+		(dx,dy) = args
+		self.attemptMove(dx,dy)
+
+
+	
+	def modern_jump(self, args):
+		(dx,dy) = args
+		if self.fighter:
+			# check to see if we are capable of jumping (should be, but good to double check)
+			if self.fighter.jump_available():
+				# This line just makes the fighter component pay the energy cost for jumping
+				self.fighter.make_jump()
+				# This line makes all the jumping actually happen!
+				self.attemptJump(dx,dy)
+			else:
+				message('Your legs are just too tired to jump.', Color_Not_Allowed)
+
+
+
+# currently this class does nothing! It's not hooked up to anything! Woo!
+class ModernAttack(Object):
+
+	def __init__(self, x, y, color, attacker = None, damage = 1, direction = None, lifespan = 1):
+
+		Object.__init__(self, x, y, '#', 'attack', color, blocks=False,  tags = {'attack'})
+
+
+		if attacker is not None:
+			mouseover = "A space where " + attacker.name + " just attacked."
+		else: 
+			mouseover = "A space where an attack just happened."
+
+		self.attacker = attacker 
+		self.damage = damage
+		self.direction = direction
+		self.lifespan = lifespan
+		self.deflected = False		# set to true when attacks 'clash of each other' 
+		self.checkForDeflection()
+
+		
+		argset = None
+		DamagePhaseEvents.append((self.dealDamage, argset))
+		FinalPostDrawEvents.append((self.fadeAway, argset))
+		# TODO add 'check for deflections' method and call it here
+		
+
+
+	def checkForDeflection(self):
+
+		#search for... hmmm hang on
+
+		# See if there is an attack on the space where my attacker is. If so, see if any of those  attacks have their attacker in the space I am attacking. If that happens, we have a clash!
+
+		if self.attacker:
+			attacker_x = self.attacker.x
+			attacker_y = self.attacker.y
+			
+			for object in objectsArray[attacker_x][attacker_y]:
+				if 'attack' in object.tags:
+					if object.attacker:
+						if object.attacker.x == self.x and object.attacker.y == self.y:	#then we have a clash!
+							self.deflected = True
+							object.deflected = True
+							message('Clash!111one The ' + object.attacker.name + ' and ' + self.attacker.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
+	
+
+	def dealDamage(self,argset):
+		global player_hit_something
+		
+		# only do the attack if it has not been deflected
+		if not self.deflected:
+	
+			print(self.attacker.name + " attack hitting shennanigans")
+			for object in objectsArray[self.x][self.y]:
+				if 'attack' not in object.tags:		#Attacks can't hit each other! I bet I forget this and try to do something with attacks hitting each other at some point in the future.
+					print(self.attacker.name + " attack hitting " + object.name)
+			
+
+
+					# print messages about hits happening
+					if object is player:
+						message('The ' + self.attacker.name.capitalize() + ' hits!', Color_Dangerous_Combat)	
+					elif self.attacker is player:
+						message('You hit the ' + object.name.capitalize() + '!', Color_Boring_Combat)
+						player_hit_something = True	
+					else:
+						message('The ' + self.attacker.name.capitalize() + ' hits the ' + object.name.capitalize() + '!', Color_Boring_Combat)
+					object.getHit(self)
+
+			# Send this attack to the back so other things can be visible!?
+			self.send_to_back()
+
+		# otherwise, reorder objects anyway because otherwise the things going to be drawed under the attack and we don't want that
+		else:
+			reorder_objects(self.x,self.y)
+
+
+
+	def fadeAway(self, argset):	# FinalPostDrawEvents phase
+		self.lifespan -= 1
+		if self.lifespan <= 0: 
+			self.remove_from_game()
+		else:	# keep attacking, at reduced lifespan
+			argset = None
+			print("NON-FADY ATTACK ALERT")
+			DamagePhaseEvents.append((self.dealDamage, argset))
+			FinalPostDrawEvents.append((self.fadeAway, argset))
+			# delete the attack woo!
+
+		#Hey here's another thing. What's the right way to check whether something is an (object of the type we are interested in?)
+		# I kind of want to do a 'flags' system? Or keywrods? I like having a list of keywords rather than individual flags because it means I don't keep having to go back to the Object class and add a new field every time I want a new type of object.  But is it actually better from a design / runtime persepctive?
+		# I suspect a dict that keywords thingsto  true or false might be better than a list that the program has to search through in order to see if a given keyword is in the list.
+		# just a question of, how does dict handle 'default values'?
+
+		# ok based on a thing online it looks like Set is actually the thing I want. Cos, you know, I don't care about order and I don't care about mapping keys to values.
+
+
+		# OK I should actually give this some thought
+	
+
+		#attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker)
+
+		
+
+		# Ok maybe there is another phase we have to add?
+
+		# Process attack decisions?
+		# Attacks appear in the world! Here they are
+		# Attacks have the opportunity to deflect each other
+		# Attacks... do damage to the thing they are on??
+		# Things.... take damage???,
+		# In next rund's preliminary phase, attakcs disappear???
+		
+		# Ok so really are 'do damage' and 'take damage' separate stages, is really the question i have
+		# Herrrmmm....  So I can imagine that in some theoretical future time down the road,
+		# we might want to have entities be able to 'resist' certain types of attacks.
+		# And that's the sort of thing that should be handled by a method within the entity itself.
+		# So certainly you do want a method called 'take damage' that is probably separate from a method 'do damage' belonign to attacks.
+		# *but* that doesn't mean they have to happen at separate times really! This can all happen in the damage phase. The attack does it damagey method which causes the victime to call its take damagey method, and the attack goes away and thinks "i did the damage, good job me', and the victim thinks 'i resisted the damage because of my wand of water resistance or whatever, go me". And it seems like the taking damage method doesn't really need to wait and see what happens elsewhere in the damage stage? unless you get a thing that says like you resist damage if you killed an enemy this turn or something, or whatever. Which seems (a) complicated and (b) not a great design, and maybe i come up with some better very complicated idea down the road but for the time being it's not worth coding for that eventuality. like I think the 'attacks clashing off each other' thing is probably as complex as we're going to get on that front.
+		
+		# So:
+		# Attack phase: Add attacks to world based on processing attack data. As attacks appear they have the possibility of 'deflecting' other attacks that have already appeared (if the two attacks are hitting each others owners)
+		# Damage phase: attacks that are not'deflected' do damage to the things they are on. Deflected attacks disappear?
+		# Misc phase: things bleed?
+		
+		# preliminary phase of next round: attacks disapear (except maybe for attacks that hang around, if we ever decide to do that)
+		# ok cool!
 
 
 
@@ -515,7 +895,7 @@ class Fire(Object):
 
 
 		AttackPhaseEvents.append((self.burnThings, argset))
-		MiscPhaseEvents.append((self.spread, argset))
+		#FinalPreDrawEvents.append((self.spread, argset))		# TEMP CANCELLED OUT FIRE SPREADING
 		
 		#return [(self.spread, argset), (self.burnThings, argset)]
 		
@@ -533,8 +913,8 @@ class Fire(Object):
 				
 				if object.fighter:
 					object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
-				elif object.door: 
-					object.door.take_damage(1)
+				#elif object.door: 
+				#	object.door.take_damage(1)
 				elif object.name == 'firepit':
 					object.take_damage(1)				
 
@@ -560,7 +940,7 @@ class Fire(Object):
 							fire_already_here = True
 					if not fire_already_here:
 						# create new fire!
-						print("spreading with args (" + str(arg_x) + ", " + str(arg_y) + ") at (" + str(self.x) + "," +  str(self.y) + ") to (" + str(new_fire_x) + "," + str(new_fire_y) + ")")
+						#print("spreading with args (" + str(arg_x) + ", " + str(arg_y) + ") at (" + str(self.x) + "," +  str(self.y) + ") to (" + str(new_fire_x) + "," + str(new_fire_y) + ")")
 						new_fire = Fire(new_fire_x,new_fire_y)
 						objectsArray[new_fire_x][new_fire_y].append(new_fire)
 						worldEntitiesList.append(new_fire)
@@ -605,13 +985,80 @@ class Firepit(Object):
 						objectsArray[x][y].append(new_fire)
 						worldEntitiesList.append(new_fire)
 
-						for other_object in objectsArray[x][y]:
-							if other_object.door:
-								other_object.aflame = True
-								worldEntitiesList.append(other_object)	#ugh what is this code
+					#	for other_object in objectsArray[x][y]:
+					#		if other_object.door:
+					#			other_object.aflame = True
+					#			worldEntitiesList.append(other_object)	#ugh what is this code
 						
 		garbage_list.append(self)
 
+
+
+	
+class Door(Object):
+	def __init__(self, x, y, easy_open = False):
+
+		Object.__init__(self, x, y, 301, 'door', default_door_color, blocks=True, always_visible=True, jumpable = False, mouseover = "Walk into this door or attack it to open. (Sometimes you need to give it a bit of welly.)")
+		map[self.x][self.y].block_sight = True
+		# decide stickiness - when it hits 0, door will automatically open when walked into
+		if easy_open or randint( 0, 1) == 0:
+			self.stickiness = 0		# a lot of the time doors just open!
+		else:
+			self.stickiness = randint( 0, 1)  + randint( 0, 1)  + randint( 0, 1)  + randint( 0, 1) 
+
+
+	def getHit(self,attack):
+		global fov_recompute
+
+
+		message('The door crashes down!', Color_Interesting_In_World)
+
+		self.visible = False
+		self.blocks = False
+		self.jumpable = True
+		self.send_to_back()
+		garbage_list.append(self)
+		
+		#update the map to say that this square isn't blocked, and update the nav data
+		map[self.x][self.y].blocked = False
+		map[self.x][self.y].block_sight = False
+		
+		nav_data_changed = True
+		initialize_fov()		# this is ok, right? update the field of view stuff
+		fov_recompute = True
+
+
+
+	def getWalkedInto(self,walker):	#normal doors can't be closed after opening, Just one of those things
+		
+
+		if self.stickiness > 0:
+			localMessage('The door rattles.', self.x, self.y, Color_Boring_In_World)
+		else:
+			localMessage('The door opens', self.x, self.y, Color_Boring_In_World)
+			# open the door! For now this is the same as destroying it
+
+			self.visible = False
+			self.blocks = False
+			self.jumpable = True
+			self.send_to_back()
+			garbage_list.append(self)
+			
+			#update the map to say that this square isn't blocked, and update the nav data
+			map[self.x][self.y].blocked = False
+			map[self.x][self.y].block_sight = False
+			
+			nav_data_changed = True
+			initialize_fov()		# this is ok, right? update the field of view stuff
+			fov_recompute = True
+
+# LIke a door, but for elevators! I need to overwrite a bunch of methods and probably add some as well here. 
+class ElevatorDoor(Door):
+	def __init__(self, x,y,owner):
+		Door.__init__(self, x,y)
+		self.char = '+'
+		self.owner = owner
+		map[self.x][self.y].block_sight = False		# gonna experiment with making these things let you see to the other side.
 
 ####################################
 #
@@ -694,71 +1141,73 @@ class Floor_Message:
 	def __init__(self, string):
 		self.string = string
 
-
-class Door:
-	# update: increasing door lossness, because these things stick slightly too often
-	def __init__(self, horizontal, default_looseness = 4, easy_open = False):
-		self.horizontal = horizontal
-		self.default_looseness = default_looseness
-		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
-		self.recently_rattled = False
-		self.easy_open = easy_open
-
-	def take_damage(self, damage):
-		#destroy the door!
-		#if damage > 0:
-		#	self.hp -= damage
-		#	#check for death. if there's a death function, call it
-		#	if self.hp <= 0:
-		#		function = self.death_function
-		#		if function is not None:
-		#			function(self.owner)
-
-		message('The door crashes down!', Color_Interesting_In_World)
-
-		door = self.owner
-		door.blocks = False
-		door.door = None
-		door.send_to_back()
-		garbage_list.append(door)
-		
-		#update the map to say that this square isn't blocked, and update the nav data
-		map[door.x][door.y].blocked = False
-		map[door.x][door.y].block_sight = False
-		
-		nav_data_changed = True
-		initialize_fov()		# this is ok, right? update the field of view stuff
-
-	def open(self):		#normal doors can't be closed after opening, Just one of those things
-		
-		if randint( 0, self.looseness-1) < 2 and not self.easy_open:		#opening unsuccesful
-			message('The door rattles.', Color_Boring_In_World)
-			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
-			self.looseness = self.looseness + 1		#increase chance of opening in future though
-			self.recently_rattled = True
-
-		else: 
-			message('The door opens', Color_Boring_In_World)
-
-			door = self.owner
-			door.blocks = False
-			door.door = None
-			door.send_to_back()
-			garbage_list.append(door)
-			
-			#update the map to say that this square isn't blocked, and update the nav data
-			map[door.x][door.y].blocked = False
-			map[door.x][door.y].block_sight = False
-			
-			nav_data_changed = True
-			initialize_fov()		# this is ok, right? update the field of view stuff
-
-	def update(self):
-		#decrease looseness back to default, unless someone recently tried to open me
-		if self.recently_rattled == False:
-			if self.looseness > self.default_looseness:
-				self.looseness = self.looseness - 1
-		self.recently_rattled = False
+# Commenting out because we no longer want doors to be a component of objects, we want them to be an object themselves.
+# Make way for the future, baby!
+#class Door:
+#	# update: increasing door lossness, because these things stick slightly too often
+#	def __init__(self, horizontal, default_looseness = 4, easy_open = False):
+#		self.horizontal = horizontal
+#		self.default_looseness = default_looseness
+#		self.looseness = default_looseness	# attempting to open a door has probability 2/loosness of being unsuccesful. loosness goes up with more attempts.
+#		self.recently_rattled = False
+#		self.easy_open = easy_open
+#
+#	def take_damage(self, damage):
+#		#destroy the door!
+#		#if damage > 0:
+#		#	self.hp -= damage
+#		#	#check for death. if there's a death function, call it
+#		#	if self.hp <= 0:
+#		#		function = self.death_function
+#		#		if function is not None:
+#		#			function(self.owner)
+#
+#		message('The door crashes down!', Color_Interesting_In_World)
+#
+#		door = self.owner
+#		door.blocks = False
+#		door.door = None
+#		door.send_to_back()
+#		garbage_list.append(door)
+#		
+#		#update the map to say that this square isn't blocked, and update the nav data
+#		map[door.x][door.y].blocked = False
+#		map[door.x][door.y].block_sight = False
+#		
+#		nav_data_changed = True
+#		initialize_fov()		# this is ok, right? update the field of view stuff
+#
+#	def open(self):		#normal doors can't be closed after opening, Just one of those things
+#		
+#		if randint( 0, self.looseness-1) < 2 and not self.easy_open:		#opening unsuccesful
+#			localMessage('The door rattles.', self.x, self.y, Color_Boring_In_World)
+#			#message('The door rattles. Looseness = ' + str(self.looseness), libtcod.white)
+#			self.looseness = self.looseness + 1		#increase chance of opening in future though
+#			self.recently_rattled = True
+#
+#		else: 
+#			localMessage('The door opens', self.x, self.y, Color_Boring_In_World)
+#
+#			door = self.owner
+#			door.blocks = False
+#			door.door = None
+#			door.send_to_back()
+#			garbage_list.append(door)
+#			
+#			#update the map to say that this square isn't blocked, and update the nav data
+#			map[door.x][door.y].blocked = False
+#			map[door.x][door.y].block_sight = False
+#			
+#			nav_data_changed = True
+#			initialize_fov()		# this is ok, right? update the field of view stuff
+#
+##	def update(self):
+##		#decrease looseness back to default, unless someone recently tried to open me
+##		# UPDATE:cutting this. Why would you be so strict about door looseness?
+##		if self.recently_rattled == False:
+##			if self.looseness > self.default_looseness:
+##				self.looseness = self.looseness - 1
+##		self.recently_rattled = False
 
 
 
@@ -805,7 +1254,7 @@ class Flower:
 			monster.fighter.heal(1)
 			monster.fighter.cure_wounds(1)
 			self.state = 'trampled'
-			message(monster.name + ' healed by ' + self.name, Color_Interesting_In_World)
+			localMessage(monster.name + ' healed by ' + self.name, monster.x, monster.y, Color_Interesting_In_World)
 			self.symbol = 'x'
 			
 
@@ -1018,7 +1467,6 @@ class Energy_Fighter:
 			error_message = 'energy too low'
 		elif self.in_water:
 			error_message = 'in water'
-			print('PSLASH')
 
 
 		# do some testing for upgrades to seeif they affect whether you can attack!
@@ -1135,6 +1583,57 @@ class Decider:
 		self.decision_made = False
 		self.decision = None
 
+
+	def processDecisions(self):
+		global MovementPhaseEvents, AttackPhaseEvents
+		#do some stuff
+
+		if self.decision is not None:
+			if self.decision.move_decision: 
+				argset = (self.decision.move_decision.dx, self.decision.move_decision.dy)
+				MovementPhaseEvents.append((self.owner.modern_move, argset))
+				
+			if self.decision.jump_decision:
+				argset = (self.decision.jump_decision.dx, self.decision.jump_decision.dy)
+				MovementPhaseEvents.append((self.owner.modern_jump, argset))
+			if self.decision.attack_decision:
+				argset = (self.decision.attack_decision.attack_list)
+				AttackPhaseEvents.append((self.makeAttacks, argset))
+			if self.decision.pickup_decision:
+				argset = (self.decision.pickup_decision.items_to_pickup)
+				MovementPhaseEvents.append((self.owner.attemptPickup, argset))
+			if self.decision.buy_decision:
+				argset = (self.decision.buy_decision.seller)
+				PreliminaryPhaseEvents.append((self.attemptBuy, argset))
+
+
+#class Attack_Decision:
+#	def __init__(self, attack_list):
+#		self.attack_list = attack_list
+
+
+
+	def makeAttacks(self, args):	# Attack Phase
+		global objectsArray, worldAttackList
+		(attack_list) = args
+		# todo make this do all the attackey making stuff
+		# Aha, this thing has not been done.
+		for attack_object in attack_list:
+			try:
+				attack_data = attack_object.attack
+				attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
+				objectsArray[attack.x][attack.y].append(attack)	
+				worldAttackList.append(attack)
+				attack.send_to_front()
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print('')	
+
+		
+		if self.owner == player:
+			player_just_attacked = True
+
+		return
+
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
 	def __init__(self, alarm_time = 4, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, assoc_fighter = None):
@@ -1200,7 +1699,7 @@ class Alarmer:
 
 
 class Decision:
-	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None, pickup_decision = False):
+	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None, pickup_decision = None, buy_decision = None):
 		self.move_decision=move_decision
 		if move_decision is not None:
 			self.move_decision.owner = self
@@ -1210,9 +1709,12 @@ class Decision:
 		self.jump_decision=jump_decision
 		if jump_decision is not None:
 			self.jump_decision.owner = self
-		self.pickup_decision=pickup_decision		# pickup_decision is just a boolean I think?
-		#if  pickup_decision is not None:
-		#	self.pickup_decision.owner = self
+		self.pickup_decision=pickup_decision		# pickup_decision is just a boolean I think? Update: Nuh-uh
+		if  pickup_decision is not None:
+			self.pickup_decision.owner = self
+		self.buy_decision=buy_decision
+		if buy_decision is not None:
+			self.buy_decision.owner = self
 
 class Move_Decision:
 	def __init__(self,dx,dy):
@@ -1224,6 +1726,17 @@ class Jump_Decision:
 	def __init__(self,dx,dy):
 		self.dx = dx
 		self.dy = dy
+
+
+class Pickup_Decision:
+	def __init__(self,items_to_pickup):
+		self.items_to_pickup = items_to_pickup
+
+
+# for now, Buy_Decision only really handles cases where the seller has just one item for one price.
+class Buy_Decision:
+	def __init__(self, seller):
+		self.seller= seller
 
 
 
@@ -1361,6 +1874,7 @@ class BasicMonster:
 
 	# Part of Step 3: Do the things that you do when going towards a target room rather than a specific grid reference
 	def moveTowardsRoom(self, monster, decider):
+
 		# Choose an option that gets you closest to where you want to go
 		((dx,dy), return_message) =  next_step_based_on_target(monster.x, monster.y, target_center = self.target_room, aiming_for_center = True, prioritise_visible = False, prioritise_straight_lines = True, rook_moves = False, request_message = True, avoid_water = self.scared_of_water)
 
@@ -1418,12 +1932,14 @@ class BasicMonster:
 	# For now, this just consists of picking up the fruit at your feet if there is one, but this may change later
 	def pursueFood(self, monster, decider):
 		plant_here = False
+		chosen_plant = None
 		for obj in objectsArray[monster.x][monster.y]:
 			if obj.plant is not None:
 				plant_here = True
+				chosen_plant = obj
 				break
 		if plant_here:
-			decider.decision = Decision(pickup_decision=True)
+			decider.decision = Decision(pickup_decision=Pickup_Decision([obj]))
 			
 
 
@@ -3179,9 +3695,9 @@ class BasicAttack:
 #							message('The security drone sounds a loud alarm!')
 #							# Let's also run the spawn clock forwards so a fresh wave of enemies arrives
 #							spawn_timer = 1	#This is not always working as I'd like???
-				elif target.door is not None and target.name != 'elevator door':
-					translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
-					target.door.take_damage(self.damage)
+				#elif target.door is not None and target.name != 'elevator door':
+				#	translated_console_set_char_background(con, target.x, target.y, self.faded_color, libtcod_BKGND_SET)
+				#	target.door.take_damage(self.damage)
 
 				elif target.name == 'firepit':
 					#target.take_damage(self.damage)
@@ -3345,6 +3861,15 @@ def next_step_towards(current_x, current_y, target_x, target_y, rook_moves = Fal
 
 
 def next_step_based_on_target(current_x, current_y, target_x = None, target_y = None, target_center = None, aiming_for_center = False, prioritise_visible = False, prioritise_straight_lines = False, rook_moves = False, return_message = None, request_message = False, request_shortlist = False, avoid_water = False):
+
+
+	# First off, if we are meant to be aiming for a target center but target center is None for whatever reason, just stand still
+	if aiming_for_center and target_center == None:
+		if request_message == True:
+			return ((0,0), "No target center specified")
+		else:
+			return (0,0)
+
 	# Make a list of possible moves (in future this might be set as a parameter)
 	possible_moves = [(+1,0), (0,-1), (0,+1), (-1,0)]
 	if rook_moves == False:
@@ -3478,6 +4003,16 @@ def choose_adjacent_room(current_center = 0, previous_center = None, avoid_previ
 			return new_target
 	except IndexError:
 		return current_center
+
+
+def getSign(num):
+	if num == 0:
+		return 0
+	elif num > 0:
+		return 1
+	else:
+		return -1
+
 
 def get_mouseover_text():
 	global mouse_coord_x, mouse_coord_y
@@ -3686,17 +4221,25 @@ def handle_keys(user_input_event):
 
 
 		if keynum >= 1 and keynum <= len(weapons_found):
-			new_weapon = get_weapon_from_item(weapons_found[keynum-1], player.fighter.bonus_max_charge)
-			old_weapon = get_item_from_weapon(player_weapon)
-			player_weapon = new_weapon
-			objectsArray[weapons_found[keynum-1].x][weapons_found[keynum-1].y].remove(weapons_found[keynum-1])
-			# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
-			#drop_weapon(old_weapon)
-			weapon_found = True
-			if str(old_weapon.name) == "unarmed":
-				message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
-			else:
-				message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+
+
+			# TODO put the below in a new movement phase method that gets called by processing a pickup decision
+
+			items_to_pickup = [weapons_found[keynum-1]]
+			player.decider.set_decision(Decision(pickup_decision=Pickup_Decision(items_to_pickup)))
+
+			
+		#	new_weapon = get_weapon_from_item(weapons_found[keynum-1], player.fighter.bonus_max_charge)
+		#	old_weapon = get_item_from_weapon(player_weapon)
+		#	player_weapon = new_weapon
+		#	objectsArray[weapons_found[keynum-1].x][weapons_found[keynum-1].y].remove(weapons_found[keynum-1])
+		#	# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
+		#	#drop_weapon(old_weapon)
+		#	weapon_found = True
+		#	if str(old_weapon.name) == "unarmed":
+		#		message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+		#	else:
+		#		message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 		elif veekay != None:
 			game_state = 'playing'
 			message('Never mind.', Color_Not_Allowed)
@@ -3713,11 +4256,17 @@ def handle_keys(user_input_event):
 		if key_char == 'y':	# player has decided to buy an upgrade...
 			upgrade_cost = current_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then let them get the upgrade
+
+				
+				player.decider.set_decision(Decision(buy_decision=Buy_Decision(current_shrine)))
+
 				something_changed = True
-				currency_count = currency_count - upgrade_cost
-				upgrade_array.append(current_shrine.upgrade)
-				message('You recieve the gift of '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
-				current_shrine.upgrade = None
+				
+				# TODO: put following in a preliminary phase method?
+				#currency_count = currency_count - upgrade_cost
+				#upgrade_array.append(current_shrine.upgrade)
+				#message('You recieve the gift of '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
+				#current_shrine.upgrade = None
 			else:
 				something_changed = True
 				message('You do not have enough favour!', Color_Not_Allowed)
@@ -3781,14 +4330,27 @@ def handle_keys(user_input_event):
 			return 'invalid-move'
 		else: 
 			return 'jump_dialog'
-		# check if there's a wall in the way before letting player jump
+			# check if there's a wall in the way before letting player jump
+		# check if the first space in this jump is blocked by something unjumpable
 		(dx,dy) = temp_jump_decision
-		if map[player.x + dx][player.y + dy].blocked:
+		xSign = getSign(dx)
+		ySign = getSign(dy)
+		
+		# check the next space out
+		space_x = player.x + xSign
+		space_y = player.y + ySign
+		if map[space_x][space_y].blocked:
 			message("There's a wall in the way!", Color_Not_Allowed)
 			return 'invalid-move'
 		else:
-			player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
-			#upgrade_array.append(Get_Random_Upgrade())
+			# check for blocking, objects
+			for obj in objectsArray[space_x][space_y]:
+				# blocking objects are only a problem if they'renot jumpable, or they're where we're trying to get to
+				if obj.blocks and not obj.jumpable :				
+					message("There's a " + obj.name + " in the way!", Color_Not_Allowed)
+					return 'invalid-move'
+		player.decider.set_decision(Decision(jump_decision=Jump_Decision(dx,dy)))
+		#upgrade_array.append(Get_Random_Upgrade())
 
 
 
@@ -3841,6 +4403,7 @@ def handle_keys(user_input_event):
 			#if key_char == 'p':
 			if actionCommand == "PICKUP":
 
+				items_to_pickup = []
 				
 				# by default, only pickup things directly underneath the player.
 				# but power ups can increase the pickup radius 
@@ -3873,43 +4436,62 @@ def handle_keys(user_input_event):
 
 				#keys take priority over weapons. I'm just calling it. Would rather not make the submenu happen.
 				if len(keys_found) > 0 and len(favours_found) == 0:
-					message('You snatch up the key.', Color_Personal_Action)
-					key_count = key_count + len(keys_found)
-					for ki in keys_found:
-						objectsArray[ki.x][ki.y].remove(ki)	
+
+					items_to_pickup = keys_found
+					# TODO: put in a movement phase methods
+					#message('You snatch up the key.', Color_Personal_Action)
+					#key_count = key_count + len(keys_found)
+					#for ki in keys_found:
+					#	objectsArray[ki.x][ki.y].remove(ki)	
 				#similarly, favours take priority over weapons but after keys.
 				elif len(keys_found) == 0 and len(favours_found) > 0:
-					message('You take the favour token.', Color_Personal_Action)
-					currency_count = currency_count + len(favours_found)
-					for fa in favours_found:
-						objectsArray[fa.x][fa.y].remove(fa)	
+
+
+
+					items_to_pickup = favours_found
+					## TODO: put in a movement phase methods
+					#message('You take the favour token.', Color_Personal_Action)
+					#currency_count = currency_count + len(favours_found)
+					#for fa in favours_found:
+					#	objectsArray[fa.x][fa.y].remove(fa)	
 				elif len(keys_found) > 0 and len(favours_found) > 0:
-					message('You pick up the key and favour token.', Color_Personal_Action)
-					key_count = key_count + len(keys_found)
-					for ki in keys_found:
-						objectsArray[ki.x][ki.y].remove(ki)
-					currency_count = currency_count + len(favours_found)
-					for fa in favours_found:
-						objectsArray[fa.x][fa.y].remove(fa)
+
+					items_to_pickup = keys_found + favours_found
+					# TODO: put in a movement phase methods
+					#message('You pick up the key and favour token.', Color_Personal_Action)
+					#key_count = key_count + len(keys_found)
+					#for ki in keys_found:
+					#	objectsArray[ki.x][ki.y].remove(ki)
+					#currency_count = currency_count + len(favours_found)
+					#for fa in favours_found:
+					#	objectsArray[fa.x][fa.y].remove(fa)
 				elif len(plants_found) > 0:
-					for pl in plants_found:
-						message('You pick up the ' + pl.name + ' and eat it.', Color_Personal_Action)
-						pl.plant.harvest(player)
-						garbage_list.append(pl)
+
+					items_to_pickup = plants_found
+					
+					# TODO: put in a movement phase methods
+					#for pl in plants_found:
+					#	message('You pick up the ' + pl.name + ' and eat it.', Color_Personal_Action)
+					#	pl.plant.harvest(player)
+					#	garbage_list.append(pl)
 				# TODO: make it so you pick up  fruits / plants / seeds / whatever in order to heal, rather than automatically.
 			#STILL TODO KEEP A KEY COUNT AND MAKE IT AFFECT ELEVATOR OPENING
 				elif len(weapons_found) == 1:
-					new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
-					old_weapon = get_item_from_weapon(player_weapon)
-					player_weapon = new_weapon
-					objectsArray[weapons_found[0].x][weapons_found[0].y].remove(weapons_found[0])
-					# let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.
-					#drop_weapon(old_weapon)
-					weapon_found = True
-					if str(old_weapon.name) == "unarmed":
-						message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
-					else:
-						message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+
+					items_to_pickup = weapons_found
+					# TODO: put in a movement phase methods
+					#new_weapon = get_weapon_from_item(weapons_found[0], player.fighter.bonus_max_charge)
+					#old_weapon = get_item_from_weapon(player_weapon)
+					#player_weapon = new_weapon
+					#objectsArray[weapons_found[0].x][weapons_found[0].y].remove(weapons_found[0])
+					#
+					## let's try that you don't drop your weapon, you throw it away entirely so you can't pick it up later.#
+					##drop_weapon(old_weapon)
+					#weapon_found = True
+					#if str(old_weapon.name) == "unarmed":
+					#	message('You pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
+					#else:
+					#	message('You throw away your ' + old_weapon.name + ' and pick up the ' + new_weapon.name + '.', Color_Personal_Action) 
 				elif  len(weapons_found) > 1:
 					message_string = ('Pick up what? (')
 					count = 1
@@ -3921,11 +4503,16 @@ def handle_keys(user_input_event):
 					message(message_string, Color_Menu_Choice)
 					return 'pickup_dialog'
 					#handle_keys()	# why do I get the feeling I am going to regret this
-				elif len(plants_found) >= 1:
-					for plant_object in plants_found:
-						if plant_object.plant.state == 'seed':
-								plant_object.plant.activate()
-								message('A sapling emerges as you poke the seed.', Color_Interesting_In_World)
+				#elif len(plants_found) >= 1:
+				#	for plant_object in plants_found:
+				#		if plant_object.plant.state == 'seed':
+				#				plant_object.plant.activate()
+				#				message('A sapling emerges as you poke the seed.', Color_Interesting_In_World)
+
+				if len(items_to_pickup) > 0:
+					# Set player pickup decision based on chosen set of items
+					player.decider.set_decision(Decision(pickup_decision=Pickup_Decision(items_to_pickup)))
+
 				else:
 				#if weapon_found == False:
 					message('Nothing to pick up', Color_Not_Allowed)
@@ -4565,27 +5152,41 @@ def make_map():
 				monster.drops_key = True
 			objectsArray[od.x][od.y].append(monster)
 			worldEntitiesList.append(monster)
+
+
 			#number_alarmers += 1			#Now doing this elsewhere..
-		elif  od.name == 'door'or od.name == 'easydoor':
-			if od.info == 'horizontal':
-				door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
-				map[od.x][od.y].block_sight = True
-				objectsArray[od.x][od.y].append(door)
-				worldEntitiesList.append(door)
-			elif od.info == 'vertical':
-				door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
-				map[od.x][od.y].block_sight = True
-				objectsArray[od.x][od.y].append(door)
-				worldEntitiesList.append(door)
-			door.mouseover = "Walk into this door or attack it to open. (Doors have a chance of sticking.)"
-			if od.name == 'easydoor':		# a door that doesn't stick!!
-				door.door.easy_open = True
-			# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
+		#elif  od.name == 'door'or od.name == 'easydoor':
+		#	if od.info == 'horizontal':
+		#		door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = True), always_visible=True) 
+		#		map[od.x][od.y].block_sight = True
+		#		objectsArray[od.x][od.y].append(door)
+		#		worldEntitiesList.append(door)
+		#	elif od.info == 'vertical':
+		#		door = Object(od.x, od.y, 301, 'door', default_door_color, blocks=True, door = Door(horizontal = False), always_visible=True) 	
+		#		map[od.x][od.y].block_sight = True
+		#		objectsArray[od.x][od.y].append(door)
+		#		worldEntitiesList.append(door)
+		#	door.mouseover = "Walk into this door or attack it to open. (Doors have a chance of sticking.)"
+		#	if od.name == 'easydoor':		# a door that doesn't stick!!
+		#		door.door.easy_open = True
+		#	# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
+
+
+		elif od.name == 'door':
+			new_door = Door(od.x,od.y)
+			objectsArray[od.x][od.y].append(new_door)
+			worldEntitiesList.append(new_door)
+		elif od.name == 'easydoor':
+			new_door = Door(od.x,od.y, easy_open= True)
+			objectsArray[od.x][od.y].append(new_door)
+			worldEntitiesList.append(new_door)
+
 		elif od.name == 'key':
 			new_key = Object(od.x, od.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
 			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
+			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'fire':
 			#new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
 			new_fire = Fire(od.x,od.y)
@@ -4626,7 +5227,8 @@ def make_map():
 	for ele in elevators:
 		ele.special_door_list = []
 		for ele_door in ele.doors:
-			door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True, mouseover = "Opens for you if you have enough keys. But mainly opens for your enemies.") 
+			#door = Object(ele_door.x, ele_door.y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Door(horizontal = ele_door.door.horizontal), always_visible=True, mouseover = "Opens for you if you have enough keys. But mainly opens for your enemies.") 
+			door = ElevatorDoor(ele_door.x, ele_door.y, owner = ele)
 			map[ele_door.x][ele_door.y].block_sight = True			
 			objectsArray[ele_door.x][ele_door.y].append(door)
 			worldEntitiesList.append(door)
@@ -4884,7 +5486,8 @@ def is_blocked(x, y, care_about_doors = False, generally_ignore_doors = True, ca
 	#now check for any blocking objects
 	for object in objectsArray[x][y]:
 		if object.blocks:
-			if object.door is not None:
+			#if object.door is not None:
+			if object.name == 'door':
 				if care_about_doors == True:
 					return 'closed-door'
 				if generally_ignore_doors == False:
@@ -5543,8 +6146,12 @@ def restart_game(): 	#TODO OKAY SO THERE IS A WIERD BUG WHERE WHEN YOU RESTART T
 #	libtcod.console_set_default_foreground(panel, default_text_color)
 #	translated_console_print_ex(panel, x + total_width / 2, y, libtcod_BKGND_NONE, libtcod_CENTER,
 #	name + ': ' + str(value) + '/' + str(maximum))
-		
 
+
+# display a message! but only if the player can see it
+def localMessage(new_msg, x,y, color = default_text_color):		
+	if fov_map.fov[x, y]:
+		message(new_msg, color)
 
 def message(new_msg, color = default_text_color):
 	global game_time
@@ -5803,6 +6410,85 @@ def restartynscreen():
 	# libtcod.console_blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
 	root_console.blit(pause_menu, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 
+
+
+
+
+def report_objects_here(args):  #FINALPREDRAW i think
+
+		
+		(x,y) = args
+		# do some messages saying what you see here!
+		#names = [obj.name for obj in objects
+		#	if obj.x == player.x and obj.y == player.y and obj is not player]
+		objects_here = [obj for obj in objectsArray[x][y]
+			if obj is not player]
+		names = [obj.name for obj in objects_here if obj.floor_message is None and obj.name is not 'water' and obj.name is not 'decoration'  and obj.name is not 'blood' and obj.name is not 'attack']  #todo: get a better way of not including certain objects in this list
+		possible_commands = []
+
+		weapon_found = False
+		key_found = False
+		favour_found = False
+		plant_found = False
+		stairs_found = False
+		shrine_found = False
+		floor_message_found = False
+	
+		floor_message_text = ''
+		for obj in objects_here:
+			if weapon_found == False and obj.weapon == True:
+				weapon_found = True
+			if key_found == False and obj.name == 'key':
+				key_found = True
+			if favour_found == False and obj.name == 'favour token':
+				favour_found = True
+			if plant_found == False and obj.plant is not None:
+				plant_found = True
+			if stairs_found == False and obj.name == 'stairs':
+				stairs_found = True
+				possible_commands.append('< to ascend')
+			if shrine_found == False and obj.shrine is not None:
+				shrine_found = True
+			if floor_message_found == False and obj.floor_message is not None:
+				floor_message_text = obj.floor_message.string
+				floor_message_found = True
+
+
+		if weapon_found or key_found or favour_found or plant_found:	
+			possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
+		if shrine_found:
+			possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
+			
+		if floor_message_found == True and player.decider.decision is not None and (player.decider.decision.move_decision is not None or player.decider.decision.jump_decision is not None): # trying to make it so messages don't repeat themselves
+			message('You see a message on the floor:', Color_Interesting_In_World)
+			message('\"' + floor_message_text + '\"', Color_Message_In_World)
+
+		if len(names) > 0:
+			names = ', '.join(names)
+			possible_commands = ', '.join(possible_commands)
+			temp_message = 'You see a ' + names + ' here (' + possible_commands + ').'
+			message(temp_message, Color_Boring_In_World)
+
+
+
+
+def do_weapon_degradation():
+	global player_hit_something, player_clashed_something
+	#weapon degradation time!
+	if( player_hit_something == True or player_clashed_something == True) and player_weapon.durability > 0:
+		degredation = 0
+		if player_clashed_something:
+			degredation = 2
+		else:
+			degredation = 1
+		if player_weapon.durability - degredation  <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > WEAPON_FAILURE_WARNING_PERIOD:
+			message("Your "  + player_weapon.name + " is close to breaking!", Color_Interesting_Combat)
+		player_weapon.durability -= degredation
+		if player_weapon.durability <= 0:
+			message("Your " + player_weapon.name + " breaks!", Color_Dangerous_Combat)
+		
+
+
 def render_all(render_mode = None):
 
 	global fov_map, color_dark_wall, color_light_wall
@@ -5898,9 +6584,10 @@ def render_all(render_mode = None):
 							# ok but if there's attacks draw those instead
 							for other_object in objectsArray[x][y]:
 								if object is not other_object:
-									if object.attack is not None and other_object.fighter is not None:
+									if (object.attack is not None or ('attack' in object.tags and not object.deflected)) and other_object.fighter is not None:
 										# libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, object.attack.faded_color, libtcod_BKGND_SET )
-										con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
+										#con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.attack.faded_color)
+										con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = object.color)
 							#Draw fire for things on fire
 							if object.getting_burned or object.aflame:
 								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = fire_color)
@@ -6809,6 +7496,198 @@ def get_info_panel_mouseover_text(x,y):
 	else:
 		return "Information Panel, Out of Bounds Exception"
 
+
+
+
+
+
+def doGlobalPreliminaryEvents():
+	global 	game_time, spawn_timer,	player_hit_something, player_clashed_something, player_got_hit,	player_just_jumped, player_just_attacked, number_hit_by_player
+	global player, nearest_points_array, worldEntitiesList
+
+
+	game_time += 1
+	spawn_timer -= 1
+	update_nav_data()
+	player_hit_something = False
+	player_clashed_something = False
+	player_got_hit = False
+	player_just_jumped = False
+	number_hit_by_player = 0
+	player_just_attacked = False
+
+	if nearest_points_array[player.x][player.y] is not None:
+		nearest_center_to_player =  nearest_points_array[player.x][player.y]
+
+
+
+
+	# LET'S PROCES SOME DECISIONS, WHICH BASICALLY ARE THE STARTING POINTS FOR ALL EVENTS 
+	#player stuff comes first
+	player.createActionEventDetails()
+	player.decider.processDecisions()
+	for ob in worldEntitiesList:
+		if ob is not player:
+			ob.createActionEventDetails()
+			if ob.decider:
+				ob.decider.processDecisions()
+
+
+
+	return
+
+
+
+
+
+def doGlobalPreDrawPhaseEvents():
+	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
+	global  ready_for_next_level
+	global player_just_attacked, player_got_hit, player_just_jumped, cold_energy_parity, upgrade_array, number_hit_by_player
+
+	#FINALPREDRAW
+	# Reveal parts of the UI based on some early-game triggers. Another part where I don't know where it goes.
+	if (not SHOW_WEAPON_NAME or not SHOW_ATTACK_COMMANDS) and player_weapon.name is not 'unarmed':
+		SHOW_WEAPON_NAME = True
+		SHOW_ATTACK_COMMANDS = True
+	if (not SHOW_ENERGY or not SHOW_WEAPON_WEIGHT) and (player.fighter.hp < STARTING_ENERGY - 4  or player.fighter.wounds > 0 or player.y <= 45):
+		SHOW_WEAPON_WEIGHT= True
+		SHOW_ENERGY = True
+	if not SHOW_WEAPON_DURABILITY and (player_weapon.durability <= 30):
+		SHOW_WEAPON_DURABILITY = True
+	# TODO Don't know how to handle showing JUmp commands yet!
+	if not SHOW_JUMP_COMMAND and player.y <= 24:
+		SHOW_JUMP_COMMAND = True
+	if not SHOW_CURRENT_FLOOR and dungeon_level > 0:
+		SHOW_CURRENT_FLOOR = True
+	if not SHOW_ALARM_LEVEL and alarm_level > 0:
+		SHOW_ALARM_LEVEL = True
+	if not SHOW_KEYS and key_count > 0:
+		SHOW_KEYS = True
+	if not SHOW_FAVOUR and currency_count > 0:
+		SHOW_FAVOUR = True
+	if not SHOW_REINFORCEMENTS and alarm_level > 0:
+		SHOW_REINFORCEMENTS = True
+	if not SHOW_TOTAL_MONSTERS and alarm_level > 0:
+		SHOW_TOTAL_MONSTERS = True
+	if not SHOW_UPGRADES and len(upgrade_array) > 0:
+		SHOW_UPGRADES = True
+
+
+	#UPDATE THE UPGRADES THAT AFFECT PLAYER STATS ONCE AND THEN STOP; I'M NOT SURE WHERE ELSE TO PUT THIS	
+	for power_up in upgrade_array:
+		if getattr(power_up, "upgrade_player_stats_once", None) is not None:
+			power_up.upgrade_player_stats_once(player)
+		if getattr(power_up, "upgrade_player_weapon_once", None) is not None:
+			power_up.upgrade_player_weapon_once(player, player_weapon)
+		if getattr(power_up, "update_based_on_level", None) is not None:
+			power_up.update_based_on_level(dungeon_level)
+
+
+	# refresh the player's energy
+	# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
+	if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False):
+
+
+		recharge_rate = 1  			#by default
+
+		# if it's cold, recharging happens at half usual speed.
+		if 'cold' in lev_set.effects:	
+			if cold_energy_parity == 0:
+				cold_energy_parity = 1
+			else:
+				cold_energy_parity = 0
+			recharge_rate = cold_energy_parity
+
+		# bonus recharge from upgrades:
+		for power_up in upgrade_array:
+			if  getattr(power_up, "affect_rate_of_energy_recharge", None) is not None:
+				recharge_rate += power_up.affect_rate_of_energy_recharge()
+		player.fighter.gain_energy(recharge_rate)
+
+	# bonus recharge for combos
+	if number_hit_by_player > 1:
+		bonus = number_hit_by_player - 1
+		player.fighter.gain_energy(bonus)
+		message("Combo! +" + str(bonus) + " energy", Color_Stat_Info)
+	
+
+
+	# FINALPREDRAW
+	do_weapon_degradation()
+
+
+	#FINALPREDRAW
+	# finally... go to the next level maybe?
+	if ready_for_next_level == True:
+		ready_for_next_level = False
+		next_level()
+
+
+
+
+def doGlobalPostDrawPhaseEvents():
+	global garbage_list
+
+
+
+	# reset upgrade statuses to 'dormant' ? this is probably not where this goes...
+	for upgrade in upgrade_array:
+		upgrade.status = 'dormant'
+
+	#FINALPOSTDRAW
+	#refresh decisions!
+	#for object in objects:
+ #		print("'fixed'  REFRESHING DECISIONS")
+	for object in worldEntitiesList:
+		if object.decider:
+			x = object.x
+			y = object.y
+				#check for water here
+			water_here = False	
+			for other_object in objectsArray[object.x][object.y]:
+				if other_object.name == 'water':
+					water_here = True
+			object.decider.refresh()
+			if object.fighter:
+				object.fighter.in_water = water_here
+
+
+	# do decisions??? at this point??? or after garbage collection???????
+	for ob in worldEntitiesList:
+		#if ob.name == 'fire':
+		#ob.createActionEventDetails()
+		if ob.decider:
+			ob.decider.decide()
+
+
+
+	# Also do garbage collection stuff because the previous phase mostly probably involved deleting stuff
+	for object in garbage_list:
+		#print ('deleting ' + object.name + '...')
+		if object in objectsArray[object.x][object.y]:
+			objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
+		if object in worldEntitiesList:
+			worldEntitiesList.remove(object)
+		if object in worldAttackList:
+			worldAttackList.remove(object)
+	#reset garbage list
+	garbage_list = []
+
+
+
+
+
+
+###############################################
+
+#		MAIN METHOD FOLLOWS	
+
+###############################################
+
+
+
+
 #libtcod.console_set_custom_font('arial12x12.png', libtcod.FONT_TYPE_GREYSCALE | libtcod	.FONT_LAYOUT_TCOD)
 
 
@@ -6886,7 +7765,7 @@ key = None
 PreliminaryEvents = []
 MovementPhaseEvents = []
 AttackPhaseEvents = []
-DamgePhaseEvents = []
+DamagePhaseEvents = []
 MiscPhaseEvents = []
 FinalPreDrawEvents = []
 FinalPostDrawEvents = []
@@ -6912,7 +7791,7 @@ time_since_last_elevator_message = 0
 
 ready_for_next_level = False
 
-libtcod.set_fps(30)
+libtcod.set_fps(LIMIT_FPS)
 
 # So for future reference, this code prints the numbers 1 to 9:
 #for num in range(1,10):
@@ -7059,233 +7938,104 @@ while not translated_console_is_window_closed():
 		
 		
 
+		#PREILIMINARYPHASE
+
 	#	print(str(mouse_coord_x))
 
-		game_time += 1
-		spawn_timer -= 1
-		update_nav_data()
-
-		player_hit_something = False
-		player_clashed_something = False
-		player_got_hit = False
-		player_just_jumped = False
-		number_hit_by_player = 0
-
-
-		if nearest_points_array[player.x][player.y] is not None:
-			nearest_center_to_player =  nearest_points_array[player.x][player.y]
-
-
-		# delete attacks from the past?! This is a fix because attacks seem to be hanging around longer than I'd like, may cause problems further down the line...
-		#deletionList = []
-
-
-	#	print ("DELETING ATTACJS")		
-	#	for y in range(MAP_HEIGHT):
-	#		for x in range(MAP_WIDTH):
-	#			
-	#			deletionList = []
-	#			for object in objectsArray[x][y]:
-	#	#for object in objects:
-	#				if object.attack:
-	#					object.attack.fade()
-	#					if object.attack.existing == False:
-	#						deletionList.append(object)
-	#			# deleting attacks that have happened
-	#			for object in objectsArray[x][y]:
-	#				object.clear()
-	#			for object in deletionList:
-	#				objectsArray[object.x][object.y].remove(object)
-
-
-#		print ("'fixed'  DELETING ATTACJS")
-		deletionList = []
-		for object in worldAttackList:
-			if object.attack:
-				object.attack.fade()
-				if object.attack.existing == False:
-					deletionList.append(object)
-		for object in deletionList:
-			x = object.x
-			y = object.y
-			# deleting attacks that have happened
-			for other_object in objectsArray[x][y]:
-				other_object.clear()
-			objectsArray[x][y].remove(object)
-			if object in worldAttackList:
-				worldAttackList.remove(object)
-
-			#let monsters take their decisions
-	#	for object in objects:
-#		print ("'fixed'  DOING DECISIONS")		
-		#for y in range(MAP_HEIGHT):
-		#	for x in range(MAP_WIDTH):
-		#		for object in objectsArray[x][y]:
-		#			if object.decider:
-		#				object.decider.decide()
-
-		for object in worldEntitiesList:
-			object.getting_burned = False
-			if object.decider:
-				object.decider.decide()
-
-		
-
-
-		#now everyone has decided things, things can happen
-	
-		#the passing of time is important for the Taylor the Deliverer!
-		if tested_by_deliverer:
-			if deliverer_test_count > 0:
-				deliverer_test_count = deliverer_test_count - 1
-			else:
-				tested_by_deliverer = False
 
 
 
 
-		
-		# decide if there are any 'punch targets'. This is an ordered pair consisting of a fighter wants to move into a space, and another fighter that is currently in that space. If the second fighter doesn't move, they're gonna get punched!
-		# also decide if anyone is trying to open a door! (By walking into it)
-		potential_punch_list = []
+
 		potential_open_list = []
 
 
-#		print ("'fixed'  DECIDING ABOUT PUNCH TARGETS")		
-		for object in worldEntitiesList:
-			if object.decider:
-				x = object.x
-				y = object.y
-				if object.decider.decision is not None:
-					if object.decider.decision.move_decision is not None:
-						md = object.decider.decision.move_decision
-						if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
-							target_x = object.x + md.dx
-							target_y = object.y + md.dy	
-							for victim in objectsArray[target_x][target_y]:
-								# try to punch if there's a fighter in this square
-								if victim.fighter:
-									# the following code checks that the victim isn't actually Attacking the puncher	
-									valid_target = True
-									if victim.decider.decision and victim.decider.decision.attack_decision:
-										victim_attacks = victim.decider.decision.attack_decision.attack_list
-										for vic_attack in victim_attacks:
-											if vic_attack.x == object.x and vic_attack.y == object.y:
-												valid_target = False
-									if valid_target == True:
-										potential_punch_list.append((object, victim))
-								#try to open if there's a (non-elevator) door in this square
-								if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y and not object.phantasmal:
-									potential_open_list.append((object, victim))
-									#print str(victim.name)
-
-								
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-#		#for object in objects:
-#					if object.decider:
-#						if object.decider.decision is not None:
-#							if object.decider.decision.move_decision is not None:
-#								md = object.decider.decision.move_decision
-#								if md.dx != 0 or md.dy != 0:	# let's not have people punch themselves just by standing still.
-#									target_x = object.x + md.dx
-#									target_y = object.y + md.dy	
-#									for victim in objectsArray[target_x][target_y]:
-#										# try to punch if there's a fighter in this square
-#										if victim.fighter:
-#											# the following code checks that the victim isn't actually Attacking the puncher	
-#											valid_target = True
-#											if victim.decider.decision and victim.decider.decision.attack_decision:
-#												victim_attacks = victim.decider.decision.attack_decision.attack_list
-#												for vic_attack in victim_attacks:
-#													if vic_attack.x == object.x and vic_attack.y == object.y:
-#														valid_target = False
-#											if valid_target == True:
-#												potential_punch_list.append((object, victim))
-#										#try to open if there's a (non-elevator) door in this square
-#										if victim.door and victim.name != 'elevator door' and victim.x == target_x and victim.y == target_y:
-#											potential_open_list.append((object, victim))
-#											#print str(victim.name)
 
 
+
+		#MOVEMENTPHASE ALSO
 
 		# actually before movement happens, let's have things picking up things
 		# todo: integrate the player pickup stuff into this 
-		mover_list = []
-		for object in worldEntitiesList:
-			if object.decider and object is not player:
-				if object.decider.decision is not None:
-					if object.decider.decision.pickup_decision:
-						# for now, all we're doing is checking for plants to pickup
-						for other_object in objectsArray[object.x][object.y]:	
-							if other_object.plant is not None:
-								other_object.plant.tread()
-								garbage_list.append(other_object)
-								# also I guess get health maybe???
-								if object.fighter and object is not player:
-									message('The ' + object.name + ' picks up the ' + other_object.name + ' and eats it.', Color_Personal_Action)
-									other_object.plant.harvest(object)
+	#	mover_list = []
+	#	for object in worldEntitiesList:
+	#		if object.decider and object is not player:
+	#			if object.decider.decision is not None:
+	#				if object.decider.decision.pickup_decision:
+	#					# for now, all we're doing is checking for plants to pickup
+	#					for other_object in objectsArray[object.x][object.y]:	
+	#						if other_object.plant is not None:
+	#							other_object.plant.tread()
+	#							garbage_list.append(other_object)
+	#							# also I guess get health maybe???
+	#							if object.fighter and object is not player:
+	#								message('The ' + object.name + ' picks up the ' + other_object.name + ' and eats it.', Color_Personal_Action)
+	#								other_object.plant.harvest(object)
 
 
+
+		#MOVEMENTPHASE
 
 		# firstly movement happens
 		# player always moves first
-		if player.decider:
-			if player.decider.decision is not None:
-				if player.decider.decision.move_decision is not None:
-					md = player.decider.decision.move_decision
-					if map[player.x + md.dx][player.y + md.dy].blocked:
-						message ("You walk into a wall.", Color_Personal_Action)
-					player.move(md.dx, md.dy)
-				elif player.decider.decision.jump_decision is not None:
-					jd = player.decider.decision.jump_decision
-					# Check for things between the player and where they want to be,
-					# and see if they are things that block the player or can be jumped over.
-					# For now, assumes all jumps are of length 2;
-					# Will need to be changed if different jumps come in.
-					tempx = 0
-					if jd.dx == -2:
-						tempx = -1
-					elif jd.dx == 2:
-						tempx = 1
-					tempy = 0
-					if jd.dy == -2:
-						tempy = -1
-					elif jd.dy == 2:
-						tempy = 1
-					somethingInWay = False
-					jumpee = None		#The thing you're jumping over...
-					if player.fighter.jump_available() == False:
-						message("Your legs are too tired to jump!", Color_Not_Allowed )
-					elif map[player.x + tempx][player.y + tempy].blocked:
-						somethingInWay = True
-						message("There's a wall in the way!!!", Color_Not_Allowed )
-					else: 
-						#check for doors, and/or find the thing the player is jumping over.
-						for ob in objectsArray[player.x + tempx][player.y + tempy]:
-							if ob.door:
-								somethingInWay = True
-							if ob.fighter:
-								jumpee = ob	
-							if ob.name == 'fire' and jumpee is None:
-								jumpee = ob
-						if somethingInWay == True:
-							message("There's a door in the way!", Color_Not_Allowed )
-					if somethingInWay == False:
-						if map[player.x + jd.dx][player.y + jd.dy].blocked:
-							message ("You leap gracefully into a wall.", Color_Personal_Action)
-							player.move(tempx, tempy)
-						else:
-							if jumpee is not None:
-								if ob.name == 'fire':
-									message ("You leap through the flames!", Color_Personal_Action)
-								else:
-									message ("You leap over the " + jumpee.name + "\'s head!", Color_Personal_Action)
-						player.fighter.make_jump()
-						player.move(jd.dx, jd.dy)
-						player_just_jumped = True
+	#	if player.decider:
+	#		if player.decider.decision is not None:
+	#			if player.decider.decision.move_decision is not None:
+	#				md = player.decider.decision.move_decision
+	#				if map[player.x + md.dx][player.y + md.dy].blocked:
+	#					message ("You walk into a wall.", Color_Personal_Action)
+	#	# TEMP COMMENT		player.move(md.dx, md.dy)
+	#			elif player.decider.decision.jump_decision is not None:
+	#				jd = player.decider.decision.jump_decision
+	#				# Check for things between the player and where they want to be,
+	#				# and see if they are things that block the player or can be jumped over.
+	#				# For now, assumes all jumps are of length 2;
+	#				# Will need to be changed if different jumps come in.
+	#				tempx = 0
+	#				if jd.dx == -2:
+	#					tempx = -1
+	#				elif jd.dx == 2:
+	#					tempx = 1
+	#				tempy = 0
+	#				if jd.dy == -2:
+	#					tempy = -1
+	#				elif jd.dy == 2:
+	#					tempy = 1
+	#				somethingInWay = False
+	#				jumpee = None		#The thing you're jumping over...
+	#				if player.fighter.jump_available() == False:
+	#					message("Your legs are too tired to jump!", Color_Not_Allowed )
+	#				elif map[player.x + tempx][player.y + tempy].blocked:
+	#					somethingInWay = True
+	#					message("There's a wall in the way!!!", Color_Not_Allowed )
+	#				else: 
+	#					#check for doors, and/or find the thing the player is jumping over.
+	#					for ob in objectsArray[player.x + tempx][player.y + tempy]:
+	#						if ob.door:
+	#							somethingInWay = True
+	#						if ob.fighter:
+	#							jumpee = ob	
+	#						if ob.name == 'fire' and jumpee is None:
+	#							jumpee = ob
+	#					if somethingInWay == True:
+	#						message("There's a door in the way!", Color_Not_Allowed )
+	#				if somethingInWay == False:
+	#					if map[player.x + jd.dx][player.y + jd.dy].blocked:
+	#						message ("You leap gracefully into a wall.", Color_Personal_Action)
+	#		# TEMP COMMENT			player.move(tempx, tempy)
+	#					else:
+	#						if jumpee is not None:
+	#							if ob.name == 'fire':
+	#								message ("You leap through the flames!", Color_Personal_Action)
+	#							else:
+	#								message ("You leap over the " + jumpee.name + "\'s head!", Color_Personal_Action)
+	#					player.fighter.make_jump()
+	#		# TEMP COMMENT		player.move(jd.dx, jd.dy)
+	#					player_just_jumped = True
 	
+
+
+
 			#	# check for player trampling plants. This is not where it should go...
 			#	for other_object in objectsArray[player.x][player.y]:	
 			#		if other_object.plant is not None:
@@ -7296,131 +8046,62 @@ while not translated_console_is_window_closed():
 
 
 
+		#MOVEMENTPHASE
+
+
 	 	# move other objects.
 		# first, make a list of objects to move (because naively going through objectsArray and moving everything at each grid reference can lead to objects getting moved multiple times
 		
 #		print ("'FIXED'  GETTING LIST OF MOVERS")
-		mover_list = []
-		for object in worldEntitiesList:
-			if object.decider and object is not player:
-				if object.decider.decision is not None:
-					if object.decider.decision.move_decision is not None:
-						mover_list.append(object)
-
-
 #		mover_list = []
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-##		for object in objects:
-#					if object.decider and object is not player:
-#						if object.decider.decision is not None:
-#							if object.decider.decision.move_decision is not None:
-#								mover_list.append(object)
+#		for object in worldEntitiesList:
+#			if object.decider and object is not player:
+#				if object.decider.decision is not None:
+#					if object.decider.decision.move_decision is not None:
+#						mover_list.append(object)
+#
+#
+#
+#		currentMovementPhaseEvents = list(MovementPhaseEvents)
+#		MovementPhaseEvents = []		#clear these events so new things can be added
+#		for (function, argset) in currentMovementPhaseEvents:
+#			if function is not None:
+#				function(argset)
+#		render_all()
+#		translated_console_flush()
 
 
-		for object in mover_list:
-			md = object.decider.decision.move_decision
-		#	if object.phantasmal:
-		#		print("phantasmagorical")
-			if object.phantasmal == True:
-				object.move(md.dx, md.dy,  ignore_doors = True)	
-			else:
-				object.move(md.dx, md.dy,)
 				
-		#TODO NOTE: hey this is going to be interesting
-		#	# also maybe trample some plants while you're here
-		#	for other_object in objectsArray[object.x][object.y]:	
-		#		if other_object.plant is not None:
-		#			other_object.plant.tread()
-		#			garbage_list.append(other_object)
-		#			# also I guess get health maybe???
-		#			if object.fighter and object is not player:
-		#				other_object.plant.harvest(object)
+
+
 
 		
 
 
-		# do some messages saying what you see here!
-		#names = [obj.name for obj in objects
-		#	if obj.x == player.x and obj.y == player.y and obj is not player]
-		objects_here = [obj for obj in objectsArray[player.x][player.y]
-			if obj is not player]
-		names = [obj.name for obj in objects_here if obj.floor_message is None and obj.name is not 'water' and obj.name is not 'decoration'  and obj.name is not 'blood']  #todo: get a better way of not including certain objects in this list
-		possible_commands = []
-
-		weapon_found = False
-		key_found = False
-		favour_found = False
-		plant_found = False
-		stairs_found = False
-		shrine_found = False
-		floor_message_found = False
-	
-		floor_message_text = ''
-		for obj in objects_here:
-			if weapon_found == False and obj.weapon == True:
-				weapon_found = True
-			if key_found == False and obj.name == 'key':
-				key_found = True
-			if favour_found == False and obj.name == 'favour token':
-				favour_found = True
-			if plant_found == False and obj.plant is not None:
-				plant_found = True
-			if stairs_found == False and obj.name == 'stairs':
-				stairs_found = True
-				possible_commands.append('< to ascend')
-			if shrine_found == False and obj.shrine is not None:
-				shrine_found = True
-			if floor_message_found == False and obj.floor_message is not None:
-				floor_message_text = obj.floor_message.string
-				floor_message_found = True
 
 
-		if weapon_found or key_found or favour_found or plant_found:	
-			possible_commands.append(controlHandler.controlLookup["PICKUP"] + ' to pick up')
-		if shrine_found:
-			possible_commands.append(controlHandler.controlLookup["MEDITATE"] +  ' to meditate')
-			
-		if floor_message_found == True and player.decider.decision is not None and (player.decider.decision.move_decision is not None or player.decider.decision.jump_decision is not None): # trying to make it so messages don't repeat themselves
-			message('You see a message on the floor:', Color_Interesting_In_World)
-			message('\"' + floor_message_text + '\"', Color_Message_In_World)
-
-		if len(names) > 0:
-			names = ', '.join(names)
-			possible_commands = ', '.join(possible_commands)
-			temp_message = 'You see a ' + names + ' here (' + possible_commands + ').'
-			message(temp_message, Color_Boring_In_World)
+#		# MOVEPHASE i guess?
+#		# draw things in their new places
+#		if player.decider.decision:
+#			if player.decider.decision.move_decision or player.decider.decision.jump_decision:			
+#				fov_recompute = True
 
 
+#		clear_onscreen_objects()
 
 
-
-		# draw things in their new places
-		if player.decider.decision:
-			if player.decider.decision.move_decision or player.decider.decision.jump_decision:			
-				fov_recompute = True
-
-
-#		print ('fixed'  "CLEARING OBJECTS AGAIN")
-		#for y in range(MAP_HEIGHT):
-		#	for x in range(MAP_WIDTH):
-		#		for object in objectsArray[x][y]:
-		##for object in objects:
-		#			object.clear()
-		clear_onscreen_objects()
+#		translated_console_set_default_foreground(con, default_text_color)
+#		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
+#		#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+#		#print('1')
+#		render_all()
+#		translated_console_flush()
+#
+#		#put in a pause before drawing the other stuff?
+#		time.sleep(0.05)
 
 
-		translated_console_set_default_foreground(con, default_text_color)
-		#temporarily commenting out, WHICH IS AN EXTRA BAD IDEA
-		#libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
-		#print('1')
-		render_all()
-		translated_console_flush()
-
-		#put in a pause before drawing the other stuff?
-		time.sleep(0.05)
-
+		# finalpostdraw?
 		
 		#update elevator so they know whether to shut their doors
 		time_since_last_elevator_message = time_since_last_elevator_message + 1
@@ -7492,13 +8173,9 @@ while not translated_console_is_window_closed():
 					level_complete = False
 
 
-#			print ("CHECKING FOR BOSSES")
-#			for y in range(MAP_HEIGHT):
-#				for x in range(MAP_WIDTH):
-#					for object in objectsArray[x][y]:
-#		#for object in objects:
-#						if object.name == lev_set.boss:
-#							level_complete = False
+
+
+		#finalpostdraw?
 
 		#elif number_security_drones <= 0:
 		#	level_complete = True
@@ -7509,35 +8186,27 @@ while not translated_console_is_window_closed():
 				if not ele.player_authorised:
 					ele.set_player_authorisation(True)
 
-		# now do punchings!
-		for (puncher, victim) in potential_punch_list:
-			# check if the victim is where the puncher was expecting
-			if victim.x == puncher.x + puncher.decider.decision.move_decision.dx and victim.y == puncher.y +  puncher.decider.decision.move_decision.dy:
-				message ('The ' + puncher.name + ' punches the ' + victim.name + ' in the face!')
-
-				if victim.name != 'strawman' and victim.name != 'flailing strawman' and victim.name != 'strawman on wheels':
-					victim.stun()
-					message('The ' + victim.name + ' is stunned!')
-				else:
-					message('It doesn\'t seem to have any affect.')
 
 
 
 
-
-		# now do door openings!
-		for (opener, victim) in potential_open_list:
-			if victim.door is not None:
-				#print "opening door"
-				victim.door.open()
-				# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
-				# libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
-				fov_map.compute_fov(player.x, player.y, fov=FOV_ALGO, radius=TORCH_RADIUS, light_walls=FOV_LIGHT_WALLS)
+	# Thinks this should be redundant now
+	#	#MOVEMENTPHASE! I have decreed it
+	#	# now do door openings!
+	#	for (opener, victim) in potential_open_list:
+	#		if victim.door is not None:
+	#			#print "opening door"
+	# TEMP COMMENT		victim.door.open()
+	#			# Here is another terrible hack, to make it so an alarmer actually spots you when you open a door on it
+	#			# libtcod.map_compute_fov(fov_map, player.x, player.y, TORCH_RADIUS, FOV_LIGHT_WALLS, FOV_ALGO)
+	#			fov_map.compute_fov(player.x, player.y, fov=FOV_ALGO, radius=TORCH_RADIUS, light_walls=FOV_LIGHT_WALLS)
 
 
 
 		spotted = False
 
+
+		# FINALPOSTDRAW? AND ALSO FINALPREDRAW? Kind of split up via some decision mecahnism
 		#UPDATE THE ALARMERS AND OTHER THINGS
 #		print ("'fixed' UPDATING ALARMERS AND OTHER THINGS")
 		#also track what alarmer is closest to recognizing you
@@ -7555,9 +8224,6 @@ while not translated_console_is_window_closed():
 				else: 
 					ob.alarmer.update(False)
 
-		#UPDATE THE DOORS
-			if ob.door is not None:
-				ob.door.update()
 
 		#UPDATE THE PLANTS
 			if ob.plant is not None:
@@ -7568,51 +8234,10 @@ while not translated_console_is_window_closed():
 		if temp_alarm_countdown < large_count_down_val:
 			message(str(temp_alarm_countdown) + " seconds from being recognized.", Color_Stat_Info)
 
-		# LET'S MAKE SOME THINGS LEAVE A BLOOD TRAIL? FOR 'FUN'??
-		# Actually I don't like it. Might be a thing to try if you have a more open level and a need to 'track' something?
-		#	if ob.fighter is not None:
-		#		if ob.fighter.hp == 1 and ob.fighter.max_hp > 1 and ob.fighter.bleeds:
-		#			#blood splashing around, yaay
-		#			bgColorArray[ob.x][ob.y] = mergeColors(bgColorArray[ob.x][ob.y], blood_background_color, 0.2)	
-
-#		#UPDATE THE ALARMERS
-#		print ("UPDATING ALARMERS")
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for ob in objectsArray[x][y]:
-#		#for object in objects:
-#	#	for ob in objects:
-#					if ob.alarmer is not None:
-#						#if libtcod.map_is_in_fov(fov_map, ob.x, ob.y):	
-#						if fov_map.fov[ob.x, ob.y]:	
-#							# print('a llama (' + str(ob.x) + ',' + str(ob.y) + ') ' + str(ob.alarmer.status))
-#							ob.alarmer.update(True)
-#							spotted = True
-#						else: 
-#							ob.alarmer.update(False)
-#
-#		#UPDATE THE DOORS
-#					if ob.door is not None:
-#						ob.door.update()
-#
-#		#UPDATE THE PLANTS
-#					if ob.plant is not None:
-#						ob.plant.update()
-#						ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
-#						ob.char = ob.plant.symbol
 
 
-		#UPDATE THE UPGRADES THAT AFFECT PLAYER STATS ONCE AND THEN STOP; I'M NOT SURE WHERE ELSE TO PUT THIS	
-		for power_up in upgrade_array:
-			if getattr(power_up, "upgrade_player_stats_once", None) is not None:
-				power_up.upgrade_player_stats_once(player)
 
 
-			if getattr(power_up, "upgrade_player_weapon_once", None) is not None:
-				power_up.upgrade_player_weapon_once(player, player_weapon)
-
-			if getattr(power_up, "update_based_on_level", None) is not None:
-				power_up.update_based_on_level(dungeon_level)
 
 
 		#if spotted == True:
@@ -7621,20 +8246,33 @@ while not translated_console_is_window_closed():
 		#	print "Alarmage status: NOT spotted"
 
 		# now create attacks!
+		# MOVING : REDOING THIS STUFF, SHOULD BE DONE ON A PER-FIGHTER BASIS IN THE makeAttacks method of decider object
+
 		deletionList = []
-#		print ("'fixed'  CREATING ATTAKS")
-		for object in worldEntitiesList:
-			if object.decider:
-				if object.decider.decision is not None:
-					if object.decider.decision.attack_decision is not None:
-						attack_list = object.decider.decision.attack_decision.attack_list
-						for attack in attack_list:
-							try:
-								objectsArray[attack.x][attack.y].append(attack)	
-								worldAttackList.append(attack)
-								attack.send_to_front()
-							except IndexError:		#todo: check that this is the right thing to catch...
-								print('')
+##		print ("'fixed'  CREATING ATTAKS")
+#		for object in worldEntitiesList:
+#			if object.decider:
+#				if object.decider.decision is not None:
+#					if object.decider.decision.attack_decision is not None:
+#						attack_list = object.decider.decision.attack_decision.attack_list
+#						for attack_object in attack_list:
+#						#for attack in attack_list:
+#							try:
+#								attack_data = attack_object.attack
+#								attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
+#								objectsArray[attack.x][attack.y].append(attack)	
+#								worldAttackList.append(attack)
+#								attack.send_to_front()
+#							except IndexError:		#todo: check that this is the right thing to catch...
+#								print('')
+
+
+
+
+
+
+
+
 
 
 #		for y in range(MAP_HEIGHT):
@@ -7655,13 +8293,19 @@ while not translated_console_is_window_closed():
 
 
 
+# TODO this is commented out for maybe being the cause of 'double hitting'. 
+# We'll see if it causes something else to break. I'm not really sure that this 'player_just_attacked' thing is going to be necessary ultimately
+#		player_just_attacked = False
+#		if player.decider.decision is not None:
+#			if player.decider.decision.attack_decision is not None:
+#				player_attack_list = player.decider.decision.attack_decision.attack_list
+#				if len(attack_list) > 0:
+#					player_just_attacked = True
 
-		player_just_attacked = False
-		if player.decider.decision is not None:
-			if player.decider.decision.attack_decision is not None:
-				player_attack_list = player.decider.decision.attack_decision.attack_list
-				if len(attack_list) > 0:
-					player_just_attacked = True
+
+
+
+
 
 		#if player_just_attacked:
 		#	print('the player just attacked!')
@@ -7705,6 +8349,10 @@ while not translated_console_is_window_closed():
 		
 
 
+
+		#mmm... attackphase?
+
+
 		# check how many enemies the player has hit, and 
 		# check if the player is getting 'hit' (whether or not the attack gets deflected)
 
@@ -7738,6 +8386,8 @@ while not translated_console_is_window_closed():
 #								number_hit_by_player += 1
 #							else:
 #								all_player_attacks_on_target = False
+
+
 		# Update relevant upgrades
 		for power_up in upgrade_array:
 			if getattr(power_up, "update_based_on_player_accuracy", None) is not None:
@@ -7745,81 +8395,11 @@ while not translated_console_is_window_closed():
 								
 
 
-		# attacks 'bouncing' off each other (when an attack from A hits B and vice versa, neither attack damages)
-		#clashing_pairs_list = []
-		#deletionList = []
-#		for object in objects:
-
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-#					if object.attack:
-#						attackee = object.attack.find_attackee()	
-#						for yy in range(MAP_HEIGHT):
-#							for xx in range(MAP_WIDTH):
-#								for other_object in objectsArray[xx][yy]:
-#						#for other_object in objects:
-#									# perform a check to ensure each unordered pair only gets processed once
-#									if object.x < other_object.x or (object.x == other_object.x and object.y <= other_object.y):
-#										if other_object.attack and other_object.attack.attacker == attackee:
-#											other_attackee = other_object.attack.find_attackee()
-#											if other_attackee == object.attack.attacker:
-#												# so now we have two fighters attacking each other
-#												clashing_pairs_list.append((object, other_object))
-#												# deletion happens, because the attacks "cancel each other out"
-#												deletionList.append(object)
-#												deletionList.append(other_object)
-#												message('Clash! The ' + attackee.name + ' and ' + other_attackee.name + '\'s attacks bounce off each other!')
-#												if attackee is player or other_attackee is player:
-#													player_clashed_something = True
 
 
-#		print("'fixed' PROCESSING ATTACK CLASHES")
 
-		for object in worldAttackList:
-			x = object.x
-			y = object.y
-			if object.attack:
-				#determine the attacker and attackee in this scenario
-				attacker = object.attack.attacker
-				attackee = object.attack.find_attackee()
-				#now, is the attackee also attacking the attacker?	
-				for other_object in objectsArray[attacker.x][attacker.y]:
-					if other_object.attack:	#so attacker is  definitely being attacked by something...
-						other_attacker = other_object.attack.attacker
-						if other_attacker == attackee:	# then attacker IS being attacked by attackee!
-							# so now we have two fighters attacking each other
-							#check to make sure same pair of attacks don't get noted twice:
-							if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
-								#clashing_pairs_list.append((object, other_object))
-								# deletion happens, because the attacks "cancel each other out"
-								deletionList.append(object)
-								deletionList.append(other_object)
-								message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
-								if attacker is player or attackee is player:
-									player_clashed_something = True
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-#					if object.attack:
-#						#determine the attacker and attackee in this scenario
-#						attacker = object.attack.attacker
-#						attackee = object.attack.find_attackee()
-#						#now, is the attackee also attacking the attacker?	
-#						for other_object in objectsArray[attacker.x][attacker.y]:
-#							if other_object.attack:	#so attacker is  definitely being attacked by something...
-#								other_attacker = other_object.attack.attacker
-#								if other_attacker == attackee:	# then attacker IS being attacked by attackee!
-#									# so now we have two fighters attacking each other
-#									#check to make sure same pair of attacks don't get noted twice:
-#									if attacker.x < attackee.x or (attacker.x == attackee.x and attacker.y < attackee.y):
-#										#clashing_pairs_list.append((object, other_object))
-#										# deletion happens, because the attacks "cancel each other out"
-#										deletionList.append(object)
-#										deletionList.append(other_object)
-#										message('Clash! The ' + attacker.name + ' and ' + attackee.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
-#										if attacker is player or attackee is player:
-#											player_clashed_something = True
+		# temp terrible hack
+		player_clashed_something = True
 
 
 		#for object in objects:
@@ -7838,67 +8418,33 @@ while not translated_console_is_window_closed():
 				worldAttackList.remove(object)
 		deletionList = []
 
+
+
+		#a COmbination of Phase types I think?  ATTACKPHASE / DAMAGEPHASE at the least?
 		## regular old attacks just happening
 		#deletionList = []
 #		for object in objects:
 #		print ("'fixed'  YMAKING ATTACKS HAPPEN")
-		for object in worldAttackList:
-			x = object.x
-			y = object.y
-			if object.attack:
-				# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
-				for power_up in upgrade_array:
-					if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
-						power_up.affect_strength_of_individual_attack(player, object)
-				object.attack.inflict_damage()
-				object.attack.fade()
-				# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
-#				if object.attack.existing == False:
-#					deletionList.append(object)
-				reorder_objects(x,y) 
 
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-#					if object.attack:
-#						# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
-#						for power_up in upgrade_array:
-#							if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
-#								power_up.affect_strength_of_individual_attack(player, object)
-#						object.attack.inflict_damage()
-#						object.attack.fade()
-#						# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
-#		#				if object.attack.existing == False:
-#		#					deletionList.append(object)
-#						reorder_objects(x,y) 
+		# ANOTHER THING I AM COMMENTING OUT BECAUSE I THINK IT'S REDUNDANT, BUT WHOOO KNOWS
+#		for object in worldAttackList:
+#			x = object.x
+#			y = object.y
+#			if object.attack:
+#				# Increase attack strengths from upgrades. whoof; this is a bit cycle hungry
+#				for power_up in upgrade_array:
+#					if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
+#						power_up.affect_strength_of_individual_attack(player, object)
+#				object.attack.inflict_damage()
+#				object.attack.fade()
+#				# todo fix??? to make attack highlighting work properly. I commented out these lines and added a reorder. I am scared that this is secretly going to break something
+##				if object.attack.existing == False:
+##					deletionList.append(object)
 
 
 
 
 
-
-
-	#	# Make things get burned if they are standing on fire
-	#	for object in worldEntitiesList:
-	#		object.getting_burned = False
-	#		if object.fighter or object.door:
-	#			# check to see if there is fire here
-	#			for other_object in objectsArray[object.x][object.y]:
-	#				if other_object.name == 'fire':
-	#					object.getting_burned = True
-	#			if object.getting_burned or object.aflame:
-	#				if object is player:
-	#					message('You get burned!', Color_Dangerous_Combat)
-	#				else:
-	#					message('The ' + object.name.capitalize() + ' gets burned!', Color_Boring_Combat)
-#
-#					if object.fighter:
-#						object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
-#					elif object.door: 
-#						object.door.take_damage(1)
-#					#translated_console_set_char_background(con, object.x, object.y, fire_color, libtcod_BKGND_SET)
-
-				
 
 		# deleting attacks that have happened
 #		for object in objects:
@@ -7917,6 +8463,10 @@ while not translated_console_is_window_closed():
 			if object in worldAttackList:
 				worldAttackList.remove(object)
 
+
+
+		# MiscPhase? or actually this probably doesn't need to be the game any more?
+
 		#recharge player attack charge. this probably shouldn't go here ultimately
 		#if player_recharge_time > 0:
 		#	player_recharge_time = player_recharge_time - 1
@@ -7926,55 +8476,23 @@ while not translated_console_is_window_closed():
 
 
 
-		# refresh the player's energy
-		# design question: when should this refresh? maybe it's only if you haven't done an attack? if you haven't been hurt?
-		if (player_just_attacked == False and player_got_hit == False and player_just_jumped == False):
 
-
-			recharge_rate = 1  			#by default
-
-			# if it's cold, recharging happens at half usual speed.
-			if 'cold' in lev_set.effects:	
-				if cold_energy_parity == 0:
-					cold_energy_parity = 1
-				else:
-					cold_energy_parity = 0
-				recharge_rate = cold_energy_parity
-
-			# bonus recharge from upgrades:
-			for power_up in upgrade_array:
-				if  getattr(power_up, "affect_rate_of_energy_recharge", None) is not None:
-					recharge_rate += power_up.affect_rate_of_energy_recharge()
-			player.fighter.gain_energy(recharge_rate)
-
-		# bonus recharge for combos
-		if number_hit_by_player > 1:
-			bonus = number_hit_by_player - 1
-			player.fighter.gain_energy(bonus)
-			message("Combo! +" + str(bonus) + " energy", Color_Stat_Info)
-	
 			
 
 
 		
-		#weapon degradation time!
-		if( player_hit_something == True or player_clashed_something == True) and player_weapon.durability > 0:
-			degredation = 0
-			if player_clashed_something:
-				degredation = 2
-			else:
-				degredation = 1
-			if player_weapon.durability - degredation  <= WEAPON_FAILURE_WARNING_PERIOD and player_weapon.durability > WEAPON_FAILURE_WARNING_PERIOD:
-				message("Your "  + player_weapon.name + " is close to breaking!", Color_Interesting_Combat)
-			player_weapon.durability -= degredation
-			if player_weapon.durability <= 0:
-				message("Your " + player_weapon.name + " breaks!", Color_Dangerous_Combat)
-		
+
+
+
+
+		# FINALPOSTDRAW?? I thinnk garbage collection should mostly happen once at end of all the other stuff,
+		# Attack deletion might have to happen in between? But hopefully it can mostly be handled by attacks themselves?
 
 		# clean up stuff
 		for object in garbage_list:
 			print ('deleting ' + object.name + '...')
-			objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
+			if object in objectsArray[object.x][object.y]:
+				objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
 			if object in worldEntitiesList:
 				worldEntitiesList.remove(object)
 			if object in worldAttackList:
@@ -7982,41 +8500,18 @@ while not translated_console_is_window_closed():
 		#reset garbage list
 		garbage_list = []
 		
-		#refresh decisions!
-		#for object in objects:
- #		print("'fixed'  REFRESHING DECISIONS")
-		for object in worldEntitiesList:
-			if object.decider:
-				x = object.x
-				y = object.y
-				#check for water here
-				water_here = False	
-				for other_object in objectsArray[object.x][object.y]:
-					if other_object.name == 'water':
-						water_here = True
-				object.decider.refresh()
-				if object.fighter:
-					object.fighter.in_water = water_here
 
 
 
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				water_here = False
-#	
-#				for object in objectsArray[x][y]:
-#					if object.name == 'water':
-#						water_here = True
-#
-#				for object in objectsArray[x][y]:
-#					if object.decider:	
-#						object.decider.refresh()
-#					if object.fighter:
-#						object.fighter.in_water = water_here
+
+
 
 
 		
 
+
+
+		# FINALPREDRAW
 
 		# Now do alarm soundings! and other alarmer-based stuff
 #		for ob in objects:
@@ -8043,34 +8538,11 @@ while not translated_console_is_window_closed():
 				elif ob.alarmer.status == 'alarm-raised':
 					ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for ob in objectsArray[x][y]:
-#					if ob.alarmer is not None:
-#						#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
-#
-#						# first, update the alarmer
-#				
-#						#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
-#
-#						# next, do things depending on the alarmer's state
-#						if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
-#							ob.color = ob.alarmer.idle_color
-#						elif ob.alarmer.status == 'suspicious':
-#							if ob.alarmer.prev_suspicious == False:
-#								message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
-#								ob.color = ob.alarmer.suspicious_color
-#
-#						elif ob.alarmer.status == 'raising-alarm':
-#							alarm_level += ob.alarmer.alarm_value
-#							spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-#							message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
-#							ob.color = ob.alarmer.alarmed_color
-#						elif ob.alarmer.status == 'alarm-raised':
-#							ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
 
 
+
+		#PROB GOES IN FINALPOSTDRAW SINCE IT'S TO DO WITH LEVEL SPAWNING?
 
 		# oh let's start creating enemies at random intervals? 
 		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_drones > 0:
@@ -8108,6 +8580,10 @@ while not translated_console_is_window_closed():
 			elif lev_set.keys_required <= key_count:
 				level_complete = True
 
+
+
+		
+
 			# are there too many monsters?
 			total_monsters = 0
 #			for object in objects:
@@ -8126,6 +8602,7 @@ while not translated_console_is_window_closed():
 #							total_monsters = total_monsters + 1
 
 			# print ("ummm " + str(total_monsters) + " vs " + str( lev_set.max_monsters))
+
 
 			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
 			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
@@ -8162,14 +8639,7 @@ while not translated_console_is_window_closed():
 								break
 							else:
 								num -= prob
-				#	#open the doors!
-				#	for door in ele.special_door_list:
-				#		door.currently_invisible = True
-				#		door.blocks = False
-				#		map[door.x][door.y].block_sight = False	
-				#		map[door.x][door.y].blocked = False	
-				#	nav_data_changed = True
-				#	initialize_fov()
+
 	
 
 
@@ -8177,142 +8647,178 @@ while not translated_console_is_window_closed():
 
 		# How we expect object types to go:
 		# PreliminaryEvents
-		# MovementPhaseEvents
-		# AttackPhaseEvents
-		# DamgePhaseEvents
-		# MiscPhaseEvents
+		# 	MovementPhaseEvents
+		# 		AttackPhaseEvents
+		#		 DamgePhaseEvents
+		# 		MiscPhaseEvents
 		# FinalPreDrawEvents
 		# FinalPostDrawEvents
 
 
 
-		PreliminaryEvents = []
-		MovementPhaseEvents = []
-		AttackPhaseEvents = []
-		DamgePhaseEvents = []
-		MiscPhaseEvents = []
-		FinalPreDrawEvents = []
-		FinalPostDrawEvents = []
+		#PreliminaryEvents = []
+		#MovementPhaseEvents = []
+		#AttackPhaseEvents = []
+		#DamgePhaseEvents = []
+		#MiscPhaseEvents = []
+		#FinalPreDrawEvents = []
+		#FinalPostDrawEvents = []
 
-		super_cool_action_event_list = []
+		#super_cool_action_event_list = []
 
 		# Do some  fire spreading maybe? This is mainly just as a test.
-		spreading_fire_list = []
-		for ob in worldEntitiesList:
-			if ob.name == 'fire':
-				ob.createActionEventDetails()
-				#super_cool_action_event_list = super_cool_action_event_list + ob.getActionEventDetails()
-				#super_cool_action_event_list.append(ob.getActionEvent())
+		#spreading_fire_list = []
+
+
 
 
 
 		#for fire in spreading_fire_list: 
 		#	fire.spread()
 
+		# MOre events queue stuff
+
+
+
+
+
+
+
+
+		# Do preliminary phase stuff
+		doGlobalPreliminaryEvents()
+
+
+
+
+
+
+
 		loop_count_sanity_check = 0
-		while(len(AttackPhaseEvents) + len(MiscPhaseEvents) > 0):
 
-			loop_count_sanity_check += 1
+		# Loop through movement phase and attack phase (and damage phase and 'misc' phase) until they are all processed
+		while(len(MovementPhaseEvents) + len(AttackPhaseEvents) + len(AttackPhaseEvents) + len(DamagePhaseEvents)  + len(MiscPhaseEvents) > 0 and loop_count_sanity_check < 500):
 
-			currentAttackPhaseEvents = list(AttackPhaseEvents)
-			AttackPhaseEvents = []		#clear these attacks so new things can be added
-			for (function, argset) in currentAttackPhaseEvents:
-				if function is not None:
-					function(argset)
+			# Movement phase stuff is treated separately from the other events, and goes first
+			while (len(MovementPhaseEvents) > 0  and loop_count_sanity_check < 500):
+				loop_count_sanity_check += 1
 
-			render_all()
-			translated_console_flush()
+		
+				# Clear out the current list of movement phase events and process them
+				# Movement events can trigger other movements, which will be processed on the next go through the loop
+				currentMovementPhaseEvents = list(MovementPhaseEvents)
+				MovementPhaseEvents = []		#clear these events so new things can be added
+				for (function, argset) in currentMovementPhaseEvents:
+					if function is not None:
+						function(argset)
+	
+				render_all()
+				translated_console_flush()	
+				if len(currentMovementPhaseEvents) > 0:				
+					#put in a pause before drawing the other stuff?
+					time.sleep(frame_pause)
+		
+			
+
+
+			# After the movement phase is cleared we handle the other events. Once they are done, more movement events may have been triggered, in which case we start the loop over
+			while(len(AttackPhaseEvents) + len(DamagePhaseEvents)  + len(MiscPhaseEvents) > 0 and loop_count_sanity_check < 500):
+	
+				loop_count_sanity_check += 1
+	
+
+				# Process Attack phase events		(things hitting/attacking)
+				currentAttackPhaseEvents = list(AttackPhaseEvents)
+				AttackPhaseEvents = []		#clear these events so new things can be added
+				for (function, argset) in currentAttackPhaseEvents:
+					if function is not None:
+						function(argset)
+	
+				render_all()
+				translated_console_flush()
+				if len(currentAttackPhaseEvents) > 0:	
+					if len(DamagePhaseEvents) > 0:			
+						# do a longer pause if attacks are doing damage???
+						time.sleep(frame_attack_pause)
+					else:
+						time.sleep(frame_pause)
+		
+				# Process Damage Phase Events		(things getting damaged by attacks)
+				currentDamagePhaseEvents = list(DamagePhaseEvents)
+				DamagePhaseEvents = []
+				for (function, argset) in currentDamagePhaseEvents:
+					if function is not None:
+						function(argset)
+	
+				render_all()
+				translated_console_flush()
+				if len(currentDamagePhaseEvents) > 0:				
+					#put in a pause before drawing the other stuff?
+					time.sleep(frame_pause)
 	
 	
-			currentMiscPhaseEvents = list(MiscPhaseEvents)
-			MiscPhaseEvents = []
-			for (function, argset) in currentMiscPhaseEvents:
-				if function is not None:
-					function(argset)
-
-			render_all()
-			translated_console_flush()
-
-			if loop_count_sanity_check > 500:
-				print("warning! Attack Phase/ Misc Phase looped over 500 times")
-				break
-
-
-
-
-
-
-
-		# finally... go to the next level maybe?
-		if ready_for_next_level == True:
-			ready_for_next_level = False
-			next_level()
-
-
-		# Reveal parts of the UI based on some early-game triggers. Another part where I don't know where it goes.
-		if (not SHOW_WEAPON_NAME or not SHOW_ATTACK_COMMANDS) and player_weapon.name is not 'unarmed':
-			SHOW_WEAPON_NAME = True
-			SHOW_ATTACK_COMMANDS = True
-		if (not SHOW_ENERGY or not SHOW_WEAPON_WEIGHT) and (player.fighter.hp < STARTING_ENERGY - 4  or player.fighter.wounds > 0 or player.y <= 45):
-			SHOW_WEAPON_WEIGHT= True
-			SHOW_ENERGY = True
-		if not SHOW_WEAPON_DURABILITY and (player_weapon.durability <= 30):
-			SHOW_WEAPON_DURABILITY = True
-		# TODO Don't know how to handle showing JUmp commands yet!
-		if not SHOW_JUMP_COMMAND and player.y <= 24:
-			SHOW_JUMP_COMMAND = True
-		if not SHOW_CURRENT_FLOOR and dungeon_level > 0:
-			SHOW_CURRENT_FLOOR = True
-		if not SHOW_ALARM_LEVEL and alarm_level > 0:
-			SHOW_ALARM_LEVEL = True
-		if not SHOW_KEYS and key_count > 0:
-			SHOW_KEYS = True
-		if not SHOW_FAVOUR and currency_count > 0:
-			SHOW_FAVOUR = True
-		if not SHOW_REINFORCEMENTS and alarm_level > 0:
-			SHOW_REINFORCEMENTS = True
-		if not SHOW_TOTAL_MONSTERS and alarm_level > 0:
-			SHOW_TOTAL_MONSTERS = True
-		if not SHOW_UPGRADES and len(upgrade_array) > 0:
-			SHOW_UPGRADES = True
-
-#SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_UPGRADES
-
-#
-
-
-
-
+				# Process Misc Phase events		(other stuff in response to damage e.g. chain reactions)
+				currentMiscPhaseEvents = list(MiscPhaseEvents)
+				MiscPhaseEvents = []
+				for (function, argset) in currentMiscPhaseEvents:
+					if function is not None:
+						function(argset)
 	
-		# reorder_objects()	#TODO probably put this somewhere else?
-		#print('4.5')
+				render_all()
+				translated_console_flush()	
+				if len(currentMiscPhaseEvents) > 0:				
+					#put in a pause before drawing the other stuff?
+					time.sleep(frame_pause)
+
+		if loop_count_sanity_check >= 500:
+			print("warning! Attack Phase/ Misc Phase looped over 500 times")
+
+
+
+
+		# Final pre-draw phase
+		currentFinalPreDrawEvents = list(FinalPreDrawEvents)
+		FinalPreDrawEvents = []
+		for (function, argset) in currentFinalPreDrawEvents:
+			if function is not None:
+				function(argset)
+		# Also do a few things I didn't want to fit into this framework really
+		doGlobalPreDrawPhaseEvents()
+
+
+
+
+
+		# Do the final draw of this turn
 		render_all()
 		translated_console_flush()
-	#num_monsters = randint( 0, max_room_monsters)
 
 
-		# reset upgrade statuses to 'dormant' ? this is probably not where this goes...
-		for upgrade in upgrade_array:
-			upgrade.status = 'dormant'
+		# Final post-draw phase
+		currentFinalPostDrawEvents = list(FinalPostDrawEvents)
+		FinalPostDrawEvents = []
+		for (function, argset) in currentFinalPostDrawEvents:
+			if function is not None:
+				function(argset)
+		# Also do a few things I didn't want to fit into this framework really
+		doGlobalPostDrawPhaseEvents()
+
 
 
 
 
 	elif game_state == 'playing' and player_action == 'pickup_dialog' or player_action == 'upgrade shop dialog':
-		#print('3')
 		render_all()
 		translated_console_flush()
 
 
 	elif game_state == 'playing' and player_action == 'jump_dialog':
-		#print('4')
 		render_all()
 		translated_console_flush()
 
 
 	# I think this goes here: want to draw stuff if there's a "you can't do that" message
 	elif game_state == 'playing' and player_action == 'invalid-move':
-		print('oog')
 		render_all()
 		translated_console_flush()
 
@@ -8351,7 +8857,6 @@ while not translated_console_is_window_closed():
 		elif game_state == 'exit':
 			break
 		else:
-			print('8' + game_state)
 			render_all()
 		translated_console_flush()
 	
@@ -8382,14 +8887,6 @@ while not translated_console_is_window_closed():
 
 
 	#ok no problem, right.
-
-
-
-
-
-
-
-
 
 
 
