@@ -169,6 +169,7 @@ default_weapon_color = (vsw,vsw,vsw)	#(50,50,50) #libtcod.grey
 
 # enemies, including player
 PLAYER_COLOR = (v_p,v_p,v_p)	#(255, 255, 255)
+color_white = (255,255,255)
 #color_sneaky_enemy
 #color_shortrange_enemy
 #color_midrange_enemy
@@ -5061,7 +5062,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component = Greenhorn_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 261, 'greenhorn', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
+		monster = Object(x, y, 261, 'greenhorn', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
 
 
 	elif name == 'rook':
@@ -5082,7 +5083,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 274, 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
+		monster = Object(x, y, 274, 'rook', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
 
 
 	elif name == 'crane':
@@ -5090,7 +5091,7 @@ def create_monster(x,y, name, guard_duty = False):
 		#ai_component = Ninja_Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 264, 'bludger', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
+		monster = Object(x, y, 264, 'bludger', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
 
 
 	elif name == 'dove':
