@@ -166,7 +166,7 @@ class Level_Segment:
 
 class Elevator:
 
-	def __init__(self, door_points, spawn_points, player_authorised = False):
+	def __init__(self, door_points, spawn_points, player_authorised = False, direction = None):
 		self.door_points = door_points
 		self.spawn_points = spawn_points
 		self.player_authorised = player_authorised
@@ -175,6 +175,7 @@ class Elevator:
 		self.doors_opening = False
 		self.doors_closing = False
 		self.ready_to_go_up = False
+		self.direction = direction 	#direction the elevator is facing. 'up',  'down', 'left', 'right'
 		self.doors = []
 		for (x,y) in self.door_points:
 			door = Object(x, y, '+', 'elevator door', color_axe_maniac, blocks=True, door = Elevator_Door(x,y,horizontal = False), always_visible=True) 
@@ -311,6 +312,10 @@ class Level_Generator:
 			max_map_height = lev_set.max_map_height
 			max_map_width = lev_set.max_map_width
 
+			start_ele_direction = lev_set.start_ele_direction
+			start_ele_spawn = lev_set.start_ele_spawn
+
+
 			#let's.... *start* by making some elevators
 			#print 'adding elevators...'
 			elev1 = Rect(1, 7, 5, 4)
@@ -362,10 +367,19 @@ class Level_Generator:
 						map[x][y].blocked = True
 						map[x][y].block_sight = True
 	
-	
 
-			choice = randint(0, len(spawn_points)-1)
-			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
+			# generate set of potential starting points for player - ideally, in an elevator facing the same direction as the one they entered, with the player in the same relative position within th elevator.
+			starting_points = []
+			for ele in elevators:
+				if (ele.direction == start_ele_direction and start_ele_spawn is not None):
+					if start_ele_spawn < len(ele.spawn_points):
+						starting_points.append[ele.spawn_points[start_ele_spawn]]
+			# if there are no ideal start points, just use the set of all enemy spawn points
+			if len(starting_points) <= 0:
+				starting_points = spawn_points
+
+			choice = randint(0, len(starting_points)-1)
+			(player_start_x, player_start_y) = starting_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[len(rooms)-1].center()
 			#object_data.append(Object_Datum(new_x,new_y, 'stairs'))
 			object_data.append(Object_Datum(new_x,new_y, 'security drone'))
@@ -394,9 +408,23 @@ class Level_Generator:
 #			self.place_objects(new_room, lev_set, map, object_data, dungeon_level)
 #			self.recursively_generate(map, lev_set, dungeon_level, object_data, rooms, room_range, new_room, nearest_points_array, center_points)
 
-			#bit of a hack for now - the player can spawn anywhere enemies can spawn...
-			choice = randint(0, len(spawn_points)-1)
-			(player_start_x, player_start_y) = spawn_points[choice] 	#rooms[len(rooms)-1].center()
+
+
+			start_ele_direction = lev_set.start_ele_direction
+			start_ele_spawn = lev_set.start_ele_spawn
+
+			# generate set of potential starting points for player - ideally, in an elevator facing the same direction as the one they entered, with the player in the same relative position within th elevator.
+			starting_points = []
+			for ele in elevators:
+				if (ele.direction == start_ele_direction and start_ele_spawn is not None):
+					if start_ele_spawn < len(ele.spawn_points):
+						starting_points.append(ele.spawn_points[start_ele_spawn])
+			# if there are no ideal start points, just use the set of all enemy spawn points
+			if len(starting_points) <= 0:
+				starting_points = spawn_points
+
+			choice = randint(0, len(starting_points)-1)
+			(player_start_x, player_start_y) = starting_points[choice] 	#rooms[len(rooms)-1].center()
 			(new_x, new_y) = rooms[4].center()
 
 			#if lev_set.final_level is not True:
@@ -1422,28 +1450,33 @@ class Level_Generator:
 		door_points = []
 		#spawn_points = []	
 		local_spawn_points = []
+		direction = None
 		if elevator_type == 'Small-Elevator-Left':
 			seg_map =      [[5,5,1,1,1],
 					[5,0,3,4,4],
 					[5,0,3,4,4],
 					[5,5,1,1,1]]
+			ele_direction = 'left'
 		elif elevator_type == 'Small-Elevator-Right':
 			seg_map =      [[1,1,1,5,5],
 					[4,4,3,0,5],
 					[4,4,3,0,5],
 					[1,1,1,5,5]]
+			ele_direction= 'right'
 		elif elevator_type == 'Small-Elevator-Down':
 			seg_map =      [[1,4,4,1],
 					[1,4,4,1],
 					[1,3,3,1],
 					[0,5,5,0],
 					[0,5,5,0]]
+			ele_direction = 'down'
 		elif elevator_type == 'Small-Elevator-Up':
 			seg_map =      [[0,5,5,0],
 					[0,5,5,0],
 					[1,3,3,1],
 					[1,4,4,1],
 					[1,4,4,1]]
+			ele_direction = 'up'
 		for y in range(0, len(seg_map)):
 			for x in range(0, len(seg_map[0])):
 				if (seg_map[y][x] == 3):
@@ -1460,7 +1493,7 @@ class Level_Generator:
 					#background_map[elevator.x1 + x][elevator.y1 + y] = 2
 					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'decoration', '\''))
 
-		new_elevator = Elevator(door_points, local_spawn_points, player_authorised = easy_elevator)
+		new_elevator = Elevator(door_points, local_spawn_points, player_authorised = easy_elevator, direction = ele_direction)
 		#print "elevatooooooooR"
 		elevators.append(new_elevator)
 
@@ -1779,6 +1812,9 @@ class Level_Generator:
 		room_max_size = b + d	
 
 
+		max_dist_between_rooms = 6
+
+
 
 		#let's.... *start* by making some elevators
 		#print 'adding elevators...'
@@ -2022,7 +2058,7 @@ class Level_Generator:
 				else:
 					# are they adjacent?
 					adjacent = False
-					dist = 6 #the max distance we can have between two rooms for them to count as 'adjacent'.
+					dist = max_dist_between_rooms #the max distance we can have between two rooms for them to count as 'adjacent'.
 							# basically dist+1 should be just enough to squeeze a tiny room in between?
 						 # TODO tie this measure to minimum room size
 					#is room i to the left of room j?
@@ -2181,15 +2217,32 @@ class Level_Generator:
 			if connectivity[i][4] == 0: #room is not connected to room 4. Why room 4? Because that's the first non-elevator room... 
 				# we fix the connectivity by super expanding the room. This should intersect with something...
 				#print 'help (' + str(rooms[i].x1) + ',' + str(rooms[i].y1) + ')-(' + str(rooms[i].x2) + ',' + str(rooms[i].y2) + ')'
-				for x in range(rooms[i].x1-4, rooms[i].x2 + 5):
-					for y in range(rooms[i].y1 - 4, rooms[i].y2+5):
-						if x > 0  and x < lev_set.max_map_width - 1 and y > 0 and y < lev_set.max_map_height - 1:
-							map[x][y].blocked = False
-							map[x][y].block_sight = False
-							if nearest_points_array[x][y] is None:
-								nearest_points_array[x][y] = rooms[i].center()
+				print("WARNING: SPAWN ROOM DISCONNECTED; EXCAVATING")
+
+				excavate_dist = max_dist_between_rooms + 2
+				excavate_points = []
+				# WAIT I KNOW SOME OF THESE ARE NEGATIVE RANGES
+				for x in range(rooms[i].x1+1, rooms[i].x2 -1 + 1):
+					for y in range(rooms[i].y1-excavate_dist, rooms[i].y1-1 + 1):
+						excavate_points.append((x,y))
+					for y in range(rooms[i].y2+1,rooms[i].y2+excavate_dist +1):
+						excavate_points.append((x,y))
+				for y in range(rooms[i].y1 + 1, rooms[i].y2 -1 + 1):
+					for x in range(rooms[i].x1-excavate_dist, rooms[i].x1-1 + 1):
+						excavate_points.append((x,y))
+					for x in range(rooms[i].x2+1,rooms[i].x2+excavate_dist +1):
+						excavate_points.append((x,y))
 
 
+				for (x,y) in excavate_points:
+					if x > 0  and x < lev_set.max_map_width - 1 and y > 0 and y < lev_set.max_map_height - 1:
+						map[x][y].blocked = False
+						map[x][y].block_sight = False
+						if nearest_points_array[x][y] is None:
+							nearest_points_array[x][y] = rooms[i].center()
+
+			else:
+				print("ALL GOOD AT " + str(i))
 
 		#print( "super length " + str(len(adjacency)))
 
@@ -2932,9 +2985,9 @@ class Level_Generator:
 		H = Object_Name('plant')
 		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
-				[1,1,1,C,0,0,0,0,0,0,0,0,0,0,0,0,C,0,0,0,0,0,1],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[0,0,0,0,0,G,0,E,0,0,0,G,0,G,0,G,0,0,G,0,E,1,1],
+				[1,1,1,C,0,0,0,0,0,0,0,0,C,0,0,0,C,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0,1,1],
+				[0,0,0,0,0,G,0,C,0,0,0,G,0,G,0,G,0,0,G,0,C,1,1],
 				[0,0,0,D,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
 				[1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1],
 				[1,0,0,0,0,0,0,0,0,C,H,C,0,0,0,C,H,C,0,0,0,1,1]]
@@ -2949,7 +3002,7 @@ class Level_Generator:
 
 	def first_level(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
-		test_mode = True
+		test_mode = False
 
 		if test_mode:
 			 self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)

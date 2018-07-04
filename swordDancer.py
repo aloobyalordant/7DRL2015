@@ -491,7 +491,7 @@ class Object:
 				for obj in objectsArray[space_x][space_y]:
 					if obj.fighter:
 						message ("You leap over the " + obj.name + "\'s head!", Color_Personal_Action)
-					elif ob.name == 'fire':
+					elif obj.name == 'fire':
 						message ("You leap through the flames!", Color_Personal_Action)
 				i+=1
 
@@ -509,9 +509,12 @@ class Object:
 		(items_to_pickup) = args
 		for item in items_to_pickup:
 			if item.exists_in_map:
-
+				print (self.name + " picking up " + item.name)
 
 				item.getPickedUp(self)
+
+	def attemptBuy(self, args):
+		return
 
 
 	def draw(self, render_mode = None, bg_color = None):
@@ -532,7 +535,7 @@ class Object:
 			elif self.name == 'firepit':
 				self.char = 333 + randint(0,1)
 
-		#if True:	# temporary hack to test enemy naviation
+		#if True:	# temporary hack to test enemy navigation
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
 
 			#set the color and then draw the character that represents this object at its position
@@ -645,7 +648,7 @@ class Object:
 	
 
 	def getPickedUp(self,picker):
-		global player_weapon, objectsArray
+		global player_weapon, objectsArray, key_count, currency_count
 
 		# things can only be picked up if they are in the map
 		if self.exists_in_map :
@@ -677,6 +680,11 @@ class Object:
 
 
 
+				# take this item off the map
+				self.exists_in_map = False
+				objectsArray[self.x][self.y].remove(self)
+
+
 			elif self.plant is not None:
 				self.plant.tread()
 				if picker is player:
@@ -688,9 +696,35 @@ class Object:
 					self.plant.harvest(picker)
 					garbage_list.append(self)
 
-			# take this item off the map
-			self.exists_in_map = False
-			objectsArray[self.x][self.y].remove(self)
+
+				# take this item off the map
+				self.exists_in_map = False
+				objectsArray[self.x][self.y].remove(self)
+
+
+			elif self.name =='key':
+				# currently only the player can interact with keys
+				if picker is player:
+					message('You snatch up the key.', Color_Personal_Action)
+					key_count += 1
+
+					
+					# take this item off the map
+					self.exists_in_map = False
+					objectsArray[self.x][self.y].remove(self)	
+			elif self.name ==  'favour token':
+				# currently only player can interact with favour tokens
+				if picker is player:
+					message('You take the favour token.', Color_Personal_Action)
+					currency_count += 1
+
+					
+					# take this item off the map
+					self.exists_in_map = False
+					objectsArray[self.x][self.y].remove(self)
+
+
+
 
 
 
@@ -709,6 +743,9 @@ class Object:
 
 		return
 
+
+	def destroy(self, args):
+		self.remove_from_game()
 
 	def remove_from_game(self):
 		global garbage_list
@@ -811,7 +848,8 @@ class ModernAttack(Object):
 					object.getHit(self)
 
 			# Send this attack to the back so other things can be visible!?
-			self.send_to_back()
+			#self.send_to_back()
+			reorder_objects(self.x, self.y)			
 
 		# otherwise, reorder objects anyway because otherwise the things going to be drawed under the attack and we don't want that
 		else:
@@ -909,7 +947,7 @@ class Fire(Object):
 				if object is player:
 					message('You get burned!', Color_Dangerous_Combat)
 				else:
-					message('The ' + object.name.capitalize() + ' gets burned!', Color_Boring_Combat)
+					localMessage('The ' + object.name.capitalize() + ' gets burned!', self.x, self.y, Color_Boring_Combat)
 				
 				if object.fighter:
 					object.fighter.take_damage(1)	# for now, fire just does 1 damage to everything
@@ -959,6 +997,14 @@ class Firepit(Object):
 
 		Object.__init__(self, x, y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
 
+
+
+
+
+	def getHit(self, attack):
+		#explode!
+		arg_set = (self.x, self.y)
+		MiscPhaseEvents.append((self.explode, arg_set))
 
 
 	def take_damage(self, damage_val):
@@ -1017,6 +1063,7 @@ class Door(Object):
 		self.blocks = False
 		self.jumpable = True
 		self.send_to_back()
+		objectsArray[self.x][self.y].remove(self)
 		garbage_list.append(self)
 		
 		#update the map to say that this square isn't blocked, and update the nav data
@@ -1034,6 +1081,7 @@ class Door(Object):
 
 		if self.stickiness > 0:
 			localMessage('The door rattles.', self.x, self.y, Color_Boring_In_World)
+			self.stickiness -= 1
 		else:
 			localMessage('The door opens', self.x, self.y, Color_Boring_In_World)
 			# open the door! For now this is the same as destroying it
@@ -1042,6 +1090,7 @@ class Door(Object):
 			self.blocks = False
 			self.jumpable = True
 			self.send_to_back()
+			objectsArray[self.x][self.y].remove(self)
 			garbage_list.append(self)
 			
 			#update the map to say that this square isn't blocked, and update the nav data
@@ -1059,6 +1108,138 @@ class ElevatorDoor(Door):
 		self.char = '+'
 		self.owner = owner
 		map[self.x][self.y].block_sight = False		# gonna experiment with making these things let you see to the other side.
+
+
+
+
+
+
+
+class Projectile(Object):
+	def __init__(self, x, y, char, name, color, mouseover, tags = set(), shooter = None, direction = 'right', speed = 1, momentum = 1000, damage = 1, bounces = False, attacksOnHit = True, passesThroughJumpables = False): 
+		global MovementPhaseEvents
+		self.shooter = shooter
+		self.direction = direction
+		self.speed = speed
+		self.momentum = momentum
+		self.damage = 1
+		self.bounces = bounces
+		self.attacksOnHit = attacksOnHit
+		self.passesThroughJumpables = passesThroughJumpables
+		tags.add('projectile')
+		Object.__init__(self, x, y, char, name, color,  mouseover = mouseover, tags = tags)
+		self.shooter = shooter			# the entity that shot this object (not the weapon used...)
+
+		(dx,dy) = getVectorFromDirectionAndSpeed (self.direction, self.speed)
+		argset = (dx,dy)
+		MovementPhaseEvents.append((self.projectile_move, argset))
+
+
+	# very similar to object.attemptJump, but with some adjustments for the busy life of a projectile (TODO make adjustments)
+	# TODO add code for passing through enemies and bouncing off walls (e.g. for grenades)
+	def projectile_move(self, argset):
+
+		(dx,dy) = argset
+		blockedByWall = False
+		nearestObstacle = None
+		old_x = self.x
+		old_y = self.y
+		target_x = self.x + dx
+		target_y = self.y + dy
+		stop_x = target_x
+		stop_y = target_y
+		bounce_x = target_x
+		bounce_y = target_y
+		# for now this only works on straight line or diagonal jumps. If we start having knights move jumps or something, we'll have to rethink
+		if (math.fabs(dx) == 0 or math.fabs(dy) == 0 or math.fabs(dx) == math.fabs(dy) and self.momentum > 0):
+			xSign = getSign(dx)
+			ySign = getSign(dy)
+			i = 1;
+			while i <= max(math.fabs(dx), math.fabs(dy)):
+			
+				# check the next space out
+				space_x = self.x + i*xSign
+				space_y = self.y + i*ySign
+				if map[space_x][space_y].blocked:
+					blockedByWall = True
+					bounce_x = self.x + (i-1)*xSign
+					bounce_y = self.y + (i-1)*ySign
+					stop_x = self.x + i*xSign
+					stop_y = self.y + i*ySign
+					break
+				else:
+					# check for blocking, objects
+					for obj in objectsArray[space_x][space_y]:
+						# blocking objects are only a problem if they'renot jumpable, or they're where we're trying to get to
+						if obj.blocks and (not (obj.jumpable and self.passesThroughJumpables) or i == max(math.fabs(dx), math.fabs(dy))):
+							nearestObstacle = obj
+							bounce_x = self.x + (i-1)*xSign
+							bounce_y = self.y + (i-1)*ySign
+							stop_x = self.x + i*xSign
+							stop_y = self.y + i*ySign
+							break
+				# Hey I forgot to increase i!
+				i += 1
+
+		if stop_x != self.x or stop_y != self.y:
+			# do the actual movement
+			# TODO: update if thing is bouncing rather than exploding on impact?
+			print("move " + str(self.x) + "," + str(self.y) + " -- " + str(stop_x) + "," + str(stop_y))
+			self.x = stop_x
+			self.y = stop_y
+			objectsArray[stop_x][stop_y].append(self)
+			objectsArray[old_x][old_y].remove(self)
+
+
+#			# in addition,  recalculate fov and report objects here if the player has just moved
+#			if self is player:
+#				argset = (final_x, final_y)
+#				FinalPreDrawEvents.append((report_objects_here, argset))
+#				fov_recompute = True
+
+		
+
+
+		# Now, if we didn't quite get where we wanted, report on what we jumped into
+		if bounce_x != target_x or bounce_y != target_y:
+			if self.attacksOnHit:
+				print ('boyoyoyoyoyom')
+				self.destroyOnImpact()
+			# TODO: implemnt bouncing if object is bouncey
+
+		# Keep moving, if momentum allows it
+		self.momentum = self.momentum - 1
+		if self.momentum > 0:			
+			(dx,dy) = getVectorFromDirectionAndSpeed (self.direction, self.speed)
+			argset = (dx,dy)
+			print(str(self.momentum))
+			MovementPhaseEvents.append((self.projectile_move, argset))
+		return
+
+	def destroyOnImpact(self):
+		self.momentum = 0	# stop infinite looping hopefully
+		MiscPhaseEvents.append((self.destroy, argset))
+
+
+
+		
+class Bullet(Projectile):
+
+	def __init__(self, x, y, tags = set(), shooter = None, direction = 'right', damage = 1) : 
+		Projectile.__init__(self, x, y, '.', 'bullet', shooter.color, "WOOSH", tags, shooter, direction, speed = 1, momentum = 1000, damage = 1, bounces = False, attacksOnHit = True, passesThroughJumpables = False)
+
+
+
+	def destroyOnImpact(self):
+		global objectsArray, worldAttackList
+		self.momentum = 0	# stop infinite looping hopefully
+		MiscPhaseEvents.append((self.destroy, argset))
+		attack = ModernAttack(x = self.x, y = self.y, color = self.color, attacker = self, damage = self.damage)		#very tempt hack hopefully
+		objectsArray[attack.x][attack.y].append(attack)	
+		worldAttackList.append(attack)
+		attack.send_to_front()
+
+
 
 ####################################
 #
@@ -1553,7 +1734,9 @@ class Energy_Fighter:
 
 	# use up one jump and start its recharge clock
 	def make_jump(self):
+		global player_just_jumped
 		self.hp = self.hp - self.jump_recharge_time
+		player_just_jumped = True
 		#jump_used = False
 		#for i in range(len(self.jump_array)):
 		#	if self.jump_array[i] == 0 and jump_used == False:
@@ -1604,7 +1787,7 @@ class Decider:
 				MovementPhaseEvents.append((self.owner.attemptPickup, argset))
 			if self.decision.buy_decision:
 				argset = (self.decision.buy_decision.seller)
-				PreliminaryPhaseEvents.append((self.attemptBuy, argset))
+				PreliminaryEvents.append((self.attemptBuy, argset))
 
 
 #class Attack_Decision:
@@ -1614,7 +1797,7 @@ class Decider:
 
 
 	def makeAttacks(self, args):	# Attack Phase
-		global objectsArray, worldAttackList
+		global objectsArray, worldAttackList, worldEntitiesList, player_just_attacked
 		(attack_list) = args
 		# todo make this do all the attackey making stuff
 		# Aha, this thing has not been done.
@@ -1631,7 +1814,9 @@ class Decider:
 		
 		if self.owner == player:
 			player_just_attacked = True
-
+			# temp thing: let's also shoot a bullet
+			#new_bullet = Bullet(player.x + 1, player.y, shooter =  player, direction = 'right', damage = 1)
+			#objectsArray[player.x + 1][player.y].append(new_bullet)	
 		return
 
 # Something that can spot the player and raise/lower the alarm
@@ -4014,6 +4199,31 @@ def getSign(num):
 		return -1
 
 
+
+def getVectorFromDirectionAndSpeed(direction, speed):
+
+
+	if direction == 'upleft':
+		vector = (-speed, -speed)
+	elif direction == 'up': 
+		vector = (0, -speed)
+	elif direction == 'upright':
+		vector = (speed, -speed)
+	elif direction == 'right':
+		vector = (speed, 0)
+	elif direction == 'downright':
+		vector = (speed, speed)
+	elif direction == 'down':
+		vector = (0, speed)
+	elif direction == 'downleft':
+		vector = (-speed, speed)
+	elif direction == 'left':
+		vector = (-speed, 0)
+
+	return vector
+
+
+
 def get_mouseover_text():
 	global mouse_coord_x, mouse_coord_y
 	global PANEL_Y, ACTION_SCREEN_X, MESSAGE_PANEL_WIDTH, SCREEN_WIDTH, SCREEN_HEIGHT, PANEL_HEIGHT
@@ -5022,12 +5232,14 @@ def create_strawman(x,y, weapon, command):
 
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
-def make_map():
+def make_map(start_ele_direction = None, start_ele_spawn = None):
 	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters
 
 	lev_gen = Level_Generator()
-
 	lev_set = game_level_settings.get_setting(dungeon_level)
+	# update level settings with what sort of elevator situation we want the player to start in
+	lev_set.start_ele_direction = start_ele_direction
+	lev_set.start_ele_spawn = start_ele_spawn
 	level_data = lev_gen.make_level(dungeon_level, lev_set)
 
 	number_alarmers = 0		# how many things in the level do stuff with the alarm? If this becomes 0, all alarms stuff
@@ -5035,10 +5247,12 @@ def make_map():
 
 	map = level_data.map
 	background_map = level_data.background_map
+	camera_x_offset = camera.x - player.x
+	camera_y_offset = camera.y - player.y
 	player.x = level_data.player_start_x
 	player.y = level_data.player_start_y
-	camera.x = player.x
-	camera.y = player.y
+	camera.x = player.x + camera_x_offset
+	camera.y = player.y + camera_y_offset
 	nearest_points_array = level_data.nearest_points_array
 	center_points = level_data.center_points
 	spawn_points = level_data.spawn_points
@@ -5198,7 +5412,7 @@ def make_map():
 			objectsArray[od.x][od.y].append(new_firepit)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
-			new_plant = Object(od.x, od.y, 289, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
+			new_plant = Object(od.x, od.y, 290, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
 			objectsArray[od.x][od.y].append(new_plant)
 			worldEntitiesList.append(new_plant)
 		elif od.name == 'tree':
@@ -5701,7 +5915,7 @@ def monster_death(monster):
 	monster.fighter = None
 	monster.decider = None
 	monster.name = 'dying ' + monster.name
-	monster.send_to_back()
+#	monster.send_to_back()
 	garbage_list.append(monster)
 
 	#monster may drop a key?
@@ -5709,7 +5923,7 @@ def monster_death(monster):
 		new_key = Object(monster.x,monster.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
 		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
-		reorder_objects(monster.x, monster.y)
+#		reorder_objects(monster.x, monster.y)
 
 	#killing a monster affects some test stuff for the god of destruction
 	if tested_by_destroyer:
@@ -5731,6 +5945,7 @@ def next_level():
 	global colorHandler
 	global dungeon_level, objectsArray, game_state, current_big_message, lev_set, favoured_by_healer, favoured_by_destroyer, favoured_by_deliverer, tested_by_deliverer, enemy_spawn_rate, deliverer_test_count, time_level_started, elevators, alarm_level, key_count, currency_count, spawn_timer,  already_healed_this_level, player, player_weapon, upgrade_array, color_handler
 	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
+	global 	PreliminaryEvents, MovementPhaseEvents, AttackPhaseEvents, DamagePhaseEvents, MiscPhaseEvents, FinalPreDrawEvents, FinalPostDrawEvents
 
 	# doing some test saving
 	save_game()
@@ -5745,6 +5960,20 @@ def next_level():
 		favoured_by_deliverer = True
 
 
+
+
+	# make a note of what elevator situation the player is in,
+	# save a starting direction and position with elevator, if we can find such values
+	start_ele_direction = None
+	start_ele_spawn = None
+	print ("player leaving level at" + str(player.x) + ", " + str(player.y))
+	for ele in elevators:
+		for i in range (len(ele.spawn_points)):
+			(spawn_x, spawn_y) = ele.spawn_points[i]
+			if spawn_x == player.x and spawn_y == player.y:
+				print("that's a bingo!")
+				start_ele_direction = ele.direction
+				start_ele_spawn = i
 
 
 	#message("New ability: " + new_upgrade.name + ". " + new_upgrade.verbose_description, color_energy)
@@ -5832,7 +6061,7 @@ def next_level():
 
 
 	#objects = []
-	make_map()
+	make_map(start_ele_direction, start_ele_spawn)
 	objectsArray[player.x][player.y].append(player)
 	worldEntitiesList.append(player)
 	print( 'heyo (' + str(player.x) + ',' + str(player.y))	
@@ -5867,23 +6096,27 @@ def next_level():
 					map[x][y].explored = False
 					translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
 
-#	for y in range(SCREEN_HEIGHT):
-#		for x in range(SCREEN_WIDTH):
-#			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
-#				#map[x][y].explored = False
-#				translated_console_set_char_background(con, x, y, color_big_alert, color_big_alert)
-#				#print "blah (" + str(x) + "," + str(y) + ")" 
-#			else:
-#				map[x][y].explored = False
-#				translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
-#				#print "bloo (" + str(x) + "," + str(y) + ")" 
-
 
 	initialize_fov()
 
 
 	enemy_spawn_rate = lev_set.enemy_spawn_rate
 	spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
+
+	# Final thing... reset all the different event phases because otherwise you get some game-crashing bugs, especially involving things trying to remove themselves from lists they are no longer part of
+	
+	PreliminaryEvents = []
+	MovementPhaseEvents = []
+	AttackPhaseEvents = []
+	DamagePhaseEvents = []
+	MiscPhaseEvents = []
+	FinalPreDrawEvents = []
+	FinalPostDrawEvents = []
+
+	# TODO: I bet there is a memory leak here and we should take pains to patch it up by maybe getting rid deleting all the things in the world except the player and maybe a special enely or two.
+
+	
+
 
 
 
@@ -6090,8 +6323,8 @@ def drop_weapon(weapon_item):
 	# only drop the item if there isn't an item with the same name in this location.
 	if copy_found == False:
 		objectsArray[weapon_x][weapon_y].append(weapon_item)
-		weapon_item.send_to_back()
-
+		#weapon_item.send_to_back()
+		reorder_objects(weapon_x, weapon_y)
 
 def create_shrine(x,y,god_type):
 		global god_healer, god_destroyer, god_deliverer
@@ -6517,7 +6750,7 @@ def render_all(render_mode = None):
 
 	for y in range(ACTION_SCREEN_HEIGHT):
 		for x in range(ACTION_SCREEN_WIDTH):
-			con.draw_char(x + ACTION_SCREEN_X, y, None, fg=None, bg=color_fog_of_war)
+			con.draw_char(x + ACTION_SCREEN_X, y, ' ', fg=None, bg=color_fog_of_war)
 
 	#go through all tiles, and set their background color according to the FOV
 #	print("'fixed':	 UPDATING BACKGROUNDS AS PART OF RENDER_ALL")
@@ -6537,7 +6770,7 @@ def render_all(render_mode = None):
 					if not visible:
 						#if it's not visible right now, the player can only see it if it's explored	
 						if map[x][y].explored:
-						#if True: 	#temp making walls and such visible to check enemy behaviour
+						#if True: 	#temp making walls and such visible to check enemy behaviour/ navigation
 							#it's out of the player's FOV
 							if wall:
 								con.draw_char(x - x_offset, y - y_offset, None, fg = None, bg =color_dark_wall)
@@ -6575,6 +6808,7 @@ def render_all(render_mode = None):
 					for object in objectsArray[x][y]:
 						#if libtcod.map_is_in_fov(fov_map, x, y) == True:
 						if fov_map.fov[x, y] == True:
+						#if True:		#temp hack to test enemy navigation
 							if object.name == 'water':
 								#libtcod.console_set_char_background(con, object.x - x_offset, object.y - y_offset, water_background_color, libtcod_BKGND_SET )
 								con.draw_char(object.x - x_offset, object.y - y_offset, None, fg = None, bg = water_background_color)
@@ -7503,7 +7737,7 @@ def get_info_panel_mouseover_text(x,y):
 
 def doGlobalPreliminaryEvents():
 	global 	game_time, spawn_timer,	player_hit_something, player_clashed_something, player_got_hit,	player_just_jumped, player_just_attacked, number_hit_by_player
-	global player, nearest_points_array, worldEntitiesList
+	global player, nearest_points_array, worldEntitiesList, nearest_center_to_player
 
 
 	game_time += 1
@@ -7542,8 +7776,10 @@ def doGlobalPreliminaryEvents():
 
 def doGlobalPreDrawPhaseEvents():
 	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
-	global  ready_for_next_level
+	global  level_complete, ready_for_next_level
 	global player_just_attacked, player_got_hit, player_just_jumped, cold_energy_parity, upgrade_array, number_hit_by_player
+	global time_since_last_elevator_message
+	global alarm_level
 
 	#FINALPREDRAW
 	# Reveal parts of the UI based on some early-game triggers. Another part where I don't know where it goes.
@@ -7617,23 +7853,164 @@ def doGlobalPreDrawPhaseEvents():
 	do_weapon_degradation()
 
 
-	#FINALPREDRAW
-	# finally... go to the next level maybe?
-	if ready_for_next_level == True:
-		ready_for_next_level = False
-		next_level()
+
+
+
+
+	# finalpredraw?
+	#update elevator so they know whether to shut their doors
+	time_since_last_elevator_message = time_since_last_elevator_message + 1
+	player_can_see_elevator_opening = False
+	for ele in elevators:
+		elevator_occupied = False
+		player_in_elevator = False
+		player_near_elevator = False
+		player_in_doorway = False
+		for (x,y) in ele.spawn_points:
+			if is_blocked(x, y):
+				elevator_occupied = True
+			if player.x == x and player.y == y:
+				player_in_elevator = True
+			if player.x <= x+ ELEVATOR_DISTANCE_CHECK and player.x >= x -ELEVATOR_DISTANCE_CHECK and player.y <= y + ELEVATOR_DISTANCE_CHECK and player.y >= y - ELEVATOR_DISTANCE_CHECK:
+				player_near_elevator = True
+				# if player not authorised, tell them so. Unless they've been spoken at by an elevator recently.
+				if time_since_last_elevator_message > 10 and not ele.player_authorised :
+					message("\"Access to the next floor is restricted by security. " + str(lev_set.keys_required) + " keys required.\"", Color_Message_In_World)
+					time_since_last_elevator_message = 0
+		for (x,y) in ele.door_points:
+			if player.x == x and player.y == y:
+				player_in_doorway = True				
+		ele.update(elevator_occupied, player_in_elevator, player_near_elevator, player_in_doorway)
+		if ele.doors_opening == True:
+			#play a 'ding' noise if the player can see the doors opening
+			for door in ele.special_door_list:
+				# if libtcod.map_is_in_fov(fov_map, door.x, door.y):
+				if fov_map.fov[door.x, door.y]:
+					player_can_see_elevator_opening = True
+
+			#close the doors!				
+			for door in ele.special_door_list:
+				door.currently_invisible = True
+				door.blocks = False
+				map[door.x][door.y].block_sight = False	
+				map[door.x][door.y].blocked = False	
+			nav_data_changed = True
+			initialize_fov()
+		elif ele.doors_closing == True:
+			#print "doors closing"
+			#close the doors!				
+			for door in ele.special_door_list:
+				door.currently_invisible = False
+				door.blocks = True
+				map[door.x][door.y].block_sight = True	
+				map[door.x][door.y].blocked = True						
+			nav_data_changed = True
+			initialize_fov()
+		if (player_in_elevator and ele.ready_to_go_up == True):
+			#print "next level maybe?"
+			ready_for_next_level = True
+		#play a "ding" if the player can see elevator doors opening?
+	if player_can_see_elevator_opening:
+		message("Ding!", Color_Message_In_World)
+		# update elevators with whether the player is authorized - for now this is just based on whether there are security drones around.
+	# later this process will become a bit more complicated (and might be folded into Elevator.update)
+	level_complete = False
+	if lev_set.boss is not None:
+		level_complete = True
+		#check for bosses?
+		#print ("CHECKING FOR BOSSES")
+		for object in worldEntitiesList:
+			#for object in objects:
+			if object.name == lev_set.boss:
+				level_complete = False
+
+
+
+	#finalpostdraw?
+	#elif number_security_drones <= 0:
+	#	level_complete = True
+	elif lev_set.keys_required <= key_count:
+		level_complete = True
+	if level_complete is True:
+		for ele in elevators:
+			if not ele.player_authorised:
+				ele.set_player_authorisation(True)
+
+
+
+
+	spotted = False
+
+	# FINALPOSTDRAW? AND ALSO FINALPREDRAW? Kind of split up via some decision mecahnism
+	#UPDATE THE ALARMERS AND OTHER THINGS
+#	print ("'fixed' UPDATING ALARMERS AND OTHER THINGS")
+	#also track what alarmer is closest to recognizing you
+	large_count_down_val = 1000
+	temp_alarm_countdown = large_count_down_val
+	for ob in worldEntitiesList:
+	#UPDATE THE ALARMERS
+		if ob.alarmer is not None:
+			if fov_map.fov[ob.x, ob.y]:	
+				ob.alarmer.update(True)
+				spotted = True
+				# keep track of shortest alarm count still ongoing
+				if ob.alarmer.alarm_countdown > 0 and ob.alarmer.alarm_countdown < temp_alarm_countdown:
+					temp_alarm_countdown = ob.alarmer.alarm_countdown 
+			else: 
+				ob.alarmer.update(False)
+
+	if temp_alarm_countdown < large_count_down_val:
+		message(str(temp_alarm_countdown) + " seconds from being recognized.", Color_Stat_Info)
+
+
+
+	#UPDATE THE PLANTS
+	#	if ob.plant is not None:
+	#		ob.plant.update()
+	#		ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
+	#		ob.char = ob.plant.symbol
+
+
+
+	# FINALPREDRAW
+
+	# Now do alarm soundings! and other alarmer-based stuff
+#	for ob in objects:
+#	print ("'fixed' UPDATING ALARMERS")	
+	for ob in worldEntitiesList:
+		if ob.alarmer is not None:
+		#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
+			# first, update the alarmer
+	
+			#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
+			# next, do things depending on the alarmer's state
+			if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
+				ob.color = ob.alarmer.idle_color
+			elif ob.alarmer.status == 'suspicious':
+				if ob.alarmer.prev_suspicious == False:
+					message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
+					ob.color = ob.alarmer.suspicious_color
+			elif ob.alarmer.status == 'raising-alarm':
+				alarm_level += ob.alarmer.alarm_value
+				spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
+				message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
+				ob.color = ob.alarmer.alarmed_color
+			elif ob.alarmer.status == 'alarm-raised':
+				ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
 
 
 
 def doGlobalPostDrawPhaseEvents():
 	global garbage_list
-
+	global  ready_for_next_level
+	global spawn_timer
 
 
 	# reset upgrade statuses to 'dormant' ? this is probably not where this goes...
 	for upgrade in upgrade_array:
 		upgrade.status = 'dormant'
+
 
 	#FINALPOSTDRAW
 	#refresh decisions!
@@ -7652,6 +8029,81 @@ def doGlobalPostDrawPhaseEvents():
 			if object.fighter:
 				object.fighter.in_water = water_here
 
+	#PROB GOES IN FINALPOSTDRAW SINCE IT'S TO DO WITH LEVEL SPAWNING?
+	# oh let's start creating enemies at random intervals? 
+	#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_drones > 0:
+	if alarm_level > 0 and spawn_timer <= 0:
+		#reset timer
+		spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
+	#	reorder_objects() #temp test
+	#	print('tick')
+	#	print('enemy spawn rate = ' + str(enemy_spawn_rate))
+	#	print('total enemy prob = ' + str(lev_set.total_enemy_prob))
+	#	print('enemy probabilites = ' + str( lev_set.enemy_probabilities))
+#		for (x,y) in spawn_points:
+
+		# check if level is complete
+		level_complete = False
+		if lev_set.boss is not None:
+			level_complete = True
+			#check for bosses?
+#			for object in objects:
+#			print ("'fixed' CHECKING FOR BOSS AGAIN")
+			for object in worldEntitiesList:
+				if object.name == lev_set.boss:
+					level_complete = False
+		#elif number_security_drones <= 0:
+		#	level_complete = True
+		elif lev_set.keys_required <= key_count:
+			level_complete = True
+
+
+
+		
+
+		# are there too many monsters?
+		total_monsters = 0
+#				for object in objects:
+#				print ("'fixed' COUNTING MONSTERS")
+		for object in worldEntitiesList:
+			if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
+				total_monsters = total_monsters + 1
+
+		# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
+		# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
+		if total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
+			elevator_shortlist = []
+			if lev_set.level_type == 'arena':	#pick one elvator at random
+				choice =  randint( 0, len(elevators)-1)
+				elevator_shortlist.append(elevators[choice])
+			else:					# do all elevators at once
+				elevator_shortlist = elevators
+			for ele in elevator_shortlist:
+				#pick a random spawn point from those available
+				num =  randint( 0, len(ele.spawn_points)-1)
+				(x,y) = ele.spawn_points[num] 
+				#for (x,y) in ele.spawn_points:
+				if not is_blocked(x, y):
+					#print('ding')
+		#ELEVATOR SPAWNING MONKEY HORSESHOE
+					total_enemy_prob = lev_set.total_enemy_prob
+					enemy_probabilities = lev_set.enemy_probabilities
+					enemy_name = 'none'
+					num = randint(0, total_enemy_prob)
+					for (name, prob) in enemy_probabilities:
+					#	print('hi')
+						#print('(' + name + ',' + str(prob) + ')')
+						if num <= prob:
+							enemy_name = name
+#							print('tick' + str(x) + ',' + str(y) + ' ' + name)
+							monster = create_monster(x,y, name)
+							objectsArray[x][y].append(monster)
+							worldEntitiesList.append(monster)
+							break
+						else:
+							num -= prob
+
+
 
 	# do decisions??? at this point??? or after garbage collection???????
 	for ob in worldEntitiesList:
@@ -7659,7 +8111,6 @@ def doGlobalPostDrawPhaseEvents():
 		#ob.createActionEventDetails()
 		if ob.decider:
 			ob.decider.decide()
-
 
 
 	# Also do garbage collection stuff because the previous phase mostly probably involved deleting stuff
@@ -7677,7 +8128,18 @@ def doGlobalPostDrawPhaseEvents():
 
 
 
-
+	#FINALPREDRAW
+	# finally... go to the next level maybe?
+	if ready_for_next_level == True:
+		ready_for_next_level = False
+		next_level()
+		# also we do a special one-off drawing of everything
+		nav_data_changed = True
+		initialize_fov()		# this is ok, right? update the field of view stuff
+		fov_recompute = True
+		render_all()
+		translated_console_flush()
+		print("hey i just drew everything on level change")
 
 ###############################################
 
@@ -7947,7 +8409,7 @@ while not translated_console_is_window_closed():
 
 
 
-		potential_open_list = []
+	#	potential_open_list = []
 
 
 
@@ -8101,90 +8563,6 @@ while not translated_console_is_window_closed():
 #		time.sleep(0.05)
 
 
-		# finalpostdraw?
-		
-		#update elevator so they know whether to shut their doors
-		time_since_last_elevator_message = time_since_last_elevator_message + 1
-		player_can_see_elevator_opening = False
-		for ele in elevators:
-			elevator_occupied = False
-			player_in_elevator = False
-			player_near_elevator = False
-			player_in_doorway = False
-			for (x,y) in ele.spawn_points:
-				if is_blocked(x, y):
-					elevator_occupied = True
-				if player.x == x and player.y == y:
-					player_in_elevator = True
-				if player.x <= x+ ELEVATOR_DISTANCE_CHECK and player.x >= x -ELEVATOR_DISTANCE_CHECK and player.y <= y + ELEVATOR_DISTANCE_CHECK and player.y >= y - ELEVATOR_DISTANCE_CHECK:
-					player_near_elevator = True
-					# if player not authorised, tell them so. Unless they've been spoken at by an elevator recently.
-					if time_since_last_elevator_message > 10 and not ele.player_authorised :
-						message("\"Access to the next floor is restricted by security. " + str(lev_set.keys_required) + " keys required.\"", Color_Message_In_World)
-						time_since_last_elevator_message = 0
-			for (x,y) in ele.door_points:
-				if player.x == x and player.y == y:
-					player_in_doorway = True				
-			ele.update(elevator_occupied, player_in_elevator, player_near_elevator, player_in_doorway)
-			if ele.doors_opening == True:
-				#play a 'ding' noise if the player can see the doors opening
-				for door in ele.special_door_list:
-					# if libtcod.map_is_in_fov(fov_map, door.x, door.y):
-					if fov_map.fov[door.x, door.y]:
-						player_can_see_elevator_opening = True
-
-
-				#close the doors!				
-				for door in ele.special_door_list:
-					door.currently_invisible = True
-					door.blocks = False
-					map[door.x][door.y].block_sight = False	
-					map[door.x][door.y].blocked = False	
-				nav_data_changed = True
-				initialize_fov()
-			elif ele.doors_closing == True:
-				#print "doors closing"
-				#close the doors!				
-				for door in ele.special_door_list:
-					door.currently_invisible = False
-					door.blocks = True
-					map[door.x][door.y].block_sight = True	
-					map[door.x][door.y].blocked = True						
-				nav_data_changed = True
-				initialize_fov()
-			if (player_in_elevator and ele.ready_to_go_up == True):
-				#print "next level maybe?"
-				ready_for_next_level = True
-
-		#play a "ding" if the player can see elevator doors opening?
-		if player_can_see_elevator_opening:
-			message("Ding!", Color_Message_In_World)
-
-		# update elevators with whether the player is authorized - for now this is just based on whether there are security drones around.
-		# later this process will become a bit more complicated (and might be folded into Elevator.update)
-		level_complete = False
-		if lev_set.boss is not None:
-			level_complete = True
-			#check for bosses?
-			#print ("CHECKING FOR BOSSES")
-			for object in worldEntitiesList:
-				#for object in objects:
-				if object.name == lev_set.boss:
-					level_complete = False
-
-
-
-
-		#finalpostdraw?
-
-		#elif number_security_drones <= 0:
-		#	level_complete = True
-		elif lev_set.keys_required <= key_count:
-			level_complete = True
-		if level_complete is True:
-			for ele in elevators:
-				if not ele.player_authorised:
-					ele.set_player_authorisation(True)
 
 
 
@@ -8203,40 +8581,6 @@ while not translated_console_is_window_closed():
 
 
 
-		spotted = False
-
-
-		# FINALPOSTDRAW? AND ALSO FINALPREDRAW? Kind of split up via some decision mecahnism
-		#UPDATE THE ALARMERS AND OTHER THINGS
-#		print ("'fixed' UPDATING ALARMERS AND OTHER THINGS")
-		#also track what alarmer is closest to recognizing you
-		large_count_down_val = 1000
-		temp_alarm_countdown = large_count_down_val
-		for ob in worldEntitiesList:
-		#UPDATE THE ALARMERS
-			if ob.alarmer is not None:
-				if fov_map.fov[ob.x, ob.y]:	
-					ob.alarmer.update(True)
-					spotted = True
-					# keep track of shortest alarm count still ongoing
-					if ob.alarmer.alarm_countdown > 0 and ob.alarmer.alarm_countdown < temp_alarm_countdown:
-						temp_alarm_countdown = ob.alarmer.alarm_countdown 
-				else: 
-					ob.alarmer.update(False)
-
-
-		#UPDATE THE PLANTS
-			if ob.plant is not None:
-				ob.plant.update()
-				ob.name = ob.plant.name	#hey this is probably not the most efficient way to do this
-				ob.char = ob.plant.symbol
-
-		if temp_alarm_countdown < large_count_down_val:
-			message(str(temp_alarm_countdown) + " seconds from being recognized.", Color_Stat_Info)
-
-
-
-
 
 
 
@@ -8248,7 +8592,7 @@ while not translated_console_is_window_closed():
 		# now create attacks!
 		# MOVING : REDOING THIS STUFF, SHOULD BE DONE ON A PER-FIGHTER BASIS IN THE makeAttacks method of decider object
 
-		deletionList = []
+		#deletionList = []
 ##		print ("'fixed'  CREATING ATTAKS")
 #		for object in worldEntitiesList:
 #			if object.decider:
@@ -8399,7 +8743,7 @@ while not translated_console_is_window_closed():
 
 
 		# temp terrible hack
-		player_clashed_something = True
+		#player_clashed_something = True
 
 
 		#for object in objects:
@@ -8511,134 +8855,12 @@ while not translated_console_is_window_closed():
 
 
 
-		# FINALPREDRAW
-
-		# Now do alarm soundings! and other alarmer-based stuff
-#		for ob in objects:
-
-#		print ("'fixed' UPDATING ALARMERS")	
-		for ob in worldEntitiesList:
-			if ob.alarmer is not None:
-				#prev_suspicious = (ob.alarmer.status == 'suspicious')	# ugh what horrible code
-				# first, update the alarmer
-		
-				#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
-				# next, do things depending on the alarmer's state
-				if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
-					ob.color = ob.alarmer.idle_color
-				elif ob.alarmer.status == 'suspicious':
-					if ob.alarmer.prev_suspicious == False:
-						message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
-						ob.color = ob.alarmer.suspicious_color
-				elif ob.alarmer.status == 'raising-alarm':
-					alarm_level += ob.alarmer.alarm_value
-					spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
-					message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
-					ob.color = ob.alarmer.alarmed_color
-				elif ob.alarmer.status == 'alarm-raised':
-					ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
 
 
 
 
 
-		#PROB GOES IN FINALPOSTDRAW SINCE IT'S TO DO WITH LEVEL SPAWNING?
 
-		# oh let's start creating enemies at random intervals? 
-		#if alarm_level > 0 and spawn_timer % (enemy_spawn_rate/alarm_level) == 0: #and number_security_drones > 0:
-		if alarm_level > 0 and spawn_timer <= 0:
-			#reset timer
-			spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
-
-		#	reorder_objects() #temp test
-		#	print('tick')
-		#	print('enemy spawn rate = ' + str(enemy_spawn_rate))
-		#	print('total enemy prob = ' + str(lev_set.total_enemy_prob))
-		#	print('enemy probabilites = ' + str( lev_set.enemy_probabilities))
-#			for (x,y) in spawn_points:
-
-			# check if level is complete
-			level_complete = False
-			if lev_set.boss is not None:
-				level_complete = True
-				#check for bosses?
-#				for object in objects:
-
-#				print ("'fixed' CHECKING FOR BOSS AGAIN")
-				for object in worldEntitiesList:
-					if object.name == lev_set.boss:
-						level_complete = False
-
-#				print ("CHECKING FOR BOSS AGAIN")
-#				for y in range(MAP_HEIGHT):
-#					for x in range(MAP_WIDTH):
-#						for object in objectsArray[x][y]:
-#							if object.name == lev_set.boss:
-#								level_complete = False
-			#elif number_security_drones <= 0:
-			#	level_complete = True
-			elif lev_set.keys_required <= key_count:
-				level_complete = True
-
-
-
-		
-
-			# are there too many monsters?
-			total_monsters = 0
-#			for object in objects:
-
-#			print ("'fixed' COUNTING MONSTERS")
-			for object in worldEntitiesList:
-				if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
-					total_monsters = total_monsters + 1
-
-
-#			print ("COUNTING MONSTERS")
-#			for y in range(MAP_HEIGHT):
-#				for x in range(MAP_WIDTH):
-#					for object in objectsArray[x][y]:
-#						if object.fighter is not None:
-#							total_monsters = total_monsters + 1
-
-			# print ("ummm " + str(total_monsters) + " vs " + str( lev_set.max_monsters))
-
-
-			# if level_complete == False and    #currently commented out because it stops spawning when you have enough keys
-			# probably the 'level_complete' stuff should be looked at and possibly taken out altogether
-			if total_monsters < lev_set.max_monsters:		#otherwise, stop the spawning
-
-				elevator_shortlist = []
-				if lev_set.level_type == 'arena':	#pick one elvator at random
-					choice =  randint( 0, len(elevators)-1)
-					elevator_shortlist.append(elevators[choice])
-				else:					# do all elevators at once
-					elevator_shortlist = elevators
-				for ele in elevator_shortlist:
-					#pick a random spawn point from those available
-	
-					num =  randint( 0, len(ele.spawn_points)-1)
-					(x,y) = ele.spawn_points[num] 
-					#for (x,y) in ele.spawn_points:
-					if not is_blocked(x, y):
-						#print('ding')
-	#ELEVATOR SPAWNING MONKEY HORSESHOE
-						total_enemy_prob = lev_set.total_enemy_prob
-						enemy_probabilities = lev_set.enemy_probabilities
-						enemy_name = 'none'
-						num = randint(0, total_enemy_prob)
-						for (name, prob) in enemy_probabilities:
-						#	print('hi')
-							#print('(' + name + ',' + str(prob) + ')')
-							if num <= prob:
-								enemy_name = name
-#								print('tick' + str(x) + ',' + str(y) + ' ' + name)
-								monster = create_monster(x,y, name)
-								objectsArray[x][y].append(monster)
-								worldEntitiesList.append(monster)
-								break
-							else:
-								num -= prob
 
 	
 

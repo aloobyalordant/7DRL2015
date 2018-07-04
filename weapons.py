@@ -45,7 +45,7 @@ ATTCKDOWNALT	 = "ATTCKDOWNALT"
 
 # A generic class for weapons, that hopefully I can make everything an extension of
 class Generic_Weapon:
-	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50, default_attack_strength = 1):
+	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50, default_attack_strength = 1, combat_type = 'melee'):
 		self.name = name
 		self.max_charge = max_charge
 		self.current_charge = current_charge
@@ -54,6 +54,8 @@ class Generic_Weapon:
 		self.just_attacked = False
 		self.default_attack_strength = default_attack_strength
 		self.command_items = []
+		self.projectile_command_items = []
+		self.combat_type = combat_type
 		#self.command_list = 'acdeqswxz'
 
 	# Look up the attack corresponding to a command, use up the required charge and return the attach data
@@ -113,8 +115,16 @@ def create_abstract_attack_data(temp_array, ava_x_pos, ava_y_pos):
 
 
 
-
-
+def create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos):
+	return_array = []
+	#changed 'xrange' to 'range' for python3
+	for j in range(len(temp_array)):
+		for i in range(len(temp_array[j])):
+			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
+			if (temp_array[j][i] is not None):
+				(projectile_name, direction) = temp_array[j][i]
+				return_array.append((i-ava_x_pos,j-ava_y_pos,projectile_name, direction))
+	return return_array
 
 
 
@@ -2845,6 +2855,35 @@ class Weapon_Halberd(Generic_Weapon):
 
 #############
 
+
+
+#class Weapon_Gun(Projectile_Weapon):
+class Weapon_Gun(Generic_Weapon):
+
+	def __init__(self):
+		Projectile_Weapon.__init__(self, 'gun', 2, 2, 2)
+		default_usage = self.default_usage
+			
+		projectile_name = 'bullet'
+
+		# So.. projectile attack info needs to tell you where projectile appear, and for each of those: what kind of item it is, and what direction it is going in.
+		o = None,
+		command = ATTCKUP
+		P = (projectile_name, 'up')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,P,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+
+
+##############
 
 
 

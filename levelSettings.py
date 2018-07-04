@@ -476,7 +476,7 @@ class Level_Settings:
 
 class Level_Setting:
 
-	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = None,  min_room_monsters = 1, enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, number_keys = 0, keys_required = 0, number_shrines = 1, guard_probability = (1,25), initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = [], door_probability = (1,8), security_timer = 4, room_size_first_dice = (3,7), room_size_second_dice = (3,7)):
+	def __init__(self, max_map_width = MAP_WIDTH, max_map_height = MAP_HEIGHT, max_rooms = MAX_ROOMS, room_max_size = ROOM_MAX_SIZE, room_min_size = ROOM_MIN_SIZE, max_room_monsters = None,  min_room_monsters = 1, enemy_probabilities = None, enemy_spawn_rate = DEFAULT_ENEMY_SPAWN_RATE, boss=None, final_level = False, level_type = 'classic', max_monsters = MAX_MONSTERS, number_sec_drones = 1, number_keys = 0, keys_required = 0, number_shrines = 1, guard_probability = (1,25), initial_alarm_level = 1, color_scheme = 'lobbyTest', effects = [], door_probability = (1,8), security_timer = 4, room_size_first_dice = (3,7), room_size_second_dice = (3,7), start_ele_direction = None, start_ele_spawn = None):
 		self.max_map_width = max_map_width
 		self.max_map_height = max_map_height
 		self.room_max_size = room_max_size
@@ -510,5 +510,6 @@ class Level_Setting:
 		self.security_timer = security_timer 	# how long security drones take before  they spot you
 		self.room_size_first_dice = room_size_first_dice   # dice (a,b) takes random values between a and b inclusive;
 		self.room_size_second_dice = room_size_second_dice # room height or width is determined by rolling two dice and adding together
-	
+		self.start_ele_direction = start_ele_direction
+		self.start_ele_spawn = start_ele_spawn
 		
