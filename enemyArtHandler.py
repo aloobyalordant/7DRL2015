@@ -1,14 +1,17 @@
 import csv
+import os
 # A class that loads non-mechanical enemy data stuff (names, sprite location, colors, description) from a csv file,
 # and then returns that data to the game when requested
 class EnemyArtHandler:
-	def __init__(self,dataFile = "enemyArtData.csv"):
-		print("Loading enemy art data from " + dataFile)
+	def __init__(self,pathname, dataFile = "enemyArtData.csv"):
+
+		datapath = os.path.join(pathname,  dataFile)
+		print("Loading enemy art data from " + datapath)
 
 		# create a dictionary for storing all the enemy data.
 		self.enemyArtDict = {}
 
-		with open(dataFile) as csvfile:
+		with open(datapath) as csvfile:
 			reader = csv.DictReader(csvfile)
 			for row in reader:
 				self.enemyArtDict[row['game_name']]=(row['Name'], row['Symbol'], (int(row['colorR']), int(row['colorG']), int(row['colorB'])), row['Description'] )

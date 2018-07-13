@@ -7447,6 +7447,7 @@ def load_game():
 def initialise_game():
 	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme, enemyArtHandler
 	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
+	global pathname
 	current_big_message = 'You weren\'t supposed to see this'
 
 	spawn_timer = 0
@@ -7464,7 +7465,7 @@ def initialise_game():
 
 
 	# set up enemy graphics
-	enemyArtHandler = EnemyArtHandler()
+	enemyArtHandler = EnemyArtHandler(pathname)
 
 	# do a test ofEnemyArtHandmer
 	#print("testing csv loading")
