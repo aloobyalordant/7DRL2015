@@ -1,0 +1,17 @@
+game_name,Name,Symbol,colorR,colorG,colorB,Description,Notes
+greenhorn,Swordsman,256,2,165,214,This enemy is just excited to be here.,Wields sword; early game easy enemy
+bustard,Rook,258,0,139,5,The tower's elite robot security force. Can't move or attack diagonally.,Wields Spear; early game; can’t move diaognally
+crane,Bludger,261,157,82,150,Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.,Wields Broom; early game
+dove,Shibop,259,219,25,32,Looooooves diagonals.,Wields Pike; early game; moves diagonally
+falcon,Sai Guy,264,214,106,54,"Wields two weapons. One weapon is aimed at you. The other one, who knows.",
+eagle,Halberd Person,257,131,62,2,Long range attacker. You probably need to stand back further than you think.,Wields halberd; earlyish ranged enemy
+axe maniac,Axe Maniac,260,128,64,0,Heeeere’s Johnny!,Wields Axe; scary to face
+boman,Boman,'B’,0,0,0,todo,Wields Staff
+tridentor,Tridentor,'T’,0,0,0,Able to attack in water. Wields a three-pronged weapon.,Wields Trident
+nunchuck fanatic,Nuisance,'N’,0,0,0,Frankly it’s a miracle they haven't hit themselves yet.,"Wields nunchuck, which is a silly weapon in this game"
+wizard,Wizard,'W’,0,0,0,"Your nemesis, in the flesh at last!",Wields Ring of Power; Final boss!
+ninja,Ninja,262,0,139,5,Cautious and sneaky. Doesn't like a fair fight.,Wields Dagger
+,,'X’,0,0,0,,
+strawman,Strawman,263,2,165,214,A training dummy. Does no attacks.,Wierd tutorial enemy
+flailing strawman,Strawman,263,2,165,214,"A training dummy, blindly attacking with a real weapon. What could go wrong?",Wierd tutorial enemy
+strawman on wheels,Strawman,263,2,165,214,A moving target to test your hand-eye co-ordination.,Wierd tutorial enemy

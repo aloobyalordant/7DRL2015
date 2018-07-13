@@ -15,6 +15,7 @@ from powerUps import PowerUp, WallHugger, Mindfulness, NeptunesBlessing, Amphibi
 from saveDataHandler import SaveDataHandler #, SaveDatum
 from controlHandler import ControlHandler
 from colorHandler import ColorHandler
+from enemyArtHandler import EnemyArtHandler
 # from object import Object  #Nope
 
 SCREEN_WIDTH = 70
@@ -5011,26 +5012,31 @@ def place_objects(room):
 
 def create_monster(x,y, name, guard_duty = False):
 	global number_alarmers
+	global enemyArtHandler
+	(data_name, data_symbol, data_color, data_description) = enemyArtHandler.getEnemyArtData(name)
 	if name == 'strawman':
 		# let's make a strawman!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_swordsman, faded_attack_color = color_swordsman, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = data_color, faded_attack_color = data_color, bleeds = False)
 		ai_component = Strawman_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', color_swordsman, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy. Does no attacks.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = data_description)
+#"A training dummy. Does no attacks.")
 
 	elif name == 'flailing strawman':
 		# let's create a strawman that can theoretically do damage!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = data_color, faded_attack_color = data_color, bleeds = False)
 		ai_component = Strawman_AI(weapon = Weapon_Sai())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy with a weapon strapped to it. Watch out!")	
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = data_description)
+#"A training dummy with a weapon strapped to it. Watch out!")	
 
 	elif name == 'strawman on wheels':
 		# let's create a strawman that can move around!
-		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_boman, faded_attack_color = color_boman, bleeds = False)
+		strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = data_color, faded_attack_color = data_color, bleeds = False)
 		ai_component = Strawman_on_wheels_AI(weapon = None)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'A', 'strawman on wheels', color_boman, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A moving target to test your hand-eye co-ordination.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = data_description)
+#mouseover = "A moving target to test your hand-eye co-ordination.")
 				
 	elif name == 'swordsman':
 		#create an orc
@@ -5051,18 +5057,20 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'boman':
 		#create a troll
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Boman_AI(weapon = Weapon_Staff(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'B', 'boman', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Dangerous up close, with a diagonal attack.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)
+#"Dangerous up close, with a diagonal attack.")
 
 
 	elif name == 'greenhorn':
 		#create a troll
-		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Greenhorn_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 261, 'greenhorn', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "This enemy is just excited to be here.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)
+		# "This enemy is just excited to be here.")
 
 
 	elif name == 'rook':
@@ -5070,7 +5078,7 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'R', 'rook', color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Can't move diagonally, but woe betide anyone who takes them head on.")
+		monster = Object(x, y, 'R', "Rook", color_rook, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Can't move diagonally, but woe betide anyone who takes them head on.")
 
 	elif name == 'albatross':
 		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
@@ -5080,41 +5088,41 @@ def create_monster(x,y, name, guard_duty = False):
 
 
 	elif name == 'bustard':
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Rook_AI(weapon = Weapon_Spear(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 274, 'rook', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "The tower's elite robot security force. Can't move or attack diagonally.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) #"The tower's elite robot security force. Can't move or attack diagonally.")
 
 
 	elif name == 'crane':
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		#ai_component = Ninja_Crane_AI(weapon = Weapon_Broom(), guard_duty = guard_duty)
 		ai_component = BasicMonster(weapon = Weapon_Broom(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 264, 'bludger', color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =   "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)# "Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.")
 
 
 	elif name == 'dove':
 		#create a troll
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Dove_AI(weapon = Weapon_Pike(), guard_duty= guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 260, 'diagonatrix', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Looooooves diagonals.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)# "Looooooves diagonals.")
 
 	elif name == 'eagle':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Eagle_AI(weapon = Weapon_Halberd(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'E', 'eagle', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Long range attacker. You probably need to stand back further than you think.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)# "Long range attacker. You probably need to stand back further than you think.")
 
 
 	elif name == 'falcon':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_swordsman, faded_attack_color = color_swordsman)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = BasicMonster(weapon = Weapon_Sai(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'F', 'falcon', color_swordsman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover =  "Wields two weapons. One weapon is aimed at you. The other one, who knows.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)  #"Wields two weapons. One weapon is aimed at you. The other one, who knows.")
 
 
 #	elif name == 'stupid rook':
@@ -5127,18 +5135,20 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'nunchuck fanatic':
 		#create a troll
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = BasicMonster(weapon = Weapon_Nunchuck(), guard_duty= guard_duty, attack_dist = 2)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'F', 'nunchuck fanatic', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's frankly a miracle they haven't hit themselves with it yet.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		# "It's frankly a miracle they haven't hit themselves with it yet.")
 
 
 	elif name == 'axe maniac':
 		#create a guy with an axe!
-		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac)
+		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death,  attack_color = data_color, faded_attack_color = data_color)
 		ai_component = BasicMonster(weapon = Weapon_Axe(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'M', 'axe maniac', color_axe_maniac, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Bad news.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		# "Bad news.")
 
 	elif name == 'samurai':
 		#create a guy with an axe!
@@ -5149,10 +5159,11 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'tridentor':
 		#create a n aquatic enemy!
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_tridentor, faded_attack_color = color_tridentor)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Tridentor_AI(weapon = Weapon_Trident(), guard_duty = guard_duty)
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'T', 'tridentor', color_tridentor, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Able to attack in water. Wields a three-pronged weapon.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		#"Able to attack in water. Wields a three-pronged weapon.")
 
 
 	elif name == 'faerie':
@@ -5183,18 +5194,20 @@ def create_monster(x,y, name, guard_duty = False):
 
 	elif name == 'ninja':
 		#create a sneaky ninja!
-		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = color_ninja, faded_attack_color = color_ninja)
+		fighter_component = Fighter(hp=2, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Ninja_AI(weapon = Weapon_Dagger())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'N', 'ninja', color_ninja, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Cautious and sneaky. Doesn't like a fair fight.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		#"Cautious and sneaky. Doesn't like a fair fight.")
 
 
 	elif name == 'wizard':
 		#create a wizard!
-		fighter_component = Fighter(hp=10, defense=0, power=1, death_function=monster_death, attack_color = color_wizard, faded_attack_color = color_wizard)
+		fighter_component = Fighter(hp=10, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
 		ai_component = Wizard_AI(weapon = Weapon_Ring_Of_Power())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'W', 'wizard', color_wizard, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "Your nemesis, in the flesh at last!")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		#"Your nemesis, in the flesh at last!")
 
 
 
@@ -5224,11 +5237,14 @@ def create_monster(x,y, name, guard_duty = False):
 
 
 def create_strawman(x,y, weapon, command):
+	global enemyArtHandler
+	(data_name, data_symbol, data_color, data_description) = enemyArtHandler.getEnemyArtData('flailing strawman')
 	# let's create a strawman that can theoretically do damage!
-	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = color_axe_maniac, faded_attack_color = color_axe_maniac, bleeds = False)
+	strawman_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death,  attack_color = data_color, faded_attack_color = data_color, bleeds = False)
 	ai_component = Strawman_AI(get_weapon_from_name(weapon), command)		
 	decider_component = Decider(ai_component)
-	monster = Object(x, y, 'A', 'strawman', color_axe_maniac, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = "A training dummy, blindly attacking with a real weapon. What could go wrong?")
+	monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=strawman_component, decider=decider_component, mouseover = data_description)
+	#"A training dummy, blindly attacking with a real weapon. What could go wrong?")
 	return monster
 
 
@@ -7429,7 +7445,7 @@ def load_game():
 	control_scheme = controlData["CONTROL_SCHEME"]
 
 def initialise_game():
-	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme
+	global current_big_message, game_msgs, game_level_settings, dungeon_level, game_time, spawn_timer, player, player_weapon, objectsArray, game_state, player_action, con, enemy_spawn_rate, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  god_healer, god_destroyer, god_deliverer, camera, alarm_level, already_healed_this_level, something_changed, upgrade_array, currency_count, controlHandler, colorHandler, control_scheme, enemyArtHandler
 	global SHOW_WEAPON_NAME, SHOW_ATTACK_COMMANDS, SHOW_WEAPON_WEIGHT, SHOW_WEAPON_DURABILITY, SHOW_ENERGY, SHOW_MOVE_COMMANDS, SHOW_JUMP_COMMAND, SHOW_TIME_ELAPSED, SHOW_CURRENT_FLOOR, SHOW_ALARM_LEVEL, SHOW_KEYS, SHOW_FAVOUR, SHOW_REINFORCEMENTS, SHOW_TOTAL_MONSTERS, SHOW_UPGRADES
 	current_big_message = 'You weren\'t supposed to see this'
 
@@ -7445,6 +7461,14 @@ def initialise_game():
 	colorHandler = ColorHandler('lobbyTest')  #('adjustedOriginal')
 	#colorHandler = ColorHandler('coldTest')  #('adjustedOriginal')
 	#colorHandler = ColorHandler(game_level)
+
+
+	# set up enemy graphics
+	enemyArtHandler = EnemyArtHandler()
+
+	# do a test ofEnemyArtHandmer
+	#print("testing csv loading")
+	#enemyArtHandler.getEnemyArtData("greenhorn")
 
 	#create the list of game messages and their colors, starts empty
 	game_msgs = []

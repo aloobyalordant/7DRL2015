@@ -29,7 +29,7 @@ class Level_Settings:
 		enemy_probs.append(('greenhorn', 50))
 		# enemy_probs.append(('flailing strawman', 25))
 		#enemy_probs.append(('stupid swordsman', 25))
-		enemy_probs.append(('rook', 25))
+		enemy_probs.append(('bustard', 25))
 		#enemy_probs.append(('strawman on wheels', 1))
 		lev0 = Level_Setting(
 			max_map_width = 60,
@@ -349,7 +349,7 @@ class Level_Settings:
 		enemy_probs.append(('boman', 10))
 		enemy_probs.append(('axe maniac', 10))
 		enemy_probs.append(('ninja', 10))
-		enemy_probs.append(('rook', 10))
+		enemy_probs.append(('bustard', 10))
 		enemy_probs.append(('nunchuck fanatic', 10))
 		temp_keys_req = len(self.bigArray) + 1
 		temp_keys_here = 2*temp_keys_req
