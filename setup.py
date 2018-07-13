@@ -10,8 +10,8 @@ base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-setup(  name = "guifoo",
+setup(  name = "Sword Dancer",
         version = "0.1",
-        description = "My GUI application!",
+        description = "A melee combat roguelike",
         options = {"build_exe": build_exe_options},
-        executables = [Executable("7DRL2015.py", base=base)])
+        executables = [Executable("swordDancer.py", base=base)])
