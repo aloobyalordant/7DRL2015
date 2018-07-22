@@ -452,7 +452,7 @@ class DareDevil(PowerUp):
 # +10 durability to new weapons
 class Fortification(PowerUp):
 	def __init__(self):
-		PowerUp.__init__(self, name = "Fortification", tech_description = "+10 durability to weapons", verbose_description = "Your weapons will last longer", code='Frt')
+		PowerUp.__init__(self, name = "Fortification", tech_description = "+10 durability to weapons", verbose_description = "Your weapons will last longer", code='Frt', tags = ['supportive'])
 		self.first_boost_done = False
 
 
@@ -517,6 +517,21 @@ def Get_Random_Upgrade():
 	#return upgrade_list[len(upgrade_list)-1]		#temp just return the sweet new thing
 	#return PersonalSpace()					#return this particular thing, for testing purposes
 
+# return a particular upgrade, for testing purposes
 def Get_Test_Upgrade():
-	return Fortification()				#return this particular thing, for testing purposes	
+
+	#return WallHugger()		#working!
+#	return Mindfulness()		# working!
+	#return NeptunesBlessing()	# working!
+#	return Amphibious()		# working!
+#	return PersonalSpace()		#BROKEN
+#	return Perfectionist()		# NOT IMPLEMENTED
+#	return Leapfrog()		#working but doesn't report back!
+#	return FarReaching()		#working!
+#	return ScrapingTheBarrel()	#working! and I finally reinstated durability decreasing by 2 on a clash
+#	return NewWeaponSmell()		# working!
+#	return Rejuvenation()		# Uncertain! (but should  presumably work since it has similar timing to fortification)
+#	return InstantaneousStrength()	# workss!
+#	return DareDevil()		# works!
+#	return Fortification()		# works!
 

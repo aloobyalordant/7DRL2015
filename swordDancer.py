@@ -117,7 +117,7 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
-STARTING_CURRENCY = 0 #2
+STARTING_CURRENCY = 5  #0 #2
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -515,8 +515,7 @@ class Object:
 
 				item.getPickedUp(self)
 
-	def attemptBuy(self, args):
-		return
+
 
 
 	def draw(self, render_mode = None, bg_color = None):
@@ -808,7 +807,7 @@ class ModernAttack(Object):
 
 
 	def checkForDeflection(self):
-
+		global player_clashed_something
 		#search for... hmmm hang on
 
 		# See if there is an attack on the space where my attacker is. If so, see if any of those  attacks have their attacker in the space I am attacking. If that happens, we have a clash!
@@ -823,6 +822,8 @@ class ModernAttack(Object):
 						if object.attacker.x == self.x and object.attacker.y == self.y:	#then we have a clash!
 							self.deflected = True
 							object.deflected = True
+							if self.attacker is player or object.attacker is player:
+								player_clashed_something = True
 							message('Clash!111one The ' + object.attacker.name + ' and ' + self.attacker.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
 	
 
@@ -1792,10 +1793,19 @@ class Decider:
 				PreliminaryEvents.append((self.attemptBuy, argset))
 
 
-#class Attack_Decision:
-#	def __init__(self, attack_list):
-#		self.attack_list = attack_list
+	# Commit to spending currency on an upgrade, and get it! (currently only works for player)
+	def attemptBuy(self, args):
+		global currency_count, upgrade_array
+		(seller) = args
+		upgrade_cost = seller.get_cost()
 
+		if self.owner is player:
+			currency_count = currency_count - upgrade_cost
+			upgrade_array.append(seller.upgrade)
+			message('You recieve the gift of '+ seller.upgrade.name +'!', Color_Stat_Info)
+			# TODO: possibly put this in a separate method for shrines? but basically yeah you have taken the upgrade from the seller.
+			seller.upgrade = None
+		return
 
 
 	def makeAttacks(self, args):	# Attack Phase
@@ -1820,6 +1830,8 @@ class Decider:
 			#new_bullet = Bullet(player.x + 1, player.y, shooter =  player, direction = 'right', damage = 1)
 			#objectsArray[player.x + 1][player.y].append(new_bullet)	
 		return
+
+
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
@@ -6025,8 +6037,8 @@ def next_level():
 		SHOW_TOTAL_MONSTERS = True
 		SHOW_UPGRADES = False
 		# give player a test upgrade?
-		#new_upgrade = Get_Test_Upgrade()
-		#upgrade_array.append(new_upgrade)
+		new_upgrade = Get_Test_Upgrade()
+		upgrade_array.append(new_upgrade)
 
 
 
@@ -8935,6 +8947,12 @@ while not translated_console_is_window_closed():
 
 		# Do preliminary phase stuff
 		doGlobalPreliminaryEvents()
+		# Do (non-global) preliminary events
+		currentPreliminaryEvents = list(PreliminaryEvents)
+		PreliminaryEvents = []
+		for (function, argset) in currentPreliminaryEvents:
+			if function is not None:
+				function(argset)
 
 
 

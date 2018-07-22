@@ -2981,7 +2981,8 @@ class Level_Generator:
 		D = Object_Name('weapon', 'sword')
 		E = Object_Name('monster', 'crane')
 		F = Object_Name('fire')
-		G = Object_Name('firepit')
+		#G = Object_Name('firepit')
+		G = Object_Name('shrine')
 		H = Object_Name('plant')
 		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
