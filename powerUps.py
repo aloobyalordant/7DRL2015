@@ -169,7 +169,7 @@ class Amphibious(PowerUp):
 class PersonalSpace(PowerUp):
 
 	def __init__(self):
-		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when more than 2 spaces from any walls or doors", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S', tags = ['aggressive'])
+		PowerUp.__init__(self, name = "Personal Space", tech_description = "+1 strength when more than 2 spaces from any walls or blocking objects", verbose_description = "Nothing better than an open battlefield to grant you strength.", code='P.S', tags = ['aggressive'])
 #, updates_on_player_attack_choice = True, affects_strength_at_attack_choice = True)
 
 	# Activates if player has no walls or doors on any adjacent space (including diagonally)
@@ -185,7 +185,7 @@ class PersonalSpace(PowerUp):
 					if map[player.x+dx][player.y+dy].blocked:
 						lots_of_space = False
 					for object in objectsArray[player.x+dx][player.y+dy]:
-						if object.blocks and object.door is not None:
+						if object.blocks and object.fighter is None:  #object.door is not None: 
 							lots_of_space = False
 		except IndexError:
 			print('')
@@ -299,11 +299,11 @@ class Perfectionist(PowerUp):
 	# give +1 damage to this attack object
 	def affect_strength_of_individual_attack(self, player, attack_object):
 		if self.activated == True:
-			if attack_object.attack.attacker == player:
+			if attack_object.attacker == player: # attack_object.attack.attacker == player:
 				#self.activated = False	 # Not reseting activated, because it has to affect multiple attakcs. Be careful!
 				print("+1 strength from " + str(self.name))
 				self.status = 'active'
-				attack_object.attack.damage += 1
+				attack_object.damage += 1
 
 class Leapfrog(PowerUp):
 	
@@ -524,8 +524,8 @@ def Get_Test_Upgrade():
 #	return Mindfulness()		# working!
 	#return NeptunesBlessing()	# working!
 #	return Amphibious()		# working!
-#	return PersonalSpace()		#BROKEN
-#	return Perfectionist()		# NOT IMPLEMENTED
+#	return PersonalSpace()		#working now I think!
+#	return Perfectionist()		# working! I think! Needs a proper check but still!
 #	return Leapfrog()		#working but doesn't report back!
 #	return FarReaching()		#working!
 #	return ScrapingTheBarrel()	#working! and I finally reinstated durability decreasing by 2 on a clash
@@ -534,4 +534,5 @@ def Get_Test_Upgrade():
 #	return InstantaneousStrength()	# workss!
 #	return DareDevil()		# works!
 #	return Fortification()		# works!
+	return Get_Random_Upgrade()
 

@@ -117,7 +117,7 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
-STARTING_CURRENCY = 5  #0 #2
+STARTING_CURRENCY = 0 #2
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -828,7 +828,14 @@ class ModernAttack(Object):
 	
 
 	def dealDamage(self,argset):
-		global player_hit_something
+		global player_hit_something, upgrade_array
+
+		# possibly update strength if we have an upgrade that does that (and this is the player's attack)
+		if self.attacker is player:
+			for power_up in upgrade_array:
+				if getattr(power_up, "affect_strength_of_individual_attack", None) is not None:
+					power_up.affect_strength_of_individual_attack(player, self)
+
 		
 		# only do the attack if it has not been deflected
 		if not self.deflected:
@@ -1828,7 +1835,11 @@ class Decider:
 			player_just_attacked = True
 			# temp thing: let's also shoot a bullet
 			#new_bullet = Bullet(player.x + 1, player.y, shooter =  player, direction = 'right', damage = 1)
-			#objectsArray[player.x + 1][player.y].append(new_bullet)	
+			#objectsArray[player.x + 1][player.y].append(new_bullet)
+
+			# if player attacked, check to see if all attacks were on target	
+			message("doin an attack")
+			checkForPlayerAttackAccuracy()
 		return
 
 
@@ -6037,8 +6048,8 @@ def next_level():
 		SHOW_TOTAL_MONSTERS = True
 		SHOW_UPGRADES = False
 		# give player a test upgrade?
-		new_upgrade = Get_Test_Upgrade()
-		upgrade_array.append(new_upgrade)
+		#new_upgrade = Get_Test_Upgrade()
+		#upgrade_array.append(new_upgrade)
 
 
 
@@ -7772,6 +7783,46 @@ def get_info_panel_mouseover_text(x,y):
 
 
 
+# See if all  player attakcs hit something (and update upgrades that care about that, if they exist)
+def checkForPlayerAttackAccuracy():
+	global all_player_attacks_on_target, worldAttackList, upgrade_array
+
+	# check how many enemies the player has hit, and 
+	# check if the player is getting 'hit' (whether or not the attack gets deflected)
+
+	all_player_attacks_on_target = True		# thing to test whether all player attacks hit
+	#print("'fied' CHECKING IF PLAYER GOT HIT")
+	for attack in worldAttackList:	# just do checks on player attacks
+		if attack.attacker == player:
+			this_attack_on_target = False
+			for object in objectsArray[attack.x][attack.y]:
+				if object.blocks or object.fighter:	# check if this attack hit a blocky thing (like a door) or a fighter
+					this_attack_on_target = True
+			if not this_attack_on_target:
+				all_player_attacks_on_target = False
+	#	attackee = object.find_attackee()
+	#	if attackee == player:
+	#		player_got_hit = True
+	#	elif object.attack.attacker == player:
+	#		if attackee is not None:
+	#			number_hit_by_player += 1
+	#		else:
+	#			all_player_attacks_on_target = False
+
+	#if all_player_attacks_on_target:
+	#	message("attacks on target")
+	#else:
+	#	message("whiff")
+
+
+	# Update relevant upgrades
+	for power_up in upgrade_array:
+		if getattr(power_up, "update_based_on_player_accuracy", None) is not None:
+			power_up.update_based_on_player_accuracy(all_player_attacks_on_target)
+								
+
+
+
 
 def doGlobalPreliminaryEvents():
 	global 	game_time, spawn_timer,	player_hit_something, player_clashed_something, player_got_hit,	player_just_jumped, player_just_attacked, number_hit_by_player
@@ -8732,49 +8783,9 @@ while not translated_console_is_window_closed():
 
 
 
-		#mmm... attackphase?
-
-
-		# check how many enemies the player has hit, and 
-		# check if the player is getting 'hit' (whether or not the attack gets deflected)
-
-		all_player_attacks_on_target = True		# thing to test whether all player attacks hit
-		#print("'fied' CHECKING IF PLAYER GOT HIT")
-		for object in worldAttackList:
-			if object.attack:
-				x = object.x
-				y = object.y
-				attackee = object.attack.find_attackee()
-				if attackee == player:
-					player_got_hit = True
-				elif object.attack.attacker == player:
-					if attackee is not None:
-						number_hit_by_player += 1
-					else:
-						all_player_attacks_on_target = False
 
 
 
-#		for y in range(MAP_HEIGHT):
-#			for x in range(MAP_WIDTH):
-#				for object in objectsArray[x][y]:
-#		#for object in objects:
-#					if object.attack:
-#						attackee = object.attack.find_attackee()
-#						if attackee == player:
-#							player_got_hit = True
-#						elif object.attack.attacker == player:
-#							if attackee is not None:
-#								number_hit_by_player += 1
-#							else:
-#								all_player_attacks_on_target = False
-
-
-		# Update relevant upgrades
-		for power_up in upgrade_array:
-			if getattr(power_up, "update_based_on_player_accuracy", None) is not None:
-				power_up.update_based_on_player_accuracy(all_player_attacks_on_target)
-								
 
 
 
