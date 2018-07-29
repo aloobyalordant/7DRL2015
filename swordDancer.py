@@ -23,7 +23,7 @@ SCREEN_HEIGHT = 39
 
 LIMIT_FPS = 20
 frame_pause = 0.05
-frame_attack_pause = 0.1
+frame_attack_pause = 0.07
 
 VERSION_STRING = 'Version 0.0.1.0.0'
 
@@ -1778,7 +1778,7 @@ class Decider:
 
 
 	def processDecisions(self):
-		global MovementPhaseEvents, AttackPhaseEvents
+		global MovementPhaseEvents, AttackPhaseEvents, sloMoAttack
 		#do some stuff
 
 		if self.decision is not None:
@@ -1792,6 +1792,8 @@ class Decider:
 			if self.decision.attack_decision:
 				argset = (self.decision.attack_decision.attack_list)
 				AttackPhaseEvents.append((self.makeAttacks, argset))
+				if fov_map.fov[self.owner.x,self.owner.y]:
+					sloMoAttack = True;
 			if self.decision.pickup_decision:
 				argset = (self.decision.pickup_decision.items_to_pickup)
 				MovementPhaseEvents.append((self.owner.attemptPickup, argset))
@@ -7825,7 +7827,7 @@ def checkForPlayerAttackAccuracy():
 
 
 def doGlobalPreliminaryEvents():
-	global 	game_time, spawn_timer,	player_hit_something, player_clashed_something, player_got_hit,	player_just_jumped, player_just_attacked, number_hit_by_player
+	global 	game_time, spawn_timer,	player_hit_something, player_clashed_something, player_got_hit,	player_just_jumped, player_just_attacked, number_hit_by_player, sloMoAttack
 	global player, nearest_points_array, worldEntitiesList, nearest_center_to_player
 
 
@@ -7838,6 +7840,7 @@ def doGlobalPreliminaryEvents():
 	player_just_jumped = False
 	number_hit_by_player = 0
 	player_just_attacked = False
+	sloMoAttack = False
 
 	if nearest_points_array[player.x][player.y] is not None:
 		nearest_center_to_player =  nearest_points_array[player.x][player.y]
@@ -8759,7 +8762,7 @@ while not translated_console_is_window_closed():
 		render_all(render_mode = 'attack-step')
 		translated_console_flush()
 		#put in a pause before drawing the other stuff?
-		time.sleep(0.05)
+		#time.sleep(0.05)
 
 		# process attacks!
 		
@@ -8991,9 +8994,14 @@ while not translated_console_is_window_closed():
 	
 				render_all()
 				translated_console_flush()	
-				if len(currentMovementPhaseEvents) > 0:				
+		#		if len(currentMovementPhaseEvents) > 0:				
 					#put in a pause before drawing the other stuff?
-					time.sleep(frame_pause)
+					#time.sleep(frame_pause)
+				if sloMoAttack:				
+					#put in a pause before drawing the other stuff?
+					print("TIMATTAKCPAUS")
+					time.sleep(frame_attack_pause)
+		
 		
 			
 
@@ -9013,12 +9021,12 @@ while not translated_console_is_window_closed():
 	
 				render_all()
 				translated_console_flush()
-				if len(currentAttackPhaseEvents) > 0:	
-					if len(DamagePhaseEvents) > 0:			
+		#		if len(currentAttackPhaseEvents) > 0:	
+		#			if len(DamagePhaseEvents) > 0:			
 						# do a longer pause if attacks are doing damage???
-						time.sleep(frame_attack_pause)
-					else:
-						time.sleep(frame_pause)
+						#time.sleep(frame_attack_pause)
+		#			else:
+						#time.sleep(frame_pause)
 		
 				# Process Damage Phase Events		(things getting damaged by attacks)
 				currentDamagePhaseEvents = list(DamagePhaseEvents)
@@ -9029,9 +9037,9 @@ while not translated_console_is_window_closed():
 	
 				render_all()
 				translated_console_flush()
-				if len(currentDamagePhaseEvents) > 0:				
+		#		if len(currentDamagePhaseEvents) > 0:				
 					#put in a pause before drawing the other stuff?
-					time.sleep(frame_pause)
+					#time.sleep(frame_pause)
 	
 	
 				# Process Misc Phase events		(other stuff in response to damage e.g. chain reactions)
@@ -9043,9 +9051,9 @@ while not translated_console_is_window_closed():
 	
 				render_all()
 				translated_console_flush()	
-				if len(currentMiscPhaseEvents) > 0:				
+		#		if len(currentMiscPhaseEvents) > 0:				
 					#put in a pause before drawing the other stuff?
-					time.sleep(frame_pause)
+					#time.sleep(frame_pause)
 
 		if loop_count_sanity_check >= 500:
 			print("warning! Attack Phase/ Misc Phase looped over 500 times")
