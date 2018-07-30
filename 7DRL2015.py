@@ -1,3 +1,7 @@
+print("This is the wrong file.\n Try swordDancer.py instead.")
+
+
+'''
 import tdl as libtcod
 #from libtcod.map import Map
 #import libtcodpy as libtcod
@@ -8086,4 +8090,4 @@ while not translated_console_is_window_closed():
 	#ok no problem, right.
 
 
-
+'''

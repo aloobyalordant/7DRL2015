@@ -117,7 +117,7 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
-STARTING_CURRENCY = 0 #2
+STARTING_CURRENCY = 5 #2
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -4339,7 +4339,7 @@ def get_names_under_mouse():
 
 #def handle_keys():
 def handle_keys(user_input_event):
-	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_action_before_pause, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme
+	global fov_recompute, keys, stairs, player_weapon, game_state, player_action, player_action_before_pause, player_just_attacked, favoured_by_healer, favoured_by_destroyer, tested_by_destroyer,  favoured_by_deliverer, tested_by_deliverer,  destroyer_test_count, deliverer_test_count, time_level_started, key_count, currency_count, already_healed_this_level, TEMP_player_previous_center, something_changed, current_shrine, controlHandler, control_scheme, shrine_list, purchase_selected_shrine
 	global SHOW_FAVOUR
 
 
@@ -4488,13 +4488,20 @@ def handle_keys(user_input_event):
 			return 'pickup_dialog'
 
 
-	elif player_action == 'upgrade shop dialog':
+	elif player_action == 'upgrade-shop-dialog-sales-pitch':
 
-		if key_char == 'y':	# player has decided to buy an upgrade...
+
+		control_num = -1
+		if key_char in controlHandler.intFromLetter:
+			control_num = controlHandler.intFromLetter[key_char]
+
+		#if key_char == 'y':	# player has decided to buy an upgrade...
+		if control_num == 1:	# player has decided to buy an upgrade...
 			upgrade_cost = current_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then let them get the upgrade
 
 				
+				#message("Are you sure???? Y/N", Color_Menu_Choice)
 				player.decider.set_decision(Decision(buy_decision=Buy_Decision(current_shrine)))
 
 				something_changed = True
@@ -4504,16 +4511,80 @@ def handle_keys(user_input_event):
 				#upgrade_array.append(current_shrine.upgrade)
 				#message('You recieve the gift of '+ current_shrine.upgrade.name +'!', Color_Stat_Info)
 				#current_shrine.upgrade = None
+				#return 'upgrade-shop-dialog-confirm'
 			else:
 				something_changed = True
 				message('You do not have enough favour!', Color_Not_Allowed)
 				if not SHOW_FAVOUR:
 					SHOW_FAVOUR = True
-		elif key_char == 'n':
+		elif control_num == 2:
+			DescribeCatalog(current_shrine)
+			return 'upgrade-shop-dialog-catalog'
+
+
+		#elif key_char == 'n':
+		else:
 			something_changed = True
 			message('You decide to abstain from ' + current_shrine.upgrade.name + '.', Color_Stat_Info)
+		#else:
+		#	message('Never mind??', Color_Not_Allowed)
+
+	elif player_action == 'upgrade-shop-dialog-catalog':
+
+
+		control_num = -1
+		if key_char in controlHandler.intFromLetter:
+			control_num = controlHandler.intFromLetter[key_char]
+
+		# reconstruct the list of available shrines/upgrades,to see if the player selected one
+		available_shrine_list = []
+		for temp_shrine in shrine_list:
+			if temp_shrine.visited and temp_shrine.upgrade is not None:
+				available_shrine_list.append(temp_shrine)
+		if control_num >0 and control_num <= len(available_shrine_list):
+			# try and buy the upgrade at shrine number control_num-1. 
+			# Actually just choose one and then either tell the player they don't have enough currency, 
+			# or ask them to confirm their choice (and give them details)
+			
+			purchase_selected_shrine = available_shrine_list[control_num - 1]
+			upgrade_cost = purchase_selected_shrine.get_cost()
+			if currency_count >= upgrade_cost:	#then tell them about the upgrade and ask to confirm
+
+				DescribeConfirmationRequest(purchase_selected_shrine)
+				#something_changed = True
+				return 'upgrade-shop-dialog-confirm'
+				
+			else:
+				something_changed = True
+				message('You do not have enough favour!', Color_Not_Allowed)
+				if not SHOW_FAVOUR:
+					SHOW_FAVOUR = True
 		else:
-			message('Never mind??', Color_Not_Allowed)
+			message('Not today.')
+
+	elif player_action == 'upgrade-shop-dialog-confirm':
+
+		control_num = -1
+		if key_char in controlHandler.intFromLetter:
+			control_num = controlHandler.intFromLetter[key_char]
+
+		if control_num == 1 or key_char == 'y' or key_char == 'Y':
+			# try and buy the upgrade under consideration
+			upgrade_cost = purchase_selected_shrine.get_cost()
+			if currency_count >= upgrade_cost:	#then tell them about the upgrade and ask to confirm
+
+				player.decider.set_decision(Decision(buy_decision=Buy_Decision(purchase_selected_shrine)))
+				something_changed = True
+				
+			else:
+				something_changed = True
+				message('You do not have enough favour!', Color_Not_Allowed)
+				if not SHOW_FAVOUR:
+					SHOW_FAVOUR = True
+
+		else:
+			message('Not today.')
+		something_changed = True
 
 	elif player_action == 'jump_dialog':
 		actionCommand = controlHandler.getGameplayCommand(veekay, key_char)
@@ -4802,21 +4873,32 @@ def handle_keys(user_input_event):
 					if shrine_here == True:
 						current_god = current_shrine.god
 						message('You close your eyes and focus your mind.', Color_Personal_Action)
-						current_shrine.visit()
 
-						if current_shrine.upgrade is not None:
-							message('A small god appears before you.', Color_Interesting_In_World)
-							message_string = '\"For a small display of faith, I will grant you the boon of ' + current_shrine.upgrade.name +'!\"'
-							message(message_string, Color_Message_In_World)
-							message_string = '[' + current_shrine.upgrade.name +':' + current_shrine.upgrade.tech_description +']'
-							message(message_string, Color_Personal_Action)
-							message_string = '\"' + current_shrine.upgrade.verbose_description +'\"'
-							message(message_string, Color_Message_In_World)
-							message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
-							message(message_string, Color_Menu_Choice)
-							return 'upgrade shop dialog'
+						#if current_shrine.upgrade is not None:
+						if not current_shrine.visited:
+							current_shrine.visit()
+							DescribeSalesPitch(current_shrine)
+							#message('A small god appears before you.', Color_Interesting_In_World)
+							#message_string = '\"For a small display of faith, I will grant you the boon of ' + current_shrine.upgrade.name +'!\"'
+							#message(message_string, Color_Message_In_World)
+							#message_string = '[' + current_shrine.upgrade.name +':' + current_shrine.upgrade.tech_description +']'
+							#message(message_string, Color_Personal_Action)
+							#message_string = '\"' + current_shrine.upgrade.verbose_description +'\"'
+							#message(message_string, Color_Message_In_World)
+							#message_string = 'Would you like some ' + current_shrine.upgrade.name + ' ('+ str(current_shrine.get_cost()) +' favour)? y/n'
+							#message(message_string, Color_Menu_Choice)
+							return 'upgrade-shop-dialog-sales-pitch'
 						else:
-							message('... but nothing happens.', Color_Boring_In_World)
+							# figure out what there would be to display in a catalog
+							available_shrine_list = []
+							for temp_shrine in shrine_list:
+								if temp_shrine.visited and temp_shrine.upgrade is not None:
+									available_shrine_list.append(temp_shrine)
+							if len(available_shrine_list) > 0:
+								DescribeCatalog(current_shrine)
+								return 'upgrade-shop-dialog-catalog'
+							else:
+								message('... but nothing happens.', Color_Boring_In_World)
 						#handle_keys()	# why do I get 
 
 						# Commenting out this deity interaction stuff now... very sad
@@ -4878,6 +4960,65 @@ def handle_keys(user_input_event):
 				else:
 					return 'didnt-take-turn'
 
+
+
+
+
+def DescribeSalesPitch(shrine):  # Shop text associated with 'upgrade-shop-dialog-sales-pitch'
+	message('HEY DO YOU WANT THE THING.', Color_Interesting_In_World)
+
+	message('A small god appears before you.', Color_Interesting_In_World)
+	message_string = '\"For a small display of faith, I will grant you the boon of ' + shrine.upgrade.name +'!\"'
+	message(message_string, Color_Message_In_World)
+	message_string = '[' + shrine.upgrade.name +':' + shrine.upgrade.tech_description +']'
+	message(message_string, Color_Personal_Action)
+	message_string = '\"' + shrine.upgrade.verbose_description +'\"'
+	message(message_string, Color_Message_In_World)
+	message_string = 'Would you like some ' + shrine.upgrade.name + ' ('+ str(shrine.get_cost()) +' favour)? y/n'
+	message(message_string, Color_Menu_Choice)
+
+	message_string = controlHandler.letterFromInt[1] + ': Yes please'
+	message(message_string, Color_Menu_Choice)
+	message_string =  controlHandler.letterFromInt[2] + ': Show options from other shrines'
+	message(message_string, Color_Menu_Choice)
+	message_string =  '#JUMP#: No thanks'	# here's some hacky coding. The command for jump also means 'leave menu', and that's hard-coded??? because I wanted both commands to be space but my control system isn't really set up to assign two commands to the same key.
+	message(message_string, Color_Menu_Choice)
+
+def DescribeCatalog(shrine): # Shop text associated with 'upgrade-shop-dialog-catalog'
+	global shrine_list
+
+	message('Choose a blessing...', Color_Message_In_World)
+	# make a list of shrines on this level that the player has visited, that have upgrades available
+	available_shrine_list = []
+	for temp_shrine in shrine_list:
+		# TODO: add checking for having been visited
+		if temp_shrine.visited and temp_shrine.upgrade is not None:
+			available_shrine_list.append(temp_shrine)
+
+	for i in range(len(available_shrine_list)):
+		#safety valve: if there are more than 26 shrines we don't try to report them all because controlHandler.letterFromInt would throw an error i think
+		if i < 26:
+			temp_shrine = available_shrine_list[i]
+			message_string = controlHandler.letterFromInt[i+1] +  ". " + temp_shrine.upgrade.name + '('+ str(temp_shrine.get_cost()) +' favour)'
+			message(message_string, Color_Menu_Choice)
+	message_string =  '#JUMP#: Nothing today thanks'	# here's some hacky coding. The command for jump also means 'leave menu', and that's hard-coded??? because I wanted both commands to be space but my control system isn't really set up to assign two commands to the same key.
+	message(message_string, Color_Menu_Choice)
+	
+
+
+def DescribeConfirmationRequest(shrine): # Shop text associated with 'upgrade-shop-dialog-confirm'. 'shrine' is the shrine you aretrying to purchase from, not necessarily the shrine you are standing at?
+	message('ARE YOU SURE YOU WANT THE THING HERE\'S WHAT IT IS IN CASE YOU FORGOT.', Color_Interesting_In_World)
+	message_string = '[' + shrine.upgrade.name +':' + shrine.upgrade.tech_description +']'
+	message(message_string, Color_Personal_Action)
+	message_string = '\"' + shrine.upgrade.verbose_description +'\"'
+	message(message_string, Color_Message_In_World)
+	message_string = 'Aquire ' + shrine.upgrade.name + ' ('+ str(shrine.get_cost()) +' favour)?'
+	message(message_string, Color_Menu_Choice)
+
+	message_string = controlHandler.letterFromInt[1] + ': Yes please'
+	message(message_string, Color_Menu_Choice)
+	message_string =  '#JUMP#: No thanks'	# here's some hacky coding. The command for jump also means 'leave menu', and that's hard-coded??? because I wanted both commands to be space but my control system isn't really set up to assign two commands to the same key.
+	message(message_string, Color_Menu_Choice)
 
 
 
@@ -5275,7 +5416,7 @@ def create_strawman(x,y, weapon, command):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map(start_ele_direction = None, start_ele_spawn = None):
-	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters
+	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters, shrine_list
 
 	lev_gen = Level_Generator()
 	lev_set = game_level_settings.get_setting(dungeon_level)
@@ -5306,6 +5447,7 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 
 	#TODO NOTE: think we can initalise objectsarray here.
 	objectsArray = []
+	shrine_list = []	# This is gonna be a list of all the shrines
 	print("DOING STUFF WITH MAKE MAP")
 	for x in range(MAP_WIDTH):
 		objectsRowArray = []
@@ -5395,11 +5537,12 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 			shrine.shrine.cost += dungeon_level - 2
 			objectsArray[od.x][od.y].append(shrine)
 			shrine.send_to_back()
+			shrine_list.append(shrine.shrine)
 			if od.info == 'rejuvenation':
 				shrine.shrine.upgrade = Rejuvenation()
 			elif od.info == 'instantaneous-strength':
 				shrine.shrine.upgrade = InstantaneousStrength()
-			if dungeon_level == 0:		# hack for making tutorial shrines cost more tha, like, 1 or 0.
+			if dungeon_level == 0:		# hack for making tutorial shrines cost more than like, 1 or 0.
 				shrine.shrine.cost = 2				
 
 		elif  od.name == 'security drone':
@@ -8488,7 +8631,7 @@ while not translated_console_is_window_closed():
 
 
 	# Game things happen woo!
-	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'upgrade shop dialog' and player_action != 'jump_dialog' :
+	elif game_state == 'playing' and player_action != 'didnt-take-turn' and  player_action != 'invalid-move' and player_action != 'pickup_dialog' and player_action != 'upgrade-shop-dialog-sales-pitch' and player_action != 'upgrade-shop-dialog-catalog'  and player_action != 'upgrade-shop-dialog-confirm' and player_action != 'jump_dialog' :
 		
 		
 
@@ -9092,7 +9235,7 @@ while not translated_console_is_window_closed():
 
 
 
-	elif game_state == 'playing' and player_action == 'pickup_dialog' or player_action == 'upgrade shop dialog':
+	elif game_state == 'playing' and player_action == 'pickup_dialog' or player_action == 'upgrade-shop-dialog-sales-pitch' or player_action == 'upgrade-shop-dialog-catalog' or player_action == 'upgrade-shop-dialog-confirm':
 		render_all()
 		translated_console_flush()
 

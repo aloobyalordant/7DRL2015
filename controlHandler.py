@@ -69,9 +69,10 @@ class ControlHandler:
 			('p', "PICKUP"), ('o', "MEDITATE"), ('SPACE', "JUMP")])
 		#TODO nopad versions
 		
-		# controls that are nae fixed.
+		# controls that are  fixed.
 		newDictionary['ESCAPE'] = "PAUSE"
 		newDictionary['ENTER'] = "FULLSCREEN"
+		#newDictionary['SPACE'] = "LEAVEMENU"
 
 
 		return newDictionary
