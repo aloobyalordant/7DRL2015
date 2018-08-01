@@ -117,7 +117,7 @@ STARTING_ENERGY  = 10
 DEFAULT_JUMP_RECHARGE_TIME = 4		#40
 DEFAULT_BLOOM_TIME = 37
 
-STARTING_CURRENCY = 5 #2
+STARTING_CURRENCY = 2 #2
 
 
 #color_dark_wall = libtcod.Color(0, 0, 100)
@@ -4568,7 +4568,7 @@ def handle_keys(user_input_event):
 		if key_char in controlHandler.intFromLetter:
 			control_num = controlHandler.intFromLetter[key_char]
 
-		if control_num == 1 or key_char == 'y' or key_char == 'Y':
+		if control_num == 1: # or key_char == 'y' or key_char == 'Y':
 			# try and buy the upgrade under consideration
 			upgrade_cost = purchase_selected_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then tell them about the upgrade and ask to confirm
@@ -4895,6 +4895,7 @@ def handle_keys(user_input_event):
 								if temp_shrine.visited and temp_shrine.upgrade is not None:
 									available_shrine_list.append(temp_shrine)
 							if len(available_shrine_list) > 0:
+								message('The small god gives you a small nod.', Color_Interesting_In_World)
 								DescribeCatalog(current_shrine)
 								return 'upgrade-shop-dialog-catalog'
 							else:
@@ -4965,16 +4966,18 @@ def handle_keys(user_input_event):
 
 
 def DescribeSalesPitch(shrine):  # Shop text associated with 'upgrade-shop-dialog-sales-pitch'
-	message('HEY DO YOU WANT THE THING.', Color_Interesting_In_World)
+	#message('HEY DO YOU WANT THE THING.', Color_Interesting_In_World)
 
 	message('A small god appears before you.', Color_Interesting_In_World)
-	message_string = '\"For a small display of faith, I will grant you the boon of ' + shrine.upgrade.name +'!\"'
+	message_string = '\"A new worshipper! For a small display of faith, I will grant you the boon of ' + shrine.upgrade.name +'!\"'
 	message(message_string, Color_Message_In_World)
+	#message_string = '\"For a small display of faith, I will grant you the boon of ' + shrine.upgrade.name +'!\"'
+	#message(message_string, Color_Message_In_World)
 	message_string = '[' + shrine.upgrade.name +':' + shrine.upgrade.tech_description +']'
 	message(message_string, Color_Personal_Action)
-	message_string = '\"' + shrine.upgrade.verbose_description +'\"'
-	message(message_string, Color_Message_In_World)
-	message_string = 'Would you like some ' + shrine.upgrade.name + ' ('+ str(shrine.get_cost()) +' favour)? y/n'
+	#message_string = '\"' + shrine.upgrade.verbose_description +'\"'
+	#message(message_string, Color_Message_In_World)
+	message_string = 'Would you like some ' + shrine.upgrade.name + ' ('+ str(shrine.get_cost()) +' favour)?'
 	message(message_string, Color_Menu_Choice)
 
 	message_string = controlHandler.letterFromInt[1] + ': Yes please'
@@ -4987,7 +4990,7 @@ def DescribeSalesPitch(shrine):  # Shop text associated with 'upgrade-shop-dialo
 def DescribeCatalog(shrine): # Shop text associated with 'upgrade-shop-dialog-catalog'
 	global shrine_list
 
-	message('Choose a blessing...', Color_Message_In_World)
+	message('\"Make your choice...\"', Color_Message_In_World)
 	# make a list of shrines on this level that the player has visited, that have upgrades available
 	available_shrine_list = []
 	for temp_shrine in shrine_list:
@@ -5007,11 +5010,11 @@ def DescribeCatalog(shrine): # Shop text associated with 'upgrade-shop-dialog-ca
 
 
 def DescribeConfirmationRequest(shrine): # Shop text associated with 'upgrade-shop-dialog-confirm'. 'shrine' is the shrine you aretrying to purchase from, not necessarily the shrine you are standing at?
-	message('ARE YOU SURE YOU WANT THE THING HERE\'S WHAT IT IS IN CASE YOU FORGOT.', Color_Interesting_In_World)
+	message('\"Are you certain?\"', Color_Message_In_World)
 	message_string = '[' + shrine.upgrade.name +':' + shrine.upgrade.tech_description +']'
 	message(message_string, Color_Personal_Action)
-	message_string = '\"' + shrine.upgrade.verbose_description +'\"'
-	message(message_string, Color_Message_In_World)
+	#message_string = '\"' + shrine.upgrade.verbose_description +'\"'
+	#message(message_string, Color_Message_In_World)
 	message_string = 'Aquire ' + shrine.upgrade.name + ' ('+ str(shrine.get_cost()) +' favour)?'
 	message(message_string, Color_Menu_Choice)
 
@@ -7044,6 +7047,7 @@ def render_all(render_mode = None):
 
 #	libtcod.console_blit(con, 0, 0, MAP_WIDTH, MAP_HEIGHT, 0, 0, 0)
 #	libtcod.console_blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 0)
+	#root_console.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 	root_console.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
 	
 

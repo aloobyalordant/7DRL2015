@@ -2979,13 +2979,13 @@ class Level_Generator:
 		C = Object_Name('door')	# a door that may stick!
 		#D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
 		D = Object_Name('weapon', 'sword')
-		E = Object_Name('monster', 'crane')
+		W = Object_Name('monster', 'wizard')
 		F = Object_Name('fire')
 		#G = Object_Name('firepit')
 		G = Object_Name('shrine')
 		H = Object_Name('plant')
 		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,W,0,0,0,0,1,1,1,1],
 				[1,1,1,C,0,0,0,0,0,0,0,0,C,0,0,0,C,0,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0,1,1],
 				[0,0,0,0,0,G,0,C,0,0,0,G,0,G,0,G,0,0,G,0,C,1,1],
