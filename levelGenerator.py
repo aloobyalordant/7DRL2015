@@ -78,6 +78,7 @@ elif ControlMode == 'Crypsis':
 	ATTCKDOWNALT	 = 's'
 
 ELEVATOR_DOOR_CLOSURE_PERIOD = 5
+ALARMER_RANGE = 10	# How close to an alarmer a dispenser has to be to be activated by it
 
 class Object_Datum:
 
@@ -782,6 +783,13 @@ class Level_Generator:
 			key_x= randint(security_room.x1,security_room.x2) 
 			key_y= randint(security_room.y1,security_room.y2) 
 			object_data.append(Object_Datum(key_x,key_y,'key'))
+
+
+		# also add an enemy dispenser in this room or nearby???
+		# ALARMER_RANGE gives an upper bound on how far away the dispensercan spawn
+		dispenser_x= randint(max(security_room.x1, sec_x - ALARMER_RANGE), min(security_room.x2, sec_x + ALARMER_RANGE)) 
+		dispenser_y= randint(max(security_room.y1, sec_y - ALARMER_RANGE), min(security_room.y2, sec_y + ALARMER_RANGE)) 
+		object_data.append(Object_Datum(dispenser_x,dispenser_y, 'enemy dispenser'))
 			
 
 

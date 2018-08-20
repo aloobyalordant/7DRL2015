@@ -1121,6 +1121,12 @@ class ElevatorDoor(Door):
 
 
 
+class EnemyDispenser(Object):
+	def __init__(self, x, y, enemy_type = 'None'):
+		Object.__init__(self, x, y, char = 9, name = 'Dispenser', color = color_white, mouseover = "Bad Things come out of this Hole.")
+
+
+
 
 
 
@@ -4496,7 +4502,7 @@ def handle_keys(user_input_event):
 			control_num = controlHandler.intFromLetter[key_char]
 
 		#if key_char == 'y':	# player has decided to buy an upgrade...
-		if control_num == 1:	# player has decided to buy an upgrade...
+		if control_num == 1 or key_char == 'y':	# player has decided to buy an upgrade...
 			upgrade_cost = current_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then let them get the upgrade
 
@@ -5530,7 +5536,7 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 		#	num = randint( 0, 2) 
 		#	if num == 0:
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
-			shrine = Object(od.x, od.y, '&', 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True, mouseover = "Home to a small god. Favour can be exchanged here for a possibly useful upgrade.") 	
+			shrine = Object(od.x, od.y, 274, 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True, mouseover = "Home to a small god. Favour can be exchanged here for a possibly useful upgrade.") 	
 		#	elif num == 1:
 		#		shrine = Object(od.x, od.y, '&', 'shrine2', altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
@@ -5573,6 +5579,11 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 		#		door.door.easy_open = True
 		#	# TODO MAKE PATHFINDING TAKE DOORS INTO ACCOUNT AT SOME POINT
 
+
+		elif  od.name == 'enemy dispenser':
+			dispenser = EnemyDispenser(od.x,od.y)
+			objectsArray[od.x][od.y].append(dispenser)
+			worldEntitiesList.append(dispenser)
 
 		elif od.name == 'door':
 			new_door = Door(od.x,od.y)
