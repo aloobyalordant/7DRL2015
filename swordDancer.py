@@ -1123,9 +1123,67 @@ class ElevatorDoor(Door):
 
 class EnemyDispenser(Object):
 	def __init__(self, x, y, enemy_type = 'None'):
-		Object.__init__(self, x, y, char = 9, name = 'Dispenser', color = color_white, mouseover = "Bad Things come out of this Hole.")
+		Object.__init__(self, x, y, char = 9, name = 'Dispenser', color = color_white, mouseover = "Bad Things come out of this Hole.", tags = ['listener'], always_visible = True)
+		self.status = 'idle'
+		self.cooldown_timer = 1
+		self.cooldown_length = 10
+
+	def notify(self):
+		print ("Dispense notified")
+		self.color = color_alarmer_alarmed
+		self.status = 'activated'
+	
+
+	def update(self):
+		global FinalPostDrawEvents
+		if self.status == 'activated':
+			# OH boy add let's make some enemies happen maybe!
+			if self.cooldown_timer > 0:
+				self.cooldown_timer -= 1
+			else:
+				#Spawn enemies
+				argset = (self.x,self.y)
+				PreliminaryEvents.append((self.spawn_enemy, argset))
+				self.cooldown_timer = self.cooldown_length
+				
+		elif self.cooldown_timer > 1 :	
+# have a 1 second delay for the next time this dispenser gets activated
+			self.cooldown_timer -= 1
+
+		if self.status == 'idle':
+			self.color = color_white
+		# become idle ?  basically unless we here an alaamr on the enxt turn we'll stop doing things
+		self.status = 'idle'
 
 
+
+	#Preliminaryphase ? - spawn an enemy here!
+	def spawn_enemy(self, args):
+		global worldEntitiesList, lev_set
+		# are there too many monsters?
+		total_monsters = 0
+#				for object in objects:
+#				print ("'fixed' COUNTING MONSTERS")
+		for object in worldEntitiesList:
+			if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
+				total_monsters = total_monsters + 1
+
+		# Do a check for too many enemies
+		if total_monsters < lev_set.max_monsters:		#if two many enemies, stop the spawning
+			# spawn an enemy! currently based on level enemy probabilities
+			total_enemy_prob = lev_set.total_enemy_prob
+			enemy_probabilities = lev_set.enemy_probabilities
+			enemy_name = 'none'
+			num = randint(0, total_enemy_prob)
+			for (name, prob) in enemy_probabilities:
+				if num <= prob:
+					enemy_name = name
+					monster = create_monster(self.x,self.y, name)
+					objectsArray[self.x][self.y].append(monster)
+					worldEntitiesList.append(monster)
+					break
+				else:
+					num -= prob
 
 
 
@@ -1907,8 +1965,17 @@ class Alarmer:
 			if self.status ==  'raising-alarm':
 				self.status = 'alarm-raised'
 			# if self.status == 'alarm-raised', keep being alarmed!
-		
 
+
+		# IN any case, if the alarm is being raised, look for listeners to tell about it!
+		if self.status == 'alarm-raised':
+			ALARMER_RANGE = 10
+			for x in range(self.owner.x - ALARMER_RANGE, self.owner.x + ALARMER_RANGE + 1):   # The +1 is because range(a,b) does everything from a to b-1 inclusive
+				for y in range(self.owner.y - ALARMER_RANGE, self.owner.y + ALARMER_RANGE + 1):
+					if x >= 0  and x < MAP_WIDTH and y >= 0 and y < MAP_HEIGHT:
+						for ob in objectsArray[x][y]:  
+							if 'listener' in ob.tags:
+								ob.notify()
 		
 	def get_hit(self):		# If you get hit, raise the alarm if you haven't already! 
 		if self.status != 'alarm-raised':
@@ -5398,6 +5465,7 @@ def create_monster(x,y, name, guard_duty = False):
 				temp_alarm_time += 1
 		alarmer_component = Alarmer(alarm_time = temp_alarm_time, pre_alarm_time = 0, assoc_fighter = strawman_component)
 		monster = Object(x, y, 275, 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
+		alarmer_component.owner = monster
 
 
 
@@ -8208,6 +8276,9 @@ def doGlobalPreDrawPhaseEvents():
 					temp_alarm_countdown = ob.alarmer.alarm_countdown 
 			else: 
 				ob.alarmer.update(False)
+		# alaso update the dispensers???
+		elif 'listener' in ob.tags:
+			ob.update()
 
 	if temp_alarm_countdown < large_count_down_val:
 		message(str(temp_alarm_countdown) + " seconds from being recognized.", Color_Stat_Info)
