@@ -110,6 +110,8 @@ WEAPON_FAILURE_WARNING_PERIOD = 10
 ELEVATOR_DOOR_CLOSURE_PERIOD = 5
 ELEVATOR_DISTANCE_CHECK = 4
 
+ALARMER_RANGE = 10
+
 CHANCE_OF_ENEMY_DROP = 30
 
 STARTING_ENERGY  = 10
@@ -318,7 +320,7 @@ def translated_console_is_fullscreen():
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
 	#it's always represented by a character on screen.
-	def __init__(self, x, y, char, name, color, blocks=False, jumpable = True, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, shrine = None, floor_message = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, immune_to_fire = False, exists_in_map = True, mouseover = None, tags = set()):  #raising_alarm = False): # door = None, 
+	def __init__(self, x, y, char, name, color, blocks=False, jumpable = True, always_visible=False, fighter=None, decider=None, attack=None, weapon = False, progenitor = None, shrine = None, floor_message = None, currently_invisible = False, alarmer = None, plant = None, drops_key = False, phantasmal = False, getting_burned = False, aflame = False, immune_to_fire = False, exists_in_map = True, mouseover = None, tags = set()):  #raising_alarm = False): # door = None, 
 		self.x = x
 		self.y = y
 		self.char = char
@@ -337,6 +339,7 @@ class Object:
 		if self.attack:
 			self.attack.owner = self
 		self.weapon = weapon
+		self.progenitor = progenitor #the object that spawned this one (if applicable)
 		self.shrine = shrine
 		if self.shrine:
 			self.shrine.owner = self
@@ -1127,9 +1130,10 @@ class EnemyDispenser(Object):
 		self.status = 'idle'
 		self.cooldown_timer = 1
 		self.cooldown_length = 10
+		self.progency = []	# list of (currently alive?) enemies this dispenser has spawned
+		self.max_progency = 10
 
 	def notify(self):
-		print ("Dispense notified")
 		self.color = color_alarmer_alarmed
 		self.status = 'activated'
 	
@@ -1144,7 +1148,6 @@ class EnemyDispenser(Object):
 				#Spawn enemies
 				argset = (self.x,self.y)
 				PreliminaryEvents.append((self.spawn_enemy, argset))
-				self.cooldown_timer = self.cooldown_length
 				
 		elif self.cooldown_timer > 1 :	
 # have a 1 second delay for the next time this dispenser gets activated
@@ -1160,31 +1163,50 @@ class EnemyDispenser(Object):
 	#Preliminaryphase ? - spawn an enemy here!
 	def spawn_enemy(self, args):
 		global worldEntitiesList, lev_set
-		# are there too many monsters?
-		total_monsters = 0
-#				for object in objects:
-#				print ("'fixed' COUNTING MONSTERS")
-		for object in worldEntitiesList:
-			if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
-				total_monsters = total_monsters + 1
 
-		# Do a check for too many enemies
-		if total_monsters < lev_set.max_monsters:		#if two many enemies, stop the spawning
-			# spawn an enemy! currently based on level enemy probabilities
-			total_enemy_prob = lev_set.total_enemy_prob
-			enemy_probabilities = lev_set.enemy_probabilities
-			enemy_name = 'none'
-			num = randint(0, total_enemy_prob)
-			for (name, prob) in enemy_probabilities:
-				if num <= prob:
-					enemy_name = name
-					monster = create_monster(self.x,self.y, name)
-					objectsArray[self.x][self.y].append(monster)
-					worldEntitiesList.append(monster)
-					break
-				else:
-					num -= prob
+		# first check whether anything is standing 'on top of' the dispenser, because if so we have to not dispense things
+		obstruction = False
+		for object in objectsArray[self.x][self.y]:
+			if object is not self and object.blocks:
+				obstruction = True
+		# if there's an obstruction, don't spawn
+		if obstruction:
+			# Also add 1 to the timer just so things don't spawn the *second* you step off.
+			self.cooldown_timer += 1
+		else:
+		
+			# Next up, a check for too many monsters!
+			# are there too many monsters?
+			total_monsters = 0
+#					for object in objects:
+#					print ("'fixed' COUNTING MONSTERS")
+			#for object in worldEntitiesList:
+			#	if object.fighter is not None and object.name != 'strawman' and object.name != 'flailing strawman' and object.name != 'strawman on wheels':
+			#		total_monsters = total_monsters + 1
 
+
+
+			# Do a check for too many enemies
+			#if total_monsters < lev_set.max_monsters:		#if two many enemies, stop the spawning
+			if len(self.progency) < self.max_progency:
+				# spawn an enemy! currently based on level enemy probabilities
+				total_enemy_prob = lev_set.total_enemy_prob
+				enemy_probabilities = lev_set.enemy_probabilities
+				enemy_name = 'none'
+				num = randint(0, total_enemy_prob)
+				for (name, prob) in enemy_probabilities:
+					if num <= prob:
+						enemy_name = name
+						monster = create_monster(self.x,self.y, name)
+						objectsArray[self.x][self.y].append(monster)
+						worldEntitiesList.append(monster)
+						self.progency.append(monster)
+						monster.progenitor = self
+						break
+					else:
+						num -= prob
+				# since we did a spawn, reset the timer
+				self.cooldown_timer = self.cooldown_length
 
 
 
@@ -1925,9 +1947,23 @@ class Alarmer:
 		self.pre_alarm_countdown = pre_alarm_time
 		self.prev_suspicious = False
 		self.assoc_fighter = assoc_fighter
-		
+		self.listeners =[]	# a set of nearby objects listening to this alarmer
+		self.listeners_set = False
+		self.alarmer_range = ALARMER_RANGE
 
 	def update(self, intruder_spotted):
+
+		# First things first, get a set of listeners if that hasn't been done already.
+		if not self.listeners_set:
+			
+			for x in range(self.owner.x - self.alarmer_range, self.owner.x + self.alarmer_range + 1):   # The +1 is because range(a,b) does everything from a to b-1 inclusive
+				for y in range(self.owner.y - self.alarmer_range, self.owner.y + self.alarmer_range + 1):
+					if x >= 0  and x < MAP_WIDTH and y >= 0 and y < MAP_HEIGHT:
+						for ob in objectsArray[x][y]:  
+							if 'listener' in ob.tags:
+								self.listeners.append(ob)
+			self.listeners_set = True
+
 		if self.status == 'suspicious':
 			self.prev_suspicious = True
 		else:
@@ -1969,13 +2005,8 @@ class Alarmer:
 
 		# IN any case, if the alarm is being raised, look for listeners to tell about it!
 		if self.status == 'alarm-raised':
-			ALARMER_RANGE = 10
-			for x in range(self.owner.x - ALARMER_RANGE, self.owner.x + ALARMER_RANGE + 1):   # The +1 is because range(a,b) does everything from a to b-1 inclusive
-				for y in range(self.owner.y - ALARMER_RANGE, self.owner.y + ALARMER_RANGE + 1):
-					if x >= 0  and x < MAP_WIDTH and y >= 0 and y < MAP_HEIGHT:
-						for ob in objectsArray[x][y]:  
-							if 'listener' in ob.tags:
-								ob.notify()
+			for listener in self.listeners:
+				listener.notify()
 		
 	def get_hit(self):		# If you get hit, raise the alarm if you haven't already! 
 		if self.status != 'alarm-raised':
@@ -8443,6 +8474,8 @@ def doGlobalPostDrawPhaseEvents():
 			worldEntitiesList.remove(object)
 		if object in worldAttackList:
 			worldAttackList.remove(object)
+		if object.progenitor is not None:
+			object.progenitor.progency.remove(object)
 	#reset garbage list
 	garbage_list = []
 
@@ -9122,6 +9155,8 @@ while not translated_console_is_window_closed():
 				worldEntitiesList.remove(object)
 			if object in worldAttackList:
 				worldAttackList.remove(object)
+			if object.progenitor is not None:
+				object.progenitor.progency.remove(object)
 		#reset garbage list
 		garbage_list = []
 		
