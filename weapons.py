@@ -122,6 +122,7 @@ def create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos):
 		for i in range(len(temp_array[j])):
 			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
 			if (temp_array[j][i] is not None):
+				print("hoooo " + str(temp_array[j][i]) + "\n")
 				(projectile_name, direction) = temp_array[j][i]
 				return_array.append((i-ava_x_pos,j-ava_y_pos,projectile_name, direction))
 	return return_array
@@ -2861,13 +2862,13 @@ class Weapon_Halberd(Generic_Weapon):
 class Weapon_Gun(Generic_Weapon):
 
 	def __init__(self):
-		Projectile_Weapon.__init__(self, 'gun', 2, 2, 2)
+		Generic_Weapon.__init__(self, 'gun', 2, 2, 2, combat_type = 'projectile')
 		default_usage = self.default_usage
 			
 		projectile_name = 'bullet'
 
 		# So.. projectile attack info needs to tell you where projectile appear, and for each of those: what kind of item it is, and what direction it is going in.
-		o = None,
+		o = None
 		command = ATTCKUP
 		P = (projectile_name, 'up')
 		temp_array =	 [[o,o,o,o,o],
@@ -2881,6 +2882,120 @@ class Weapon_Gun(Generic_Weapon):
 		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
 		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
 
+
+		command = ATTCKUPLEFT
+		P = (projectile_name, 'upleft')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,P,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+
+		command = ATTCKLEFT
+		P = (projectile_name, 'left')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,P,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+		command = ATTCKDOWNLEFT
+		P = (projectile_name, 'downleft')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,P,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+
+		command = ATTCKDOWN
+		P = (projectile_name, 'down')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,P,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+		command = ATTCKDOWNRIGHT
+		P = (projectile_name, 'downright')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,P,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+
+		command = ATTCKRIGHT
+		P = (projectile_name, 'right')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,P,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+
+		command = ATTCKUPRIGHT
+		P = (projectile_name, 'upright')
+		temp_array =	 [[o,o,o,o,o],
+				  [o,o,o,P,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o],
+				  [o,o,o,o,o]]
+
+		ava_x_pos = 2
+		ava_y_pos = 2
+		abstract_projectile_data = create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos)
+		self.projectile_command_items.append((command, abstract_projectile_data, default_usage))
+
+	def get_default_usage_cost(self):
+		(com, data, usage) = self.projectile_command_items[0]
+		return usage
+
+	# Look up the *projectile* attack corresponding to a command, use up the required charge and return the attach data
+	def do_projectile_attack(self, command):
+		for (com, data, usage) in self.projectile_command_items:
+			if com == command and usage <= self.current_charge and self.durability > 0:
+				self.current_charge = self.current_charge - usage
+				self.just_attacked = True
+				return data
+
+	#get projectile data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
+	def do_energy_projectile_attack(self, command):
+		for (com, data, usage) in self.projectile_command_items:
+			if com == command and self.durability > 0:
+				self.just_attacked = True
+				return data
 
 
 ##############

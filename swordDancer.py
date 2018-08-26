@@ -7,7 +7,7 @@ import textwrap
 import random
 #import shelve 	# for saving and loading			# TODO possibly cut; doesn't seem to play nice with cxfreeze
 from random import randint
-from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power, Weapon_Shiv, Weapon_Broom, Weapon_Pike, Weapon_Halberd
+from weapons import Weapon_Unarmed, Weapon_Sword, Weapon_Staff, Weapon_Spear, Weapon_Dagger, Weapon_Strawhands, Weapon_Sai, Weapon_Sai_Alt, Weapon_Nunchuck, Weapon_Axe, Weapon_Katana, Weapon_Hammer, Weapon_Wierd_Sword, Weapon_Wierd_Staff, Weapon_Trident, Weapon_Ring_Of_Power, Weapon_Shiv, Weapon_Broom, Weapon_Pike, Weapon_Halberd, Weapon_Gun
 from levelSettings import Level_Settings
 from levelGenerator import Level_Generator
 from gods import God, God_Healer, God_Destroyer, God_Deliverer
@@ -1284,7 +1284,8 @@ class Projectile(Object):
 			self.x = stop_x
 			self.y = stop_y
 			objectsArray[stop_x][stop_y].append(self)
-			objectsArray[old_x][old_y].remove(self)
+			if self in objectsArray[old_x][old_y]:
+				objectsArray[old_x][old_y].remove(self)
 
 
 #			# in addition,  recalculate fov and report objects here if the player has just moved
@@ -1880,6 +1881,11 @@ class Decider:
 				AttackPhaseEvents.append((self.makeAttacks, argset))
 				if fov_map.fov[self.owner.x,self.owner.y]:
 					sloMoAttack = True;
+			if self.decision.projectile_decision:
+				argset = (self.decision.projectile_decision.projectile_list)
+				AttackPhaseEvents.append((self.makeProjectiles, argset))
+				if fov_map.fov[self.owner.x,self.owner.y]:
+					sloMoAttack = True;
 			if self.decision.pickup_decision:
 				argset = (self.decision.pickup_decision.items_to_pickup)
 				MovementPhaseEvents.append((self.owner.attemptPickup, argset))
@@ -1930,6 +1936,29 @@ class Decider:
 			checkForPlayerAttackAccuracy()
 		return
 
+
+	def makeProjectiles(self, args):	# Attack Phase
+		global objectsArray, worldAttackList, worldEntitiesList, player_just_attacked
+		(projectile_list) = args
+		# todo make this do all the attackey making stuff
+		# Aha, this thing has not been done.
+		for projectile in projectile_list:
+			try:
+				#attack_data = attack_object.attack
+				#attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
+				objectsArray[projectile.x][projectile.y].append(projectile)	
+				#worldAttackList.append(attack)		# TODO: should we add theprojectile to world entities list?
+				projectile.send_to_front()
+			except IndexError:		#todo: check that this is the right thing to catch...
+				print('')	
+
+		
+		if self.owner == player:
+			player_just_attacked = True
+			# if player attacked, check to see if all attacks were on target	
+			message("doin a shoot")
+			#checkForPlayerAttackAccuracy()
+		return
 
 
 # Something that can spot the player and raise/lower the alarm
@@ -2015,13 +2044,16 @@ class Alarmer:
 
 
 class Decision:
-	def __init__(self, move_decision=None, attack_decision=None, jump_decision = None, pickup_decision = None, buy_decision = None):
+	def __init__(self, move_decision=None, attack_decision=None, projectile_decision = None, jump_decision = None, pickup_decision = None, buy_decision = None):
 		self.move_decision=move_decision
 		if move_decision is not None:
 			self.move_decision.owner = self
 		self.attack_decision=attack_decision
 		if attack_decision is not None:
 			self.attack_decision.owner = self
+		self.projectile_decision=projectile_decision
+		if projectile_decision is not None:
+			self.projectile_decision.owner = self
 		self.jump_decision=jump_decision
 		if jump_decision is not None:
 			self.jump_decision.owner = self
@@ -2059,6 +2091,11 @@ class Buy_Decision:
 class Attack_Decision:
 	def __init__(self, attack_list):
 		self.attack_list = attack_list
+
+
+class Projectile_Decision:
+	def __init__(self, projectile_list):
+		self.projectile_list = projectile_list
 
 
 
@@ -5522,6 +5559,22 @@ def create_strawman(x,y, weapon, command):
 	return monster
 
 
+
+
+
+def create_projectile(x,y,name,direction, attacker):
+
+	if name == 'bullet':
+		projectile = Bullet(x,y, direction = direction, shooter = attacker)
+	#def __init__(self, x, y, tags = set(), shooter = None, direction = 'right', damage = 1) : 
+	# Note that for our current purposes, damage done by projectile is not affected by things like player strength etc...	
+	return projectile
+
+
+
+
+
+
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map(start_ele_direction = None, start_ele_spawn = None):
 	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters, shrine_list
@@ -6065,9 +6118,14 @@ def process_player_attack(actionCommand):
 	# check whether the weapon can do this kind of attack
 	# probably this should be a separate command in the weapons class, but that would mean repeating yet more code or cleaning up how the weapon code exists, and I am too lazy to do either right now
 	command_recognised = False
-	for (com, data, usage) in player_weapon.command_items:
-		if com == actionCommand:
-			command_recognised = True
+	if player_weapon.combat_type == 'melee':
+		for (com, data, usage) in player_weapon.command_items:
+			if com == actionCommand:
+				command_recognised = True
+	elif player_weapon.combat_type == 'projectile':
+		for (com, data, usage) in player_weapon.projectile_command_items:
+			if com == actionCommand:
+				command_recognised = True
 	if command_recognised == False:
 		if player_weapon.name == 'unarmed':
 			message('You have no weapon!', Color_Not_Allowed)
@@ -6106,9 +6164,18 @@ def process_player_attack(actionCommand):
 		#			print "+1 strength for being on an altar"
 		#			bonus_strength += 1
 
-			abstract_attack_data = player_weapon.do_energy_attack(actionCommand)
-			temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
-			player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+
+			if player_weapon.combat_type == 'melee':
+				abstract_attack_data = player_weapon.do_energy_attack(actionCommand)
+				temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
+				player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+			elif player_weapon.combat_type == 'projectile':
+				# todo make this be projetiley
+				abstract_projectile_data = player_weapon.do_energy_projectile_attack(actionCommand)
+				temp_projectile_list = process_abstract_projectile_data(player.x,player.y, abstract_projectile_data, player, bonus_strength)	
+				player.decider.set_decision(Decision(projectile_decision = Projectile_Decision(projectile_list=temp_projectile_list)))
+				# Also the weapon loses durability! Right now. Because the durability is really 'ammo'.
+				player_weapon.durability -= 1
 			player.fighter.lose_energy(energy_cost)
 		
 		#Note: this code might need to change in future if we decide to have other reasons for not being able to attack
@@ -6139,6 +6206,24 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker), mouseover = "A space where " + attacker.name + " just attacked.")
 			temp_attack_list.append(temp_attack)
 	return temp_attack_list
+
+# like process_abstract_attack_data, but for projectile weapons!
+def process_abstract_projectile_data(x,y,abstract_projectile_data, attacker=None, bonus_strength = 0, direction = None):
+	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
+	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
+	temp_projectile_list = []
+	temp_color = color_swordsman  # libtcod.dark_red
+	if attacker is not None:
+		if attacker.fighter:
+			temp_color = attacker.fighter.attack_color
+	# not having this condition leads to the wierd event handling issues leaf to game-crashing bugs.
+	# Let's add this condition so we can investigate the wierd handling issues a bit, and/or find another game-crashing bug
+	if abstract_projectile_data is not None:	
+		for (i,j,projectile_name, direction) in abstract_projectile_data:
+			# create projectile of the type, location and direction that the data says (damage unaffected by strength etc)
+			temp_projectile = create_projectile(x,y,projectile_name,direction, attacker)	
+			temp_projectile_list.append(temp_projectile)
+	return temp_projectile_list
 
 	
 
@@ -6282,8 +6367,8 @@ def next_level():
 		print ("leaving tutorial, resetting player stats")
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
-		#player_weapon = Weapon_Sword()
-		player_weapon = Weapon_Shiv()
+		#player_weapon = Weapon_Shiv()
+		player_weapon = Weapon_Gun()
 		#player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
@@ -6513,6 +6598,8 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 		new_weapon =  Weapon_Halberd()
 	elif name == 'shiv':
 		new_weapon =  Weapon_Shiv()
+	elif name == 'gun':
+		new_weapon =  Weapon_Gun()
 	elif name == 'ring of power':
 		new_weapon =  Weapon_Ring_Of_Power()
 	else:
