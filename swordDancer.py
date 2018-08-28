@@ -426,6 +426,13 @@ class Object:
 					FinalPreDrawEvents.append((report_objects_here, argset))
 					fov_recompute = True
 
+				# Also! check for projectiles?
+				for obj in objectsArray[new_x][new_y]:
+					if 'projectile' in obj.tags and obj is not self:
+						if obj.attacksOnHit:
+							print ('owowowowow at (' + str(new_x) + ',' + str(new_y) + ')')
+							obj.destroyOnImpact()
+
 
 	# MovementPhase event
 	def attemptJump(self, dx, dy):
@@ -749,6 +756,8 @@ class Object:
 
 
 	def destroy(self, args):
+		print("DESTROY DESTROY DESTROY " + self.name + " at (" + str(self.x) + "," + str(self.y) + ")\n")
+		print(str(objectsArray[self.x][self.y]))
 		self.remove_from_game()
 
 	def remove_from_game(self):
@@ -1225,16 +1234,18 @@ class Projectile(Object):
 		tags.add('projectile')
 		Object.__init__(self, x, y, char, name, color,  mouseover = mouseover, tags = tags)
 		self.shooter = shooter			# the entity that shot this object (not the weapon used...)
+		self.marked_for_destruction = False
 
+
+	# start the projectile moving! moved this out of the initialization method because i think it was causing bugs
+	def fire(self):
 		(dx,dy) = getVectorFromDirectionAndSpeed (self.direction, self.speed)
 		argset = (dx,dy)
 		MovementPhaseEvents.append((self.projectile_move, argset))
 
-
 	# very similar to object.attemptJump, but with some adjustments for the busy life of a projectile (TODO make adjustments)
 	# TODO add code for passing through enemies and bouncing off walls (e.g. for grenades)
 	def projectile_move(self, argset):
-
 		(dx,dy) = argset
 		blockedByWall = False
 		nearestObstacle = None
@@ -1246,75 +1257,84 @@ class Projectile(Object):
 		stop_y = target_y
 		bounce_x = target_x
 		bounce_y = target_y
-		# for now this only works on straight line or diagonal jumps. If we start having knights move jumps or something, we'll have to rethink
-		if (math.fabs(dx) == 0 or math.fabs(dy) == 0 or math.fabs(dx) == math.fabs(dy) and self.momentum > 0):
-			xSign = getSign(dx)
-			ySign = getSign(dy)
-			i = 1;
-			while i <= max(math.fabs(dx), math.fabs(dy)):
-			
-				# check the next space out
-				space_x = self.x + i*xSign
-				space_y = self.y + i*ySign
-				if map[space_x][space_y].blocked:
-					blockedByWall = True
-					bounce_x = self.x + (i-1)*xSign
-					bounce_y = self.y + (i-1)*ySign
-					stop_x = self.x + i*xSign
-					stop_y = self.y + i*ySign
-					break
-				else:
-					# check for blocking, objects
-					for obj in objectsArray[space_x][space_y]:
-						# blocking objects are only a problem if they'renot jumpable, or they're where we're trying to get to
-						if obj.blocks and (not (obj.jumpable and self.passesThroughJumpables) or i == max(math.fabs(dx), math.fabs(dy))):
-							nearestObstacle = obj
-							bounce_x = self.x + (i-1)*xSign
-							bounce_y = self.y + (i-1)*ySign
-							stop_x = self.x + i*xSign
-							stop_y = self.y + i*ySign
-							break
-				# Hey I forgot to increase i!
-				i += 1
 
-		if stop_x != self.x or stop_y != self.y:
-			# do the actual movement
-			# TODO: update if thing is bouncing rather than exploding on impact?
-			print("move " + str(self.x) + "," + str(self.y) + " -- " + str(stop_x) + "," + str(stop_y))
-			self.x = stop_x
-			self.y = stop_y
-			objectsArray[stop_x][stop_y].append(self)
-			if self in objectsArray[old_x][old_y]:
-				objectsArray[old_x][old_y].remove(self)
+	
+		if not self.marked_for_destruction:	#hopefully this stops wierd bugs caused by trying to move a projectile after it's meant to have been destroyed
+	
+			print("nyoom AT (" + str(self.x) + "," + str(self.y) + ")")
+			print(str(objectsArray[self.x][self.y]))	
+	
+			# for now this only works on straight line or diagonal jumps. If we start having knights move jumps or something, we'll have to rethink
+			if (math.fabs(dx) == 0 or math.fabs(dy) == 0 or math.fabs(dx) == math.fabs(dy) and self.momentum > 0):
+				xSign = getSign(dx)
+				ySign = getSign(dy)
+				i = 1;
+				while i <= max(math.fabs(dx), math.fabs(dy)):
+				
+					# check the next space out
+					space_x = self.x + i*xSign
+					space_y = self.y + i*ySign
+					if map[space_x][space_y].blocked:
+						blockedByWall = True
+						bounce_x = self.x + (i-1)*xSign
+						bounce_y = self.y + (i-1)*ySign
+						stop_x = self.x + i*xSign
+						stop_y = self.y + i*ySign
+						break
+					else:
+						# check for blocking, objects
+						for obj in objectsArray[space_x][space_y]:
+							# blocking objects are only a problem if they'renot jumpable, or they're where we're trying to get to
+							if obj.blocks and (not (obj.jumpable and self.passesThroughJumpables) or i == max(math.fabs(dx), math.fabs(dy))):
+								nearestObstacle = obj
+								bounce_x = self.x + (i-1)*xSign
+								bounce_y = self.y + (i-1)*ySign
+								stop_x = self.x + i*xSign
+								stop_y = self.y + i*ySign
+								break
+					# Hey I forgot to increase i!
+					i += 1
+
+			if stop_x != self.x or stop_y != self.y:
+				# do the actual movement
+				# TODO: update if thing is bouncing rather than exploding on impact?
+				print("move " + str(self.x) + "," + str(self.y) + " -- " + str(stop_x) + "," + str(stop_y))
+				self.x = stop_x
+				self.y = stop_y
+				if self not in objectsArray[stop_x][stop_y]:
+					objectsArray[stop_x][stop_y].append(self)		# APPEND 1
+				if self in objectsArray[old_x][old_y]:
+					objectsArray[old_x][old_y].remove(self)
 
 
-#			# in addition,  recalculate fov and report objects here if the player has just moved
-#			if self is player:
-#				argset = (final_x, final_y)
-#				FinalPreDrawEvents.append((report_objects_here, argset))
-#				fov_recompute = True
+#				# in addition,  recalculate fov and report objects here if the player has just moved
+#				if self is player:
+#					argset = (final_x, final_y)
+#					FinalPreDrawEvents.append((report_objects_here, argset))
+#					fov_recompute = True
 
 		
 
 
-		# Now, if we didn't quite get where we wanted, report on what we jumped into
-		if bounce_x != target_x or bounce_y != target_y:
-			if self.attacksOnHit:
-				print ('boyoyoyoyoyom')
-				self.destroyOnImpact()
-			# TODO: implemnt bouncing if object is bouncey
-
-		# Keep moving, if momentum allows it
-		self.momentum = self.momentum - 1
-		if self.momentum > 0:			
-			(dx,dy) = getVectorFromDirectionAndSpeed (self.direction, self.speed)
-			argset = (dx,dy)
-			print(str(self.momentum))
-			MovementPhaseEvents.append((self.projectile_move, argset))
-		return
+			# Now, if we didn't quite get where we wanted, report on what we jumped into
+			if bounce_x != target_x or bounce_y != target_y:
+				if self.attacksOnHit:
+					print ('boyoyoyoyoyom at(' + str(self.x) + ',' + str(self.y) + ')')
+					self.destroyOnImpact()
+				# TODO: implemnt bouncing if object is bouncey
+	
+			# Keep moving, if momentum allows it
+			self.momentum = self.momentum - 1
+			if self.momentum > 0:			
+				(dx,dy) = getVectorFromDirectionAndSpeed (self.direction, self.speed)
+				argset = (dx,dy)
+				print(str(self.momentum))
+				MovementPhaseEvents.append((self.projectile_move, argset))
+			return
 
 	def destroyOnImpact(self):
 		self.momentum = 0	# stop infinite looping hopefully
+		self.marked_for_destruction = True	# stop bullets wiedly hanging around hopefully?
 		MiscPhaseEvents.append((self.destroy, argset))
 
 
@@ -1329,7 +1349,10 @@ class Bullet(Projectile):
 
 	def destroyOnImpact(self):
 		global objectsArray, worldAttackList
+		print("DESTROYING BULLET AT (" + str(self.x) + "," + str(self.y) + ")")
+		print(str(objectsArray[self.x][self.y]))
 		self.momentum = 0	# stop infinite looping hopefully
+		self.marked_for_destruction = True	# stop bullets wiedly hanging around hopefully?
 		MiscPhaseEvents.append((self.destroy, argset))
 		attack = ModernAttack(x = self.x, y = self.y, color = self.color, attacker = self, damage = self.damage)		#very tempt hack hopefully
 		objectsArray[attack.x][attack.y].append(attack)	
@@ -1943,12 +1966,15 @@ class Decider:
 		# todo make this do all the attackey making stuff
 		# Aha, this thing has not been done.
 		for projectile in projectile_list:
+
+			print("tryna make projectile at (" + str(projectile.x) + "," + str(projectile.y) + ")") 
 			try:
 				#attack_data = attack_object.attack
 				#attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
 				objectsArray[projectile.x][projectile.y].append(projectile)	
 				#worldAttackList.append(attack)		# TODO: should we add theprojectile to world entities list?
 				projectile.send_to_front()
+				projectile.fire()
 			except IndexError:		#todo: check that this is the right thing to catch...
 				print('')	
 
@@ -7890,7 +7916,8 @@ def initialise_game():
 	#upgrade_array.append(another_upgrade)
 	
 	#WEAPON SELECT
-	player_weapon = Weapon_Unarmed()
+	#player_weapon = Weapon_Unarmed()
+	player_weapon = Weapon_Gun()
 	#player_weapon = Weapon_Sword()
 	#player_weapon = Weapon_Spear()
 	#player_weapon = Weapon_Staff()
@@ -9308,7 +9335,8 @@ while not translated_console_is_window_closed():
 
 
 
-
+		#print("Phase: prelim")
+		#print(str(objectsArray[13][61]))
 
 		# Do preliminary phase stuff
 		doGlobalPreliminaryEvents()
@@ -9335,6 +9363,8 @@ while not translated_console_is_window_closed():
 				loop_count_sanity_check += 1
 
 		
+				#print("Phase: movement")
+				#print(str(objectsArray[13][61]))
 				# Clear out the current list of movement phase events and process them
 				# Movement events can trigger other movements, which will be processed on the next go through the loop
 				currentMovementPhaseEvents = list(MovementPhaseEvents)
@@ -9363,11 +9393,16 @@ while not translated_console_is_window_closed():
 				loop_count_sanity_check += 1
 	
 
+				#print("Phase: attack")
+				#print(str(objectsArray[13][61]))
 				# Process Attack phase events		(things hitting/attacking)
 				currentAttackPhaseEvents = list(AttackPhaseEvents)
+				print(str(currentAttackPhaseEvents))
 				AttackPhaseEvents = []		#clear these events so new things can be added
 				for (function, argset) in currentAttackPhaseEvents:
 					if function is not None:
+						#print("Phase: mid-attack")
+						#print(str(objectsArray[13][61]))
 						function(argset)
 	
 				render_all()
@@ -9378,7 +9413,11 @@ while not translated_console_is_window_closed():
 						#time.sleep(frame_attack_pause)
 		#			else:
 						#time.sleep(frame_pause)
-		
+	
+					
+				#print("Phase: damage")	
+				#print(str(objectsArray[13][61]))	
+
 				# Process Damage Phase Events		(things getting damaged by attacks)
 				currentDamagePhaseEvents = list(DamagePhaseEvents)
 				DamagePhaseEvents = []
@@ -9392,6 +9431,9 @@ while not translated_console_is_window_closed():
 					#put in a pause before drawing the other stuff?
 					#time.sleep(frame_pause)
 	
+
+				#print("Phase: misc")
+				#print(str(objectsArray[13][61]))
 	
 				# Process Misc Phase events		(other stuff in response to damage e.g. chain reactions)
 				currentMiscPhaseEvents = list(MiscPhaseEvents)
@@ -9412,6 +9454,7 @@ while not translated_console_is_window_closed():
 
 
 
+		#print("Phase: predraw")
 		# Final pre-draw phase
 		currentFinalPreDrawEvents = list(FinalPreDrawEvents)
 		FinalPreDrawEvents = []
@@ -9430,6 +9473,8 @@ while not translated_console_is_window_closed():
 		translated_console_flush()
 
 
+		#print("Phase: postdraw")
+		#print(str(objectsArray[13][61]))
 		# Final post-draw phase
 		currentFinalPostDrawEvents = list(FinalPostDrawEvents)
 		FinalPostDrawEvents = []

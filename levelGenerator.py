@@ -301,7 +301,7 @@ class Level_Generator:
 			self.first_level(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			# self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			#self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
-			player_start_x = 11
+			player_start_x = 10
 			player_start_y = 61
 			#max_map_width = lev_set.max_map_width + 1
 
@@ -2997,7 +2997,7 @@ class Level_Generator:
 				[1,1,1,C,0,0,0,0,0,0,0,0,C,0,0,0,C,0,0,0,0,0,1],
 				[1,0,0,0,0,0,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0,1,1],
 				[0,0,0,0,0,G,0,C,0,0,0,G,0,G,0,G,0,0,G,0,C,1,1],
-				[0,0,0,D,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+				[0,0,0,D,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
 				[1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1],
 				[1,0,0,0,0,0,0,0,0,C,H,C,0,0,0,C,H,C,0,0,0,1,1]]
 		#seg_map = self.rotateSegment(seg_map)
