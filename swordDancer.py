@@ -1907,8 +1907,8 @@ class Decider:
 			if self.decision.projectile_decision:
 				argset = (self.decision.projectile_decision.projectile_list)
 				AttackPhaseEvents.append((self.makeProjectiles, argset))
-				if fov_map.fov[self.owner.x,self.owner.y]:
-					sloMoAttack = True;
+				#if fov_map.fov[self.owner.x,self.owner.y]:
+				#	sloMoAttack = True;
 			if self.decision.pickup_decision:
 				argset = (self.decision.pickup_decision.items_to_pickup)
 				MovementPhaseEvents.append((self.owner.attemptPickup, argset))
@@ -2625,6 +2625,136 @@ class Dove_AI(BasicMonster):
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
 
+
+# Tries to get in line with the player (either horizontally, vertically or diagonally?) and then shoot at them, mostly regardless of distance
+# (will probably have some max distance of like 10 or 15 just to avoid too much shooting from offscreen...)
+class Gunslinger_AI(BasicMonster):
+
+	# Part of Step 3: do the things you can do when you see the player!
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		# (which happens if  you are in a direct line with the player, with no blocking objects in between)
+		attackList = self.possibleAttackList(monster, decider)
+
+
+		# figure out the vector that the player is from you
+		dist_x = self.target_x  - monster.x
+		dist_y = self.target_y  - monster.y
+		xSign = getSign(dist_x)
+		ySign = getSign(dist_y)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_projectile_data = self.weapon.do_projectile_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_projectile_list = process_abstract_projectile_data(monster.x,monster.y, abstract_projectile_data, monster)	
+			decider.decision = Decision(projectile_decision = Projectile_Decision(projectile_list=chosen_projectile_list))
+
+		# if we can't attack bcause we're not in line, try and get in line
+		elif dist_x != 0 and dist_y != 0 and math.fabs(dist_x) != math.fabs(dist_y):
+
+			# either try and reduce y distance or x distance. If one is not possible, try to other
+			if not fov_map.fov[monster.x + xSign, monster.y] or is_blocked(monster.x + xSign, monster.y):
+				# try to reduce y distance
+				decider.decision = Decision(move_decision=Move_Decision(0, ySign))
+			elif not fov_map.fov[monster.x, monster.y +ySign] or is_blocked(monster.x, monster.y +ySign):
+				# try to reduce x distance
+				decider.decision = Decision(move_decision=Move_Decision(xSign, 0))
+
+			# otherwise, try and line up either the horizontal/vertical shot or the diagonal shot, whichever is nearest
+			elif math.fabs(dist_x) < math.fabs(dist_y):
+				# case where the horizontal shot is easiest to line up
+				if math.fabs(dist_x) <=  math.fabs(dist_y) - math.fabs(dist_x):
+					# try to reduce x distance
+					decider.decision = Decision(move_decision=Move_Decision(xSign,0))
+				# case where the diagonal shot is easier to line up
+				else:
+					# try to reduce y distance
+					decider.decision = Decision(move_decision=Move_Decision(0, ySign))
+			else:
+				# case where the vertical shot is easiest to line up
+				if math.fabs(dist_y) <=  math.fabs(dist_x) - math.fabs(dist_y):
+					# try to reduce y distance
+					decider.decision = Decision(move_decision=Move_Decision(0, ySign))
+				# case where the diagonal shot is easier to line up
+				else:
+					# try to reduce x distance
+					decider.decision = Decision(move_decision=Move_Decision(xSign,0))
+					
+
+
+		# otherwise (there's something in the way), walk towards the player if possible.
+		elif monster.distance_to(player) > 2: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True,  return_message = None, avoid_water = self.scared_of_water)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+
+	# Returns a list of possible attacks that might hit the player 
+	# (this basically being, the attack that points in the direction of the player, if you are in line with the player and there's nothing in the way)
+	def possibleAttackList(self, monster, decider):
+		attackList = []
+		# Is the player alive and do you have enough 'weapon charge'?
+		# AND are you not in water?
+		if player.fighter.hp >= 0 and self.weapon.current_charge >= self.weapon.default_usage and not monster.fighter.in_water:
+			# figure out the vector that the player is from you
+			dist_x = self.target_x  - monster.x
+			dist_y = self.target_y  - monster.y
+
+			# can only attack if the target is in a direct vertical, horizontal or diagonal line
+			if (dist_x == 0 and dist_y != 0) or (dist_y == 0 and dist_x != 0) or math.fabs(dist_x) == math.fabs(dist_y):
+
+				# Now check to see if there are any obstacles in the way
+				# (code here is similar to that used in attemptJump, except we don't do a check on the target space.
+				# Should be agnostic with regard to direction of target (as long as it's in a straight line)
+
+				xSign = getSign(dist_x)
+				ySign = getSign(dist_y)
+				i = 1;
+				blocked = False
+				while i < max(math.fabs(dist_x), math.fabs(dist_y)):
+				
+					# check the next space out
+					space_x = monster.x + i*xSign
+					space_y = monster.y + i*ySign
+					if map[space_x][space_y].blocked:
+						blocked = True
+						break
+					else:
+						# check for blocking, objects
+						for obj in objectsArray[space_x][space_y]:
+							# don't make special allowances for jumpable objects - bullets don't care
+							if obj.blocks: #and (not obj.jumpable or i == max(math.fabs(dx), math.fabs(dy))):
+								blocked = True
+								break
+					# Hey I forgot to increase i!
+					i += 1
+
+				# The above should have checked that there's nothing in the way that will block the bullet
+				if not blocked:
+					# now that we are in line and that  there is nothing in the way, just have to figure out which line we are in
+					if dist_x == 0 and dist_y < 0:
+						attackList.append(ATTCKUP)
+					if dist_x == 0 and dist_y > 0:
+						attackList.append(ATTCKDOWN)
+					if dist_x < 0 and dist_y == 0:
+						attackList.append(ATTCKLEFT)
+					if dist_x > 0 and dist_y == 0:
+						attackList.append(ATTCKRIGHT)
+	
+					if dist_x < 0 and dist_y < 0:
+						attackList.append(ATTCKUPLEFT)
+					if dist_x > 0 and dist_y < 0:
+						attackList.append(ATTCKUPRIGHT)
+					if dist_x < 0 and dist_y > 0:
+						attackList.append(ATTCKDOWNLEFT)
+					if dist_x > 0 and dist_y > 0:
+						attackList.append(ATTCKDOWNRIGHT)
+
+		print (str(attackList))
+		return attackList
 
 
 # Like the basic AI, but the eagle attacks towards the player when standing next to them, even though the player isn't in range for that attack
@@ -5461,6 +5591,15 @@ def create_monster(x,y, name, guard_duty = False):
 		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)  #"Wields two weapons. One weapon is aimed at you. The other one, who knows.")
 
 
+
+	elif name == 'gunslinger':
+		#create a guy with an gun!
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
+		ai_component = Gunslinger_AI(weapon = Weapon_Gun(), guard_duty = guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)  
+
+
 #	elif name == 'stupid rook':
 #		#create a rook! That's a guy with a spear who only moves in four directions
 #		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
@@ -6393,8 +6532,8 @@ def next_level():
 		print ("leaving tutorial, resetting player stats")
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
-		#player_weapon = Weapon_Shiv()
-		player_weapon = Weapon_Gun()
+		player_weapon = Weapon_Shiv()
+		#player_weapon = Weapon_Gun()
 		#player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
 		currency_count = STARTING_CURRENCY
@@ -6713,6 +6852,9 @@ def get_item_from_name(x,y, name):
 	elif name == 'shiv':
 		char = 's'
 		mouseover_text = "A lightweight, short range, versatile weapon."
+	elif name == 'gun':
+		char = 'g'
+		mouseover_text = "A weapon of terrifying range."
 	elif name == 'ring of power':
 		char = 'o'
 		mouseover_text = "Ancient weapon of mass destruction. Currently seeking new collaborators."
@@ -7384,8 +7526,10 @@ def create_GUI_panel():
 	#libtcod.console_print_ex(panel, attack_panel_x, 7, libtcod_BKGND_NONE, libtcod_LEFT,
 	#'Durability: ' + str(player_weapon.durability))
 	if SHOW_WEAPON_DURABILITY:
-		panel.draw_str(int(attack_panel_x) , 7, 'Durability: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
-
+		if player_weapon.combat_type != 'projectile':
+			panel.draw_str(int(attack_panel_x) , 7, 'Durability: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
+		else:
+			panel.draw_str(int(attack_panel_x) , 7, 'Ammo: ' + str(player_weapon.durability), bg=None, fg=current_text_color)
 
 	#PLAYER PANEL STUFF
 
@@ -7916,8 +8060,8 @@ def initialise_game():
 	#upgrade_array.append(another_upgrade)
 	
 	#WEAPON SELECT
-	#player_weapon = Weapon_Unarmed()
-	player_weapon = Weapon_Gun()
+	player_weapon = Weapon_Unarmed()
+	#player_weapon = Weapon_Gun()
 	#player_weapon = Weapon_Sword()
 	#player_weapon = Weapon_Spear()
 	#player_weapon = Weapon_Staff()
@@ -9397,7 +9541,7 @@ while not translated_console_is_window_closed():
 				#print(str(objectsArray[13][61]))
 				# Process Attack phase events		(things hitting/attacking)
 				currentAttackPhaseEvents = list(AttackPhaseEvents)
-				print(str(currentAttackPhaseEvents))
+				#print(str(currentAttackPhaseEvents))
 				AttackPhaseEvents = []		#clear these events so new things can be added
 				for (function, argset) in currentAttackPhaseEvents:
 					if function is not None:

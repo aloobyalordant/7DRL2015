@@ -79,6 +79,9 @@ class Generic_Weapon:
 		for (com, data, usage) in self.command_items:
 			if com == command:
 				return usage
+		for (com, data, usage) in self.projectile_command_items:
+			if com == command:
+				return usage
 		print('attack not found, returning cost 0')
 		return 0
 
@@ -2862,7 +2865,7 @@ class Weapon_Halberd(Generic_Weapon):
 class Weapon_Gun(Generic_Weapon):
 
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'gun', 2, 2, 2, combat_type = 'projectile')
+		Generic_Weapon.__init__(self, 'gun', 2, 2, 2, combat_type = 'projectile', durability = 40)
 		default_usage = self.default_usage
 			
 		projectile_name = 'bullet'

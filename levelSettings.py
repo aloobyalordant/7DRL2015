@@ -143,7 +143,7 @@ class Level_Settings:
 		enemybench = []		# enemies not currently being used, but that we might soon
 	#	if randint(0,1) == 0:	TEMP COMMENTED OUT RANDOMIZATION TO MAKE TESTING EASIER
 		if 0 == 0:
-			enemyprobs1 = [('greenhorn', 20), ('crane',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
+			enemyprobs1 = [('greenhorn', 20), ('crane',10), ('gunslinger',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
 			enemybench = [('bustard',10), ('dove', 10),  ('falcon', 10)]
 		else:
 			enemyprobs1 = [('greenhorn', 20), ('bustard',10)] 

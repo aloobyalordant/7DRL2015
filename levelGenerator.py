@@ -2987,7 +2987,7 @@ class Level_Generator:
 		C = Object_Name('door')	# a door that may stick!
 		#D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
 		D = Object_Name('weapon', 'sword')
-		W = Object_Name('monster', 'wizard')
+		W = Object_Name('monster', 'gunslinger')
 		F = Object_Name('fire')
 		#G = Object_Name('firepit')
 		G = Object_Name('shrine')
