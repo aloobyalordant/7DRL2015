@@ -1,5 +1,7 @@
 game_name,Name,Symbol,colorR,colorG,colorB,Description,Notes,,
-greenhorn,Swordsman,257,2,165,214,This enemy is just excited to be here.,Wields sword, early game easy enemy,
+greenhorn,SwordBot,257,2,165,214,Just your standard-issue kill bot,Wields sword, early game easy enemy,
+greenhorn-aggro,SwordBotV2,257,2,165,214,Faster! Meaner! Stupider!,Wields sword,"modified version, attacks faster",
+greenhorn-cautious,SwordBotMKI,256,2,165,214,"An older model killbot, with unreliable wiring",,,
 bustard,Rook,259,0,139,5,The tower's elite robot security force. Can't move or attack diagonally.,Wields Spear, early game, can’t move diaognally
 crane,Bludger,261,157,82,150,Likes to hedge their bets by attacking multiple spaces at once. Not concerned about hitting co-workers.,Wields Broom, early game,
 dove,Shibop,D,219,25,32,Looooooves diagonals.,Wields Pike, early game, moves diagonally

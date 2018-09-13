@@ -301,7 +301,7 @@ class Level_Generator:
 			self.first_level(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			# self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			#self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
-			player_start_x = 10
+			player_start_x = 11
 			player_start_y = 61
 			#max_map_width = lev_set.max_map_width + 1
 
@@ -1461,26 +1461,26 @@ class Level_Generator:
 		direction = None
 		if elevator_type == 'Small-Elevator-Left':
 			seg_map =      [[5,5,1,1,1],
-					[5,0,3,4,4],
-					[5,0,3,4,4],
+					[5,6,3,4,4],
+					[5,6,3,4,4],
 					[5,5,1,1,1]]
 			ele_direction = 'left'
 		elif elevator_type == 'Small-Elevator-Right':
 			seg_map =      [[1,1,1,5,5],
-					[4,4,3,0,5],
-					[4,4,3,0,5],
+					[4,4,3,7,5],
+					[4,4,3,7,5],
 					[1,1,1,5,5]]
 			ele_direction= 'right'
 		elif elevator_type == 'Small-Elevator-Down':
 			seg_map =      [[1,4,4,1],
 					[1,4,4,1],
 					[1,3,3,1],
-					[0,5,5,0],
+					[8,5,5,8],
 					[0,5,5,0]]
 			ele_direction = 'down'
 		elif elevator_type == 'Small-Elevator-Up':
 			seg_map =      [[0,5,5,0],
-					[0,5,5,0],
+					[9,5,5,9],
 					[1,3,3,1],
 					[1,4,4,1],
 					[1,4,4,1]]
@@ -1500,6 +1500,14 @@ class Level_Generator:
 				elif (seg_map[y][x] == 5):  # and background_map is not None):
 					#background_map[elevator.x1 + x][elevator.y1 + y] = 2
 					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'decoration', '\''))
+				elif (seg_map[y][x] == 6): 
+					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'exit-arrow', 'right'))
+				elif (seg_map[y][x] == 7): 
+					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'exit-arrow', 'left'))
+				elif (seg_map[y][x] == 8): 
+					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'exit-arrow', 'up'))
+				elif (seg_map[y][x] == 9): 
+					object_data.append(Object_Datum(elevator.x1 + x,elevator.y1 + y, 'exit-arrow', 'down'))
 
 		new_elevator = Elevator(door_points, local_spawn_points, player_authorised = easy_elevator, direction = ele_direction)
 		#print "elevatooooooooR"
@@ -2419,10 +2427,11 @@ class Level_Generator:
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
 		D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
 		E = Object_Name('monster', 'greenhorn')
+		U = Object_Name('exit-arrow', 'up')
 		seg_map =      [[0,0,0,0,0,0,0,1],
 				[1,1,1,0,1,1,1,1],
 				[1,1,1,C,1,1,1,1],
-				[1,0,0,0,0,0,1,1],
+				[1,0,0,U,0,0,1,1],
 				[0,0,0,0,0,0,1,1],
 				[0,0,0,D,0,0,1,1],
 				[1,0,0,0,0,0,1,1],
@@ -2543,11 +2552,11 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,0],
 				[1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0],
-				[0,0,0,0,0,A,0,0],
 				[1,0,A,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,A],
 				[1,0,0,A,0,0,0,0],
-				[1,0,0,0,0,0,0,0],
+				[1,0,0,0,0,A,0,0],
 				[1,0,0,0,0,0,F,0]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), 3*tut_rm_width,3*tut_rm_height, object_data)
 
@@ -2557,24 +2566,44 @@ class Level_Generator:
 		new_room = Rect(tut_rm_width,3*tut_rm_height,2*tut_rm_width,2*tut_rm_height-1)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		F = Object_Name('message', "Be not afraid to run into the place your enemy has just struck.")
+		G = Object_Name('message', "Don't forget you can press #STANDSTILL# to stand still for a turn.")
+		H = Object_Name('message', "Observe that you can parry an enemy's attack if your own attack would hit them.")
 		B = Object_Name('strawman', 'spear', 'ATTCKLEFT')
 		C = Object_Name('strawman', 'spear', 'ATTCKUP')
 		D = Object_Name('strawman', 'spear', 'ATTCKDOWN')
 		E = Object_Name('strawman', 'spear', 'ATTCKRIGHT')
-		seg_map =      [[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
-				[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
-				[1,1,0,1,1,1,1,1,1,1,1,1,0,F,0,1],
-				[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1],
-				[1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1],
-				[E,0,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
-				[1,1,0,1,1,0,1,1,1,1,1,1,1,0,1,1],
-				[1,1,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
-				[1,1,1,0,1,0,0,B,1,1,1,1,1,1,1,1],
-				[1,1,1,C,1,0,1,1,1,1,1,1,0,0,0,1],
-				[1,1,1,1,1,0,1,1,1,1,1,1,0,F,0,0],
-				[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
-				[1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1],
-				[1,1,1,1,1,1,C,1,C,1,C,1,1,1,1,1],
+		S = Object_Name('weapon', 'sword')
+		Z = Object_Name('door', 'horizontal')
+		L = Object_Name('exit-arrow', 'left')
+		#seg_map =      [[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+		#		[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0],
+		#		[1,1,0,1,1,1,1,1,1,1,1,1,0,F,0,1],
+		#		[E,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1],
+		#		[1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1],
+		#		[E,0,0,1,1,D,1,1,1,1,1,1,1,0,0,B],
+		#		[1,1,0,1,1,0,1,1,1,1,1,1,1,0,1,1],
+		#		[1,1,0,0,0,0,1,1,1,1,1,E,0,0,1,1],
+		#		[1,1,1,0,1,0,0,B,1,1,1,1,1,1,1,1],
+		#		[1,1,1,C,1,0,1,1,1,1,1,1,0,0,0,1],
+		#		[1,1,1,1,1,0,1,1,1,1,1,1,0,F,0,0],
+		#		[1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
+		#		[1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1],
+		#		[1,1,1,1,1,1,C,1,C,1,C,1,1,1,1,1],
+		#		[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+		seg_map =      [[1,1,Z,1,1,1,0,0,0,0,1,1,1,1,1,1],
+				[1,0,0,0,1,1,0,1,1,0,1,1,1,1,1,1],
+				[0,0,S,0,0,1,0,E,0,0,1,1,1,1,1,1],
+				[0,E,0,B,0,1,0,1,1,0,1,1,1,1,1,1],
+				[0,0,0,0,0,1,0,1,1,0,1,1,1,1,1,1],
+				[1,0,H,0,0,0,0,E,0,0,1,0,1,1,1,1],
+				[1,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1],
+				[1,1,1,1,1,1,1,1,0,G,0,1,1,1,1,1],
+				[1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+				[1,1,0,0,0,1,D,1,D,1,D,1,1,1,1,1],
+				[1,1,0,0,0,1,0,1,0,1,0,1,0,0,0,0],
+				[1,1,0,0,0,L,0,L,0,L,0,0,0,F,0,1],
+				[1,1,1,1,1,1,1,0,1,0,1,1,0,0,0,1],
 				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,3*tut_rm_height, object_data)
 
@@ -2584,12 +2613,13 @@ class Level_Generator:
 		new_room = Rect(tut_rm_width,tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		A = Object_Name('strawman')
-		F = Object_Name('message', "Taken wounds in battle? We recommend: fresh fruit.")
+		E = Object_Name('message', "Taken wounds in battle? We recommend: fresh fruit.")
 		G = Object_Name('message', "Sometimes the best thing to do is not to fight but to Jump (#JUMP#).")
 		H = Object_Name('message', "Water is fine to swim in. You just can't attack while doing so.")
 		W = Object_Name('water')
 		B = Object_Name('plant')
-		S = Object_Name('weapon', 'shiv')
+		S = Object_Name('weapon', 'sword')
+		F = Object_Name('infinifire')
 		seg_map =      [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,W,W,0],
@@ -2597,12 +2627,12 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,0,0,0,0,0,W,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,W,W,A,0,0],
 				[1,0,0,0,0,0,0,1,0,0,0,W,W,0,H,0],
-				[1,A,A,A,A,A,A,1,0,0,0,0,W,A,0,0],
+				[1,F,F,F,F,F,F,1,0,0,0,0,W,A,0,0],
 				[1,0,0,G,0,0,0,1,0,0,0,0,W,W,A,W],
 				[1,0,0,0,B,0,0,1,0,0,0,0,0,W,W,W],
 				[1,0,B,0,0,0,0,1,0,0,0,0,0,W,W,0],
 				[1,0,0,0,0,B,0,1,0,0,0,0,0,0,0,0],
-				[1,0,0,F,0,0,0,1,0,0,0,S,0,0,0,0],
+				[1,0,0,E,0,0,0,1,0,0,0,S,0,0,0,0],
 				[1,0,0,0,B,0,0,1,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
 				[1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1]]
@@ -2660,7 +2690,7 @@ class Level_Generator:
 		# makea new room and thereby update nearest_points_array hopefully
 		new_room = Rect(4*tut_rm_width, 4*tut_rm_height,2*tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
-		R = Object_Name('monster', 'rook')
+		R = Object_Name('monster', 'bustard')
 		W = Object_Name('water')
 		C = Object_Name('easydoor', 'horizontal')	# a door that doesn't stick!
 		F = Object_Name('message', "This enemy has extended reach! But they cannot move or attack diagonally.")
@@ -2732,6 +2762,7 @@ class Level_Generator:
 		new_room = Rect(2*tut_rm_width, 6*tut_rm_height,2*tut_rm_width,2*tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('security drone', 'drops-key')
+		D = Object_Name('enemy dispenser')
 		W = Object_Name('water')
 		F = Object_Name('message', "The favour you get from defeating security drones can be exchanged at shrines for powerful abilities.")
 		G = Object_Name('message', "Defeating security drones (even active ones) will give you rewards and sometimes keys.")
@@ -2750,8 +2781,8 @@ class Level_Generator:
 				[1,0,0,0,0,0,0,B,0,0,0,0,0,B,0,0],
 				[1,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,B,0,0,0,0],
-				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-				[1,0,0,0,0,0,B,0,0,0,0,0,0,0,C,0],
+				[1,D,0,0,0,0,0,0,0,0,0,0,0,0,0,D],
+				[1,0,0,0,0,0,B,0,0,0,C,0,0,0,0,0],
 				[1,0,0,0,H,H,0,0,0,0,0,0,H,H,0,0],
 				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 				[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]

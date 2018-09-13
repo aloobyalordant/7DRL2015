@@ -209,7 +209,7 @@ Color_Interesting_In_World=(v_p,v_p,v_p)	# Events of note happening in the world
 Color_Boring_In_World=(v_p,v_p,v_p)		# everyday occurences like doors opening
 Color_Stat_Info=(v_p,v_p,v_p)			# info about not-in-the-world stuff like gaining energy
 Color_Personal_Action=(v_p,v_p,v_p)		# Things the player does that aren't combat "you pick up the sword" etc
-
+Color_Route_Guidance=(v_p,v_p,v_p)		# Telling the player where to go, in particular when exits open
 
 
 
@@ -369,6 +369,7 @@ class Object:
 		self.getting_burned = getting_burned
 		self.aflame = aflame
 		self.immune_to_fire = immune_to_fire
+		self.pushMomentum = 0
 
 
 #	# TODO: ultimately this move should be deprecated? Use attemptMove instead
@@ -414,6 +415,8 @@ class Object:
 				# if this was the player, tell them they walked into a wall
 				if self is player:
 					message ("You walk into a wall.", Color_Personal_Action)
+				#if we were pushed, stop being pushed
+				self.pushMomentum = 0
 			else:
 				# do the actual movement
 				self.x = new_x
@@ -430,7 +433,7 @@ class Object:
 				for obj in objectsArray[new_x][new_y]:
 					if 'projectile' in obj.tags and obj is not self:
 						if obj.attacksOnHit:
-							print ('owowowowow at (' + str(new_x) + ',' + str(new_y) + ')')
+							#print ('owowowowow at (' + str(new_x) + ',' + str(new_y) + ')')
 							obj.destroyOnImpact()
 
 
@@ -552,6 +555,8 @@ class Object:
 			#set the color and then draw the character that represents this object at its position
 			con.draw_char(self.x - x_offset, self.y - y_offset, self.char, bg=bg_color, fg = self.color)
 
+
+
 	def clear(self):
 		global camera
 
@@ -659,7 +664,7 @@ class Object:
 	
 
 	def getPickedUp(self,picker):
-		global player_weapon, objectsArray, key_count, currency_count
+		global player_weapon, objectsArray, key_count, currency_count, lev_set
 
 		# things can only be picked up if they are in the map
 		if self.exists_in_map :
@@ -719,6 +724,9 @@ class Object:
 					message('You snatch up the key.', Color_Personal_Action)
 					key_count += 1
 
+					if key_count >= lev_set.keys_required:
+						message("You have enough keys, the exits are now open!", Color_Interesting_In_World)
+
 					
 					# take this item off the map
 					self.exists_in_map = False
@@ -756,8 +764,8 @@ class Object:
 
 
 	def destroy(self, args):
-		print("DESTROY DESTROY DESTROY " + self.name + " at (" + str(self.x) + "," + str(self.y) + ")\n")
-		print(str(objectsArray[self.x][self.y]))
+		#print("DESTROY DESTROY DESTROY " + self.name + " at (" + str(self.x) + "," + str(self.y) + ")\n")
+		#print(str(objectsArray[self.x][self.y]))
 		self.remove_from_game()
 
 	def remove_from_game(self):
@@ -789,11 +797,30 @@ class Object:
 				message('Your legs are just too tired to jump.', Color_Not_Allowed)
 
 
+	def attemptPush(self, args):
+		global MovementPhaseEvents
+		(direction, force) = args
+		(dx,dy) =  getVectorFromDirectionAndSpeed (direction, 1)
+		self.pushMomentum = force
+		argset = (dx,dy)
+		MovementPhaseEvents.append((self.doPush, argset))
+	
+	def doPush(self, args):
+		global MovementPhaseEvents
+		(dx,dy) = args
+		if self.pushMomentum > 0 and self in objectsArray[self.x][self.y]:	# only push if object is still where we think it is;
+											# otherwise wierd stuff can happen
+			self.attemptMove(dx,dy)
+		self.pushMomentum -= 1
+		if self.pushMomentum > 0:
+			MovementPhaseEvents.append((self.doPush, args))
+
+
 
 # currently this class does nothing! It's not hooked up to anything! Woo!
 class ModernAttack(Object):
 
-	def __init__(self, x, y, color, attacker = None, damage = 1, direction = None, lifespan = 1):
+	def __init__(self, x, y, color, attacker = None, damage = 1, direction = None, lifespan = 1, force = 0):
 
 		Object.__init__(self, x, y, '#', 'attack', color, blocks=False,  tags = {'attack'})
 
@@ -806,6 +833,7 @@ class ModernAttack(Object):
 		self.attacker = attacker 
 		self.damage = damage
 		self.direction = direction
+		self.force = force		#physical force that pushes enemies around the map!
 		self.lifespan = lifespan
 		self.deflected = False		# set to true when attacks 'clash of each other' 
 		self.checkForDeflection()
@@ -832,15 +860,25 @@ class ModernAttack(Object):
 				if 'attack' in object.tags:
 					if object.attacker:
 						if object.attacker.x == self.x and object.attacker.y == self.y:	#then we have a clash!
-							self.deflected = True
-							object.deflected = True
+							#self.deflected = True
+							#object.deflected = True
+							self.deflect()
+							object.deflect()
 							if self.attacker is player or object.attacker is player:
 								player_clashed_something = True
-							message('Clash!111one The ' + object.attacker.name + ' and ' + self.attacker.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
+							#message('Clash!111one The ' + object.attacker.name + ' and ' + self.attacker.name + '\'s attacks bounce off each other!', Color_Interesting_Combat)
+							localMessage('Clash! The ' + object.attacker.name + ' and ' + self.attacker.name + '\'s attacks bounce off each other!', self.x, self.y, Color_Interesting_Combat)
 	
 
+	# mark attack as deflected (and also reduce force if 
+	def deflect(self):
+		if not self.deflected:
+			self.deflected = True
+			if self.force > 0:
+				self.force -= 1		# TODO: may want to divide in half (and round down) instead
+
 	def dealDamage(self,argset):
-		global player_hit_something, upgrade_array
+		global player_hit_something, upgrade_array, number_hit_by_player, MovementPhaseEvents
 
 		# possibly update strength if we have an upgrade that does that (and this is the player's attack)
 		if self.attacker is player:
@@ -852,22 +890,51 @@ class ModernAttack(Object):
 		# only do the attack if it has not been deflected
 		if not self.deflected:
 	
-			print(self.attacker.name + " attack hitting shennanigans")
+			#print(self.attacker.name + " attack hitting shennanigans")
 			for object in objectsArray[self.x][self.y]:
 				if 'attack' not in object.tags:		#Attacks can't hit each other! I bet I forget this and try to do something with attacks hitting each other at some point in the future.
-					print(self.attacker.name + " attack hitting " + object.name)
+					#print(self.attacker.name + " attack hitting " + object.name)
 			
 
+					# May want to check this / add an explicit tag later, but for now, things can get hit
+					# if and only if they block or have an associated fighter component.
+					if object.blocks or object.fighter:
 
-					# print messages about hits happening
-					if object is player:
-						message('The ' + self.attacker.name.capitalize() + ' hits!', Color_Dangerous_Combat)	
-					elif self.attacker is player:
-						message('You hit the ' + object.name.capitalize() + '!', Color_Boring_Combat)
-						player_hit_something = True	
-					else:
-						message('The ' + self.attacker.name.capitalize() + ' hits the ' + object.name.capitalize() + '!', Color_Boring_Combat)
-					object.getHit(self)
+						# print messages about hits happening
+						if object is player:
+							message('The ' + self.attacker.name.capitalize() + ' hits!', Color_Dangerous_Combat)	
+						elif self.attacker is player:
+							message('You hit the ' + object.name.capitalize() + '!', Color_Boring_Combat)
+							player_hit_something = True
+							number_hit_by_player += 1
+						else:
+							message('The ' + self.attacker.name.capitalize() + ' hits the ' + object.name.capitalize() + '!', Color_Boring_Combat)
+
+
+					if object.fighter and object.fighter.bleeds:
+						splash_color = blood_background_color
+						#if object is player:
+						#	splash_color = blood_background_color
+						#else:
+						#	splash_color = object.fighter.attack_color
+						
+						bgColorArray[object.x][object.y] = mergeColors(bgColorArray[object.x][object.y], splash_color, 0.2)
+						#blood splashing around, yaay
+						if (object.x > 0):
+							bgColorArray[object.x-1][object.y] = mergeColors(bgColorArray[object.x-1][object.y], splash_color, 0.1)	
+						if (object.x < MAP_WIDTH-1):
+							bgColorArray[object.x+1][object.y] = mergeColors(bgColorArray[object.x+1][object.y], splash_color, 0.1)
+						if (object.y > 0):
+							bgColorArray[object.x][object.y-1] = mergeColors(bgColorArray[object.x][object.y-1], splash_color, 0.1)
+						if (object.y < MAP_HEIGHT-1):
+							bgColorArray[object.x][object.y+1] = mergeColors(bgColorArray[object.x][object.y+1], splash_color, 0.1)
+
+
+
+
+					if object.blocks or object.fighter:
+						object.getHit(self)
+					#translated_console_set_char_background(con, object.x, object.y, self.faded_color, libtcod_BKGND_SET)
 
 			# Send this attack to the back so other things can be visible!?
 			#self.send_to_back()
@@ -876,6 +943,22 @@ class ModernAttack(Object):
 		# otherwise, reorder objects anyway because otherwise the things going to be drawed under the attack and we don't want that
 		else:
 			reorder_objects(self.x,self.y)
+			# also, we still want to count a clashed attack towards the player hit things.
+			if self.attacker is player:
+				for object in objectsArray[self.x][self.y]:
+					if 'attack' not in object.tags and (object.blocks or object.fighter):
+						number_hit_by_player += 1	
+		
+
+
+		# experimental thing: do a push?
+		if self.force > 0 and self.direction is not None:
+			#print("DIRECTIONS (and force), I AHVE THEM")
+			for object in objectsArray[self.x][self.y]:
+				if 'attack' not in object.tags:
+					if object.blocks or object.fighter:
+						argset = (self.direction, self.force)
+						MovementPhaseEvents.append((object.attemptPush, argset))		
 
 
 
@@ -885,7 +968,7 @@ class ModernAttack(Object):
 			self.remove_from_game()
 		else:	# keep attacking, at reduced lifespan
 			argset = None
-			print("NON-FADY ATTACK ALERT")
+			#print("NON-FADY ATTACK ALERT")
 			DamagePhaseEvents.append((self.dealDamage, argset))
 			FinalPostDrawEvents.append((self.fadeAway, argset))
 			# delete the attack woo!
@@ -933,11 +1016,13 @@ class ModernAttack(Object):
 
 class Fire(Object):
 
-	def __init__(self, x, y):  #raising_alarm = False):
+	def __init__(self, x, y, infinite = False):  #raising_alarm = False):
 		global AttackPhaseEvents
 		Object.__init__(self, x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "WUH WOH.")
 		argset = (self.x,self.y)
 		AttackPhaseEvents.append((self.burnThings, argset))
+		self.fuel = 45 + randint(0,10)
+		self.infinite = infinite
 
 
 	def getActionEvent(self):
@@ -962,13 +1047,14 @@ class Fire(Object):
 
 
 	def burnThings(self, argset):
+		global MiscPhaseEvents
 		for object in objectsArray[self.x][self.y]:
 			if object.immune_to_fire == False and object is not self:
 				#hurt the thing with fire!
 				#first report a messag about it
 				if object is player:
 					message('You get burned!', Color_Dangerous_Combat)
-				else:
+				elif object.fighter or object.name == 'firepit':
 					localMessage('The ' + object.name.capitalize() + ' gets burned!', self.x, self.y, Color_Boring_Combat)
 				
 				if object.fighter:
@@ -976,8 +1062,15 @@ class Fire(Object):
 				#elif object.door: 
 				#	object.door.take_damage(1)
 				elif object.name == 'firepit':
-					object.take_damage(1)				
+					object.take_damage(1)	
 
+				# also extinguish yourself if on water
+				if object.name == 'water':
+					self.fuel = 0
+		if not self.infinite:
+			self.fuel -= 1			
+		if self.fuel <= 0:
+			MiscPhaseEvents.append((self.destroy, argset))
 
 
 	def spread(self, argset):
@@ -1132,6 +1225,31 @@ class ElevatorDoor(Door):
 		map[self.x][self.y].block_sight = False		# gonna experiment with making these things let you see to the other side.
 
 
+class ExitArrow(Object):
+	def __init__(self, x,y, direction):
+		symbol = 24
+		if direction == 'up':
+			symbol = 24
+		elif direction == 'down':
+			symbol = 25
+		elif direction == 'right':
+			symbol = 26
+		elif direction == 'left':
+			symbol = 27
+		Object.__init__(self, x, y, symbol, 'exit arrow', default_altar_color, blocks=False,  mouseover = "Go here to win!")
+		self.visible = False
+
+	def update(self, level_complete = False):
+		global game_time
+		if level_complete and game_time % 2 == 0:
+			self.always_visible = True
+			self.visible = True
+			self.color = color_boman
+		else:
+			self.always_visible = False
+			self.visible = False
+			self.color = default_altar_color
+
 
 class EnemyDispenser(Object):
 	def __init__(self, x, y, enemy_type = 'None'):
@@ -1140,7 +1258,7 @@ class EnemyDispenser(Object):
 		self.cooldown_timer = 1
 		self.cooldown_length = 10
 		self.progency = []	# list of (currently alive?) enemies this dispenser has spawned
-		self.max_progency = 10
+		self.max_progency = 5
 
 	def notify(self):
 		self.color = color_alarmer_alarmed
@@ -1319,7 +1437,7 @@ class Projectile(Object):
 			# Now, if we didn't quite get where we wanted, report on what we jumped into
 			if bounce_x != target_x or bounce_y != target_y:
 				if self.attacksOnHit:
-					print ('boyoyoyoyoyom at(' + str(self.x) + ',' + str(self.y) + ')')
+					#print ('boyoyoyoyoyom at(' + str(self.x) + ',' + str(self.y) + ')')
 					self.destroyOnImpact()
 				# TODO: implemnt bouncing if object is bouncey
 	
@@ -1354,7 +1472,7 @@ class Bullet(Projectile):
 		self.momentum = 0	# stop infinite looping hopefully
 		self.marked_for_destruction = True	# stop bullets wiedly hanging around hopefully?
 		MiscPhaseEvents.append((self.destroy, argset))
-		attack = ModernAttack(x = self.x, y = self.y, color = self.color, attacker = self, damage = self.damage)		#very tempt hack hopefully
+		attack = ModernAttack(x = self.x, y = self.y, color = self.color, attacker = self, damage = self.damage, direction = self.direction)		#very tempt hack hopefully
 		objectsArray[attack.x][attack.y].append(attack)	
 		worldAttackList.append(attack)
 		attack.send_to_front()
@@ -1900,7 +2018,7 @@ class Decider:
 				argset = (self.decision.jump_decision.dx, self.decision.jump_decision.dy)
 				MovementPhaseEvents.append((self.owner.modern_jump, argset))
 			if self.decision.attack_decision:
-				argset = (self.decision.attack_decision.attack_list)
+				argset = (self.decision.attack_decision.attack_list, self.decision.attack_decision.force)
 				AttackPhaseEvents.append((self.makeAttacks, argset))
 				if fov_map.fov[self.owner.x,self.owner.y]:
 					sloMoAttack = True;
@@ -1934,13 +2052,13 @@ class Decider:
 
 	def makeAttacks(self, args):	# Attack Phase
 		global objectsArray, worldAttackList, worldEntitiesList, player_just_attacked
-		(attack_list) = args
+		(attack_list, force) = args
 		# todo make this do all the attackey making stuff
 		# Aha, this thing has not been done.
 		for attack_object in attack_list:
 			try:
 				attack_data = attack_object.attack
-				attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
+				attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage, direction = attack_data.direction, force = force)		#very tempt hack hopefully
 				objectsArray[attack.x][attack.y].append(attack)	
 				worldAttackList.append(attack)
 				attack.send_to_front()
@@ -1955,7 +2073,7 @@ class Decider:
 			#objectsArray[player.x + 1][player.y].append(new_bullet)
 
 			# if player attacked, check to see if all attacks were on target	
-			message("doin an attack")
+			#message("doin an attack")
 			checkForPlayerAttackAccuracy()
 		return
 
@@ -1967,7 +2085,7 @@ class Decider:
 		# Aha, this thing has not been done.
 		for projectile in projectile_list:
 
-			print("tryna make projectile at (" + str(projectile.x) + "," + str(projectile.y) + ")") 
+			#print("tryna make projectile at (" + str(projectile.x) + "," + str(projectile.y) + ")") 
 			try:
 				#attack_data = attack_object.attack
 				#attack = ModernAttack(x = attack_object.x, y = attack_object.y, color = attack_object.color, attacker = attack_data.attacker, damage = attack_data.damage)		#very tempt hack hopefully
@@ -1982,7 +2100,7 @@ class Decider:
 		if self.owner == player:
 			player_just_attacked = True
 			# if player attacked, check to see if all attacks were on target	
-			message("doin a shoot")
+			#message("doin a shoot")
 			#checkForPlayerAttackAccuracy()
 		return
 
@@ -2115,8 +2233,9 @@ class Buy_Decision:
 
 
 class Attack_Decision:
-	def __init__(self, attack_list):
+	def __init__(self, attack_list, force):
 		self.attack_list = attack_list
+		self.force = force
 
 
 class Projectile_Decision:
@@ -2300,7 +2419,7 @@ class BasicMonster:
 			abstract_attack_data = self.weapon.do_attack(command_choice)
 			# now do the attack! or, you know, decide to
 			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
 
 		# otherwise, walk towards the player if possible.
 		elif monster.distance_to(player) > 1: 	#cutting this condition makes enemies move around player when they can't attack. Might be worth considering for smarter : harder enemies.
@@ -2348,6 +2467,37 @@ class BasicMonster:
 		return attackList
 
 
+
+
+
+# Just like BasicMonster, except that moving towards the player happens with... 1 in 2 chance? when distance 1 away
+class Cautious_AI(BasicMonster):
+
+	# Part of Step 3: do the things you can do when you see the player!
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0:
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
+
+		# otherwise, walk towards the player if possible.
+		elif monster.distance_to(player) > 2: 	
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None, avoid_water = self.scared_of_water)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+		elif monster.distance_to(player) > 1 and randint(0,1) == 1:	# This is where the caution comes in!
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None, avoid_water = self.scared_of_water)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+
+
+
 # A version of BasicMonster that has no access to level navigation data!
 # For use in the tutorial, where currently no such navigation data exists
 class StupidBasicMonster(BasicMonster):
@@ -2392,7 +2542,7 @@ class Boman_AI(BasicMonster):
 			abstract_attack_data = self.weapon.do_attack(command_choice)
 			# now do the attack! or, you know, decide to
 			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
 
 		# otherwise, walk towards the player if possible.
 		elif monster.distance_to(player) > 1: 	
@@ -2509,7 +2659,7 @@ class Crane_AI(BasicMonster):
 			abstract_attack_data = self.weapon.do_attack(command_choice)
 			# now do the attack! or, you know, decide to
 			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
 
 		# Crane only approaches player if to do so wouldn't bring them next to the player. Also, slowly?
 		# tried a bunch of modifications to this behaviour to make them still a threat if left completely alone
@@ -2544,7 +2694,7 @@ class Dove_AI(BasicMonster):
 			abstract_attack_data = self.weapon.do_attack(command_choice)
 			# now do the attack! or, you know, decide to
 			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
 
 
 
@@ -2609,7 +2759,7 @@ class Dove_AI(BasicMonster):
 			#	secondary_preferences = clockwise_prefs
 
 			(dx,dy) = movement_preferences[-ydiff+2][-xdiff+2]
-			print("DOVE: based on ydiff " + str(ydiff) + " and xdiff " + str(xdiff) + ", I want to do (" + str(dx) + "," + str(dy) + ")")
+			#print("DOVE: based on ydiff " + str(ydiff) + " and xdiff " + str(xdiff) + ", I want to do (" + str(dx) + "," + str(dy) + ")")
 			#print "distance (" + str(xdiff) + "," + str(ydiff) + ") leading to movement (" + str(dx) + "," + str(dy) + ")."
 			if not is_blocked(monster.x + dx, monster.y + dy):
 			#	print "huh"
@@ -2620,7 +2770,7 @@ class Dove_AI(BasicMonster):
 				#	print "huh"
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 				else:	# for now, just run towards player I guess
-					print("DOVEBLOCKD")
+					#print("DOVEBLOCKD")
 					(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
 					decider.decision = Decision(move_decision=Move_Decision(dx,dy))
 
@@ -2753,7 +2903,7 @@ class Gunslinger_AI(BasicMonster):
 					if dist_x > 0 and dist_y > 0:
 						attackList.append(ATTCKDOWNRIGHT)
 
-		print (str(attackList))
+		#print (str(attackList))
 		return attackList
 
 
@@ -2860,7 +3010,7 @@ class Greenhorn_AI(BasicMonster):
 			abstract_attack_data = self.weapon.do_attack(command_choice)
 			# now do the attack! or, you know, decide to
 			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list))
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
 			self.just_attacked = True
 
 		# otherwise, walk towards the player if possible.
@@ -2873,6 +3023,32 @@ class Greenhorn_AI(BasicMonster):
 			self.just_attacked = False
 			
 
+# Like a greenhorn with dodgy wiring, sometimes forgets to love or attack
+class Greenhorn_Erratic_AI(Greenhorn_AI):
+
+	# Engaging player is same as BasicMonster, except you can't attack two turns in a row (even if the weapon would allow it)
+	def engagePlayer(self, monster, decider):
+		# First off, see if you can attack the player from where you are
+		attackList = self.possibleAttackList(monster, decider)
+
+		# Now we know if attacking is possible, and have built up a list of attacks:
+		# if there are some attacks we could do, pick one
+		if len(attackList) > 0 and self.just_attacked == False and randint(0,2) != 0:	# Add 1 in 3 chance of failure
+			command_choice = random.choice(tuple(attackList))	#returns arbitrary element from candidate_set
+			abstract_attack_data = self.weapon.do_attack(command_choice)
+			# now do the attack! or, you know, decide to
+			chosen_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
+			decider.decision = Decision(attack_decision = Attack_Decision(attack_list=chosen_attack_list, force=self.weapon.force))
+			self.just_attacked = True
+
+		# otherwise, walk towards the player if possible.
+		elif monster.distance_to(player) > 2 or (monster.distance_to(player) > 1 and randint(0,2) == 0): 	#Add 2 in 3 chance of failure at a certain distance
+			(dx,dy) = next_step_based_on_target(monster.x, monster.y, target_x = player.x, target_y = player.y, aiming_for_center = False, prioritise_visible = True, prioritise_straight_lines = True, rook_moves = False, return_message = None,  avoid_water = self.scared_of_water)
+			decider.decision = Decision(move_decision=Move_Decision(dx,dy))
+			self.just_attacked = False
+
+		else:
+			self.just_attacked = False
 
 
 class Rogue_AI(BasicMonster):
@@ -3008,7 +3184,7 @@ class Rogue_AI(BasicMonster):
 							
 					if abstract_attack_data is not None:
 						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)		
-						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 
 
 #	
@@ -3058,7 +3234,7 @@ class Ninja_Crane_AI(BasicMonster):
 						
 				if abstract_attack_data is not None:
 					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 
 		# otherwise, walk towards the player if possible.
 		else:
@@ -3116,7 +3292,7 @@ class Tridentor_AI(BasicMonster):
 						
 				if abstract_attack_data is not None:
 					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 
 			# can't attack but the player is next to you? then step back
 			# commented out for now - too tricksy / annoying for what is basically meant to be an upgrade to the basic mook
@@ -3240,7 +3416,7 @@ class Wizard_AI:
 
 						if abstract_attack_data is not None:
 							temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 				
 				else:
 					# we have the power! Start attacking the player if they get in range and walking towards the player
@@ -3276,7 +3452,7 @@ class Wizard_AI:
 
 						if abstract_attack_data is not None:
 							temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 					else:
 						# if the player isn't near enough, walk towards them.
 						(dx,dy) = Move_Towards_Visible_Player(monster.x, monster.y)
@@ -3423,7 +3599,7 @@ class Samurai_AI:
 						
 						if abstract_attack_data is not None:
 							temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+							decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 				
 					# if next to the player, and I don't have charge, then do some movement:
 					else:
@@ -3610,7 +3786,7 @@ class Ninja_AI:
 					
 					if abstract_attack_data is not None:
 						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 				
 				
 				# Otherwise, the player is too far away, chase them!
@@ -3723,7 +3899,7 @@ class Rook_AI:
 					
 					if abstract_attack_data is not None:
 						temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+						decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 
 
 			if self.weapon:
@@ -3842,7 +4018,7 @@ class Strawman_AI:
 
 				if abstract_attack_data is not None:
 					temp_attack_list = process_abstract_attack_data(monster.x,monster.y, abstract_attack_data, monster)	
-					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list))
+					decider.decision = Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=self.weapon.force))
 			if self.weapon:
 				self.weapon.recharge()
 		if self.stunned_time > 0:
@@ -3890,10 +4066,10 @@ def Move_Towards_Visible_Player(current_x, current_y, rook_moves = False, bias =
 				if bias == 'horizontal':
 					return (xdiff,0)
 				elif bias == 'vertical':
-					print('ROOKVERT')
+					#print('ROOKVERT')
 					return(0,ydiff)
 				else:
-					print('ROOKanomaly')
+					#print('ROOKanomaly')
 					num =  randint( 0, 2) 
 					if num == 0:
 						return (xdiff,0)
@@ -4155,7 +4331,7 @@ def Circle_Player_Anticlockwise(current_x, current_y):
 
 class BasicAttack:
 	#it's an attack. It hangs around for a second, does damage to anyone unlucky enough to be standing in it, and leaves.
-	def __init__(self, damage, lifespan = 1, attacker=None):
+	def __init__(self, damage, lifespan = 1, attacker=None, direction = None):
 		self.damage = damage
 		self.lifespan = lifespan
 		self.attacker = attacker
@@ -4163,6 +4339,7 @@ class BasicAttack:
 		if attacker.fighter:
 			self.color = attacker.fighter.attack_color
 			self.faded_color = attacker.fighter.faded_attack_color
+		self.direction = direction
 
 	def inflict_damage(self):
 		global player_hit_something, alarm_level, spawn_timer
@@ -4269,7 +4446,7 @@ class BasicAttack:
 def process_nearest_center_points():
 	global center_points, nearest_points_array
 	
-	print("PROCESSING NEAREST CENTER POINTS")
+	#print("PROCESSING NEAREST CENTER POINTS")
 
 	for y in range(MAP_HEIGHT):
 		for x in range(MAP_WIDTH):
@@ -4793,7 +4970,7 @@ def handle_keys(user_input_event):
 			control_num = controlHandler.intFromLetter[key_char]
 
 		#if key_char == 'y':	# player has decided to buy an upgrade...
-		if control_num == 1 or key_char == 'y':	# player has decided to buy an upgrade...
+		if control_num == 1 or key_char == 'y' or key_char == 'Y':	# player has decided to buy an upgrade...
 			upgrade_cost = current_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then let them get the upgrade
 
@@ -4865,7 +5042,7 @@ def handle_keys(user_input_event):
 		if key_char in controlHandler.intFromLetter:
 			control_num = controlHandler.intFromLetter[key_char]
 
-		if control_num == 1: # or key_char == 'y' or key_char == 'Y':
+		if control_num == 1  or key_char == 'y' or key_char == 'Y':
 			# try and buy the upgrade under consideration
 			upgrade_cost = purchase_selected_shrine.get_cost()
 			if currency_count >= upgrade_cost:	#then tell them about the upgrade and ask to confirm
@@ -5539,6 +5716,21 @@ def create_monster(x,y, name, guard_duty = False):
 		# "This enemy is just excited to be here.")
 
 
+	elif name == 'greenhorn-aggro':
+		#create a troll
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
+		ai_component = BasicMonster(weapon = Weapon_Sword(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)
+
+
+	elif name == 'greenhorn-cautious':
+		#create a troll
+		fighter_component = Fighter(hp=1, defense=0, power=1, death_function=monster_death, attack_color = data_color, faded_attack_color = data_color)
+		ai_component = Greenhorn_Erratic_AI(weapon = Weapon_Sword(), guard_duty= guard_duty)
+		decider_component = Decider(ai_component)
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description)
+
 	elif name == 'rook':
 		#create a rook! That's a guy with a spear who only moves in four directions
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_rook, faded_attack_color = color_rook)
@@ -5659,12 +5851,12 @@ def create_monster(x,y, name, guard_duty = False):
 
 
 
-	elif name == 'hammer sister':
+	elif name == 'hammerer':
 		#create a lady with a hammer!
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
-		ai_component =  Ninja_AI(weapon = Weapon_Hammer())
+		ai_component =  BasicMonster(weapon = Weapon_Hammer())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'H', 'hammer sister', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "The secret long lost character.")
+		monster = Object(x, y, 'H', 'hammerer', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "The secret long lost character.")
 
 
 	elif name == 'ninja':
@@ -5742,7 +5934,7 @@ def create_projectile(x,y,name,direction, attacker):
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
 def make_map(start_ele_direction = None, start_ele_spawn = None):
-	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, total_monsters, shrine_list
+	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, worldArrowsList, total_monsters, shrine_list
 
 	lev_gen = Level_Generator()
 	lev_set = game_level_settings.get_setting(dungeon_level)
@@ -5786,6 +5978,7 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 
 	worldAttackList = []	## a list of attacks in the world (these are also stored in objectArray)
 	worldEntitiesList = []	## list of non-attack objects that have to get updated / do things, e.g. deciders. (also stored in objectArray)
+	worldArrowsList = []	## list of exit arrows that will light up when the level is complete
 
 	process_nearest_center_points()
 	initialize_nav_data()
@@ -5922,6 +6115,10 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 			new_fire = Fire(od.x,od.y)
 			objectsArray[od.x][od.y].append(new_fire)
 			worldEntitiesList.append(new_fire)
+		elif od.name == 'infinifire':
+			new_fire = Fire(od.x,od.y, infinite = True)
+			objectsArray[od.x][od.y].append(new_fire)
+			worldEntitiesList.append(new_fire)
 		elif od.name == 'firepit':
 			#new_firepit = Object(od.x, od.y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
 			new_firepit = Firepit(od.x,od.y)
@@ -5951,6 +6148,21 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 			decoration_count += 1
+		elif od.name == 'exit-arrow':
+	#		symbol = 24
+	#		if od.info == 'up':
+	#			symbol = 24
+	#		elif od.info == 'down':
+	#			symbol = 25
+	#		elif od.info == 'right':
+	#			symbol = 26
+	#		elif od.info == 'left':
+	#			symbol = 27
+	#		exit_arrow = Object(od.x, od.y, symbol, 'exit arrow', color_boman, blocks=False, always_visible=True, mouseover = "Go here to win!")
+			exit_arrow = ExitArrow(od.x,od.y,od.info)
+			objectsArray[od.x][od.y].append(exit_arrow)
+			exit_arrow.send_to_back()
+			worldArrowsList.append(exit_arrow)
 			
 
 	# elevator data because elevators are complicated! Do you know how to build an elevator? I sure don't!
@@ -6333,7 +6545,7 @@ def process_player_attack(actionCommand):
 			if player_weapon.combat_type == 'melee':
 				abstract_attack_data = player_weapon.do_energy_attack(actionCommand)
 				temp_attack_list = process_abstract_attack_data(player.x,player.y, abstract_attack_data, player, bonus_strength)	
-				player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list)))
+				player.decider.set_decision(Decision(attack_decision = Attack_Decision(attack_list=temp_attack_list, force=player_weapon.force)))
 			elif player_weapon.combat_type == 'projectile':
 				# todo make this be projetiley
 				abstract_projectile_data = player_weapon.do_energy_projectile_attack(actionCommand)
@@ -6355,7 +6567,7 @@ def process_player_attack(actionCommand):
 			message('Error: cannot attack', Color_Not_Allowed)
 			return 'invalid-move'
 
-def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0, direction = None):
+def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_strength = 0):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
 	temp_attack_list = []
@@ -6366,14 +6578,16 @@ def process_abstract_attack_data(x,y,abstract_attack_data, attacker=None, bonus_
 	# not having this condition leads to the wierd event handling issues leaf to game-crashing bugs.
 	# Let's add this condition so we can investigate the wierd handling issues a bit, and/or find another game-crashing bug
 	if abstract_attack_data is not None:	
-		for (i,j,val) in abstract_attack_data:
+		(abstract_array, direction) = abstract_attack_data
+		#for (i,j,val) in abstract_attack_data:
+		for (i,j,val) in abstract_array:
 			# adjust attack for position, and also extra strength from the fighter.
-			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker), mouseover = "A space where " + attacker.name + " just attacked.")
+			temp_attack = Object(x+i, y+j, '#', 'attack', temp_color, blocks=False, attack= BasicAttack(val + attacker.fighter.extra_strength + bonus_strength, attacker=attacker, direction = direction), mouseover = "A space where " + attacker.name + " just attacked.")
 			temp_attack_list.append(temp_attack)
 	return temp_attack_list
 
 # like process_abstract_attack_data, but for projectile weapons!
-def process_abstract_projectile_data(x,y,abstract_projectile_data, attacker=None, bonus_strength = 0, direction = None):
+def process_abstract_projectile_data(x,y,abstract_projectile_data, attacker=None, bonus_strength = 0):
 	# given data (i,j, val) from an abstract attack, produce an attack at co-ordinates x_i, y_j with damage val.
 	# this function mainly exists because I am a bad programmer and can't figure out how to get the weapons file to recognise Attacks...
 	temp_projectile_list = []
@@ -6384,6 +6598,7 @@ def process_abstract_projectile_data(x,y,abstract_projectile_data, attacker=None
 	# not having this condition leads to the wierd event handling issues leaf to game-crashing bugs.
 	# Let's add this condition so we can investigate the wierd handling issues a bit, and/or find another game-crashing bug
 	if abstract_projectile_data is not None:	
+		#for (i,j,projectile_name, direction) in abstract_projectile_data:
 		for (i,j,projectile_name, direction) in abstract_projectile_data:
 			# create projectile of the type, location and direction that the data says (damage unaffected by strength etc)
 			temp_projectile = create_projectile(x,y,projectile_name,direction, attacker)	
@@ -6433,7 +6648,7 @@ def monster_death(monster):
 		#decrease the alarm level alittle bit! Unless that was the last one, in which case set it to 0
 		if number_alarmers > 0:
 			if alarm_level > 0 and monster.alarmer.status == 'alarm-raised':
-				alarm_level += (-monster.alarmer.alarm_value + monster.alarmer.dead_alarm_value)
+				#alarm_level += (-monster.alarmer.alarm_value + monster.alarmer.dead_alarm_value)
 				message('The alarms get a little quieter.', Color_Interesting_In_World)
 		else:
 			alarm_level = 0
@@ -6519,7 +6734,7 @@ def next_level():
 		for i in range (len(ele.spawn_points)):
 			(spawn_x, spawn_y) = ele.spawn_points[i]
 			if spawn_x == player.x and spawn_y == player.y:
-				print("that's a bingo!")
+				#print("that's a bingo!")
 				start_ele_direction = ele.direction
 				start_ele_spawn = i
 
@@ -6533,6 +6748,8 @@ def next_level():
 		player.fighter.hp = STARTING_ENERGY
 		player.fighter.wounds = 0
 		player_weapon = Weapon_Shiv()
+		#player_weapon = Weapon_Hammer()
+		#player_weapon = Weapon_Broom()
 		#player_weapon = Weapon_Gun()
 		#player_weapon = Weapon_Sai()
 		#player_weapon = Weapon_Nunchuck()
@@ -6603,7 +6820,7 @@ def next_level():
 
 	# Update color scheme
 	colorHandler = ColorHandler(lev_set.color_scheme)  #('adjustedOriginal')
-	print ('setting color scheme yO ' + lev_set.color_scheme)
+	#print ('setting color scheme yO ' + lev_set.color_scheme)
 	#colorHandler = ColorHandler(game_level)
 	setColorScheme()
 
@@ -6612,11 +6829,11 @@ def next_level():
 	make_map(start_ele_direction, start_ele_spawn)
 	objectsArray[player.x][player.y].append(player)
 	worldEntitiesList.append(player)
-	print( 'heyo (' + str(player.x) + ',' + str(player.y))	
+	#print( 'heyo (' + str(player.x) + ',' + str(player.y))	
 
 
 	# display some stuff about level effects maybe?
-	print ('word' + str(lev_set.effects))
+	#print ('word' + str(lev_set.effects))
 	if 'waterlogged' in lev_set.effects:
 		message('There must be a leak somewhere. This floor is waterlogged!', Color_Stat_Info)
 	if 'cold' in lev_set.effects:
@@ -6981,7 +7198,7 @@ def translateCommands(msg):
 		else:
 			command_substring = msg[firstHashtag +1: nextHashtag+1]
 			# Look up the control string corresponding to this command
-			print ("Found hashtag " + command_substring)
+			#print ("Found hashtag " + command_substring)
 			replacement_string = "?"
 			if command_substring in controlHandler.controlLookup:
 				replacement_string = controlHandler.controlLookup[command_substring]
@@ -7847,13 +8064,13 @@ def setColorScheme(colorScheme = 'default'):
 	global color_dark_wall, color_light_wall, color_dark_ground, color_light_ground, color_light_ground_alt, color_fog_of_war, default_altar_color, alt_altar_color, default_door_color, default_message_color, default_decoration_color, water_background_color, water_foreground_color, blood_background_color, blood_foreground_color, default_flower_color, default_weapon_color, fire_color
 	global PLAYER_COLOR, color_swordsman, color_boman, color_rook, color_axe_maniac, color_tridentor, color_rogue, color_ninja, color_faerie, color_wizard, color_alarmer_idle, color_alarmer_suspicious, color_alarmer_alarmed
 	global default_background_color, default_text_color, color_energy, color_faded_energy, color_warning, color_big_alert
-	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action
+	global 	Color_Message_In_World,	Color_Menu_Choice, Color_Not_Allowed, Color_Dangerous_Combat, Color_Interesting_Combat, Color_Boring_Combat, Color_Interesting_In_World, Color_Boring_In_World,	Color_Stat_Info, Color_Personal_Action, Color_Route_Guidance
 	
-	print("i think it's " + colorHandler.colorScheme)
+	#print("i think it's " + colorHandler.colorScheme)
 
 	levelColors = colorHandler.levelColors
 
-	print("i think walls are " + str(levelColors['color_light_wall']))
+	#print("i think walls are " + str(levelColors['color_light_wall']))
 	
 	color_dark_wall = levelColors['color_dark_wall']
 	color_light_wall = levelColors['color_light_wall']
@@ -7872,7 +8089,7 @@ def setColorScheme(colorScheme = 'default'):
 	blood_foreground_color = levelColors['blood_foreground_color']
 
 
-	print("now i think walls are " + str(color_light_wall))
+	#print("now i think walls are " + str(color_light_wall))
 
 	# collectiable e.g. weapons and plants and keys
 	default_flower_color = levelColors['default_flower_color']
@@ -7917,7 +8134,7 @@ def setColorScheme(colorScheme = 'default'):
 	Color_Boring_In_World = menuColors['Boring_In_World']		# everyday occurences like doors opening
 	Color_Stat_Info = menuColors['Stat_Info']			# info about not-in-the-world stuff like gaining energy
 	Color_Personal_Action = menuColors['Personal_Action']		# Things the player does that aren't combat "you pick up the sword" etc
-
+	Color_Route_Guidance = menuColors['Route_Guidance']		# Telling the player where to go, in particular when exits open
 
 
 def mergeColors(initial_color, new_color, mix_level = 0.5):
@@ -8073,9 +8290,9 @@ def initialise_game():
 	make_map()
 	objectsArray[player.x][player.y].append(player)	
 	worldEntitiesList.append(player)
-	print('howdy (' + str(player.x) + ',' + str(player.y))
-	for object in objectsArray[player.x][player.y]:
-		print(object.name)
+	#print('howdy (' + str(player.x) + ',' + str(player.y))
+	#for object in objectsArray[player.x][player.y]:
+		#print(object.name)
 
 	#the list of objects starting with the player
 #	objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
@@ -8104,7 +8321,7 @@ def initialise_game():
 	if floor_message_found == True:  
 		message('You see a message on the floor:', Color_Interesting_In_World)
 		message('\"' + floor_message_text + '\"', Color_Message_In_World)
-		print (str(Color_Interesting_In_World))
+		#print (str(Color_Interesting_In_World))
 
 
 
@@ -8386,7 +8603,7 @@ def doGlobalPreDrawPhaseEvents():
 	global  level_complete, ready_for_next_level
 	global player_just_attacked, player_got_hit, player_just_jumped, cold_energy_parity, upgrade_array, number_hit_by_player
 	global time_since_last_elevator_message
-	global alarm_level
+	global alarm_level, worldArrowsList
 
 	#FINALPREDRAW
 	# Reveal parts of the UI based on some early-game triggers. Another part where I don't know where it goes.
@@ -8516,7 +8733,12 @@ def doGlobalPreDrawPhaseEvents():
 		if (player_in_elevator and ele.ready_to_go_up == True):
 			#print "next level maybe?"
 			ready_for_next_level = True
-		#play a "ding" if the player can see elevator doors opening?
+
+
+
+				
+
+	#play a "ding" if the player can see elevator doors opening?
 	if player_can_see_elevator_opening:
 		message("Ding!", Color_Message_In_World)
 		# update elevators with whether the player is authorized - for now this is just based on whether there are security drones around.
@@ -8542,6 +8764,9 @@ def doGlobalPreDrawPhaseEvents():
 		for ele in elevators:
 			if not ele.player_authorised:
 				ele.set_player_authorisation(True)
+
+	for ea in worldArrowsList:
+		ea.update(level_complete)
 
 
 
@@ -8601,7 +8826,7 @@ def doGlobalPreDrawPhaseEvents():
 					message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
 					ob.color = ob.alarmer.suspicious_color
 			elif ob.alarmer.status == 'raising-alarm':
-				alarm_level += ob.alarmer.alarm_value
+				#alarm_level += ob.alarmer.alarm_value
 				spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
 				message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
 				ob.color = ob.alarmer.alarmed_color
@@ -9406,7 +9631,7 @@ while not translated_console_is_window_closed():
 
 		# clean up stuff
 		for object in garbage_list:
-			print ('deleting ' + object.name + '...')
+			#print ('deleting ' + object.name + '...')
 			if object in objectsArray[object.x][object.y]:
 				objectsArray[object.x][object.y].remove(object)				#TODO NOTE: Think this should work the usual way? i.e objectarray[x][y].remove...
 			if object in worldEntitiesList:

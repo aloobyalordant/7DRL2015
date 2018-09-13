@@ -45,7 +45,7 @@ ATTCKDOWNALT	 = "ATTCKDOWNALT"
 
 # A generic class for weapons, that hopefully I can make everything an extension of
 class Generic_Weapon:
-	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50, default_attack_strength = 1, combat_type = 'melee'):
+	def __init__(self, name, max_charge, current_charge, default_usage, durability = 50, default_attack_strength = 1, combat_type = 'melee', force = 0):
 		self.name = name
 		self.max_charge = max_charge
 		self.current_charge = current_charge
@@ -56,6 +56,7 @@ class Generic_Weapon:
 		self.command_items = []
 		self.projectile_command_items = []
 		self.combat_type = combat_type
+		self.force = force		#physical force that pushes enemies around the map!
 		#self.command_list = 'acdeqswxz'
 
 	# Look up the attack corresponding to a command, use up the required charge and return the attach data
@@ -64,7 +65,8 @@ class Generic_Weapon:
 			if com == command and usage <= self.current_charge and self.durability > 0:
 				self.current_charge = self.current_charge - usage
 				self.just_attacked = True
-				return data
+				direction = getDirectionFromCommand(command)
+				return (data, direction)
 
 
 	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
@@ -72,7 +74,8 @@ class Generic_Weapon:
 		for (com, data, usage) in self.command_items:
 			if com == command and self.durability > 0:
 				self.just_attacked = True
-				return data
+				direction = getDirectionFromCommand(command)
+				return (data, direction)
 
 	# return the how much charge / energy a given attack will use.
 	def get_usage_cost(self, command):
@@ -125,11 +128,32 @@ def create_abstract_projectile_data(temp_array, ava_x_pos, ava_y_pos):
 		for i in range(len(temp_array[j])):
 			#print ('(' +str(j) + ',' + str(i) + '), (' + str(j-y_start_offset) + ',' + str(i-x_start_offset) + ')')
 			if (temp_array[j][i] is not None):
-				print("hoooo " + str(temp_array[j][i]) + "\n")
+				#print("hoooo " + str(temp_array[j][i]) + "\n")
 				(projectile_name, direction) = temp_array[j][i]
 				return_array.append((i-ava_x_pos,j-ava_y_pos,projectile_name, direction))
 	return return_array
 
+
+def getDirectionFromCommand(command):
+	returnVal = None
+	if command == ATTCKUP:
+		return 'up'
+	elif command == ATTCKUPRIGHT:
+		return 'upright'
+	elif command == ATTCKRIGHT:
+		return 'right'
+	elif command == ATTCKDOWNRIGHT:
+		return 'downright'
+	elif command == ATTCKDOWN:
+		return 'down'
+	elif command == ATTCKDOWNLEFT:
+		return 'downleft'
+	elif command == ATTCKLEFT:
+		return 'left'
+	elif  command == ATTCKUPLEFT:
+		return 'upleft'
+
+	return returnVal
 
 
 
@@ -1687,7 +1711,8 @@ class Weapon_Nunchuck(Generic_Weapon):
 				if usage <= self.current_charge and self.durability > 0:
 					self.current_charge = self.current_charge - usage
 					self.just_attacked = True
-					return data
+					direction = getDirectionFromCommand(usage)
+					return (data, direction)
 #		return generic_do_attack(choice, self.command_items, self.current_charge, self.durability)
 
 	#get attack data without using up charge (for 'energy_fighter' types who use their own energy to wield a weapon)
@@ -1699,14 +1724,15 @@ class Weapon_Nunchuck(Generic_Weapon):
 				(com, data, usage) = self.command_items[choice]
 				if self.durability > 0:
 					self.just_attacked = True
-					return data
+					direction = getDirectionFromCommand(usage)
+					return (data, direction)
 
 #############
 
 class Weapon_Axe(Generic_Weapon):
 	# A different version of the axe. Wider circles! Probably a nightmare to fight against in narrow corridors
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'axe', 2, 2, 2)
+		Generic_Weapon.__init__(self, 'axe', 2, 2, 2, force = 2)
 		default_usage = self.default_usage
 	
 		self.command_items = []
@@ -1844,13 +1870,13 @@ class Weapon_Hammer(Generic_Weapon):
 	# also increasing the charge usage, in hopes of reinforcing the 'wait till a lot of people surround you' play style.
 
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'hammer', 2, 2, 2)
+		Generic_Weapon.__init__(self, 'hammer', 2, 2, 2, force = 2)
 		default_usage = self.default_usage
 		
 		command = ATTCKUP
 		temp_array =	 [[0,0,0,0,0],
 				  [0,1,1,1,0],
-				  [0,1,0,1,0],
+				  [0,0,0,0,0],
 				  [0,0,0,0,0],
 				  [0,0,0,0,0]]
 
@@ -1864,9 +1890,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKRIGHT
 		temp_array =	 [[0,0,0,0,0],
-				  [0,0,1,1,0],
 				  [0,0,0,1,0],
-				  [0,0,1,1,0],
+				  [0,0,0,1,0],
+				  [0,0,0,1,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
@@ -1879,9 +1905,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKUPRIGHT
 		temp_array =	 [[0,0,0,0,0],
-				  [0,1,1,1,0],
+				  [0,0,1,1,0],
 				  [0,0,0,1,0],
-				  [0,0,0,1,0],
+				  [0,0,0,0,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
@@ -1893,9 +1919,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKDOWNRIGHT
 		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
 				  [0,0,0,1,0],
-				  [0,0,0,1,0],
-				  [0,1,1,1,0],
+				  [0,0,1,1,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
@@ -1907,7 +1933,7 @@ class Weapon_Hammer(Generic_Weapon):
 		command = ATTCKDOWN
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
-				  [0,1,0,1,0],
+				  [0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,0,0,0,0]]
 
@@ -1920,7 +1946,7 @@ class Weapon_Hammer(Generic_Weapon):
 		command = ATTCKDOWNALT
 		temp_array =	 [[0,0,0,0,0],
 				  [0,0,0,0,0],
-				  [0,1,0,1,0],
+				  [0,0,0,0,0],
 				  [0,1,1,1,0],
 				  [0,0,0,0,0]]
 
@@ -1935,9 +1961,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKLEFT
 		temp_array =	 [[0,0,0,0,0],
-				  [0,1,1,0,0],
 				  [0,1,0,0,0],
-				  [0,1,1,0,0],
+				  [0,1,0,0,0],
+				  [0,1,0,0,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
@@ -1947,9 +1973,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKUPLEFT
 		temp_array =	 [[0,0,0,0,0],
-				  [0,1,1,1,0],
+				  [0,1,1,0,0],
 				  [0,1,0,0,0],
-				  [0,1,0,0,0],
+				  [0,0,0,0,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2
@@ -1959,9 +1985,9 @@ class Weapon_Hammer(Generic_Weapon):
 
 		command = ATTCKDOWNLEFT
 		temp_array =	 [[0,0,0,0,0],
+				  [0,0,0,0,0],
 				  [0,1,0,0,0],
-				  [0,1,0,0,0],
-				  [0,1,1,1,0],
+				  [0,1,1,0,0],
 				  [0,0,0,0,0]]
 
 		ava_x_pos = 2

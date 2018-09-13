@@ -246,7 +246,8 @@ class ColorHandler:
 			('Interesting_In_World',(v_p,v_p,v_p)),		# Events of note happening in the world. Like alarms going off
 			('Boring_In_World',(v_p,v_p,v_p)),		# everyday occurences like doors opening
 			('Stat_Info',(v_p,v_p,v_p)),			# info about not-in-the-world stuff like gaining energy
-			('Personal_Action',(v_p,v_p,v_p))		# Things the player does that aren't combat "you pick up the sword" etc
+			('Personal_Action',(v_p,v_p,v_p)),		# Things the player does that aren't combat "you pick up the sword" etc
+			('Route_Guidance', (v_p,v_p,v_p)) 		# Telling the player where to go, in particular when exits open
 		])
 
 
@@ -265,7 +266,7 @@ class ColorHandler:
 			newDictionary['Boring_In_World']=(238,232,213)		# everyday occurences like doors opening
 			newDictionary['Stat_Info']=(42,161,152)		# info about not-in-the-world stuff like gaining energy
 			newDictionary['Personal_Action']=(191, 147, 10)		# (181,137,0)Things the player does that aren't combat "you pick up the sword" etc
-
+			newDictionary['Route_Guidance'] = (133,153,0) 		# Telling the player where to go, in particular when exits open
 			
 		# Commenting out a bunch of stuff:
 		# For now,not going to do the 'adjust for Value' stuff, because it's clear that Saturation is also important 
