@@ -545,9 +545,9 @@ class Object:
 		# Here's a special thing. Fire randomizes its appearance every time it gets drawn in the attack step
 		if render_mode is not None and render_mode == 'attack-step':
 			if self.name == 'fire':
-				self.char = 317 + randint(0,1)
+				self.char = 384 + randint(0,1)
 			elif self.name == 'firepit':
-				self.char = 333 + randint(0,1)
+				self.char = 370 + randint(0,1)
 
 		#if True:	# temporary hack to test enemy navigation
 		if (fov_map.fov[self.x, self.y] or (self.always_visible and map[self.x][self.y].explored)) and not self.currently_invisible:
@@ -1018,7 +1018,7 @@ class Fire(Object):
 
 	def __init__(self, x, y, infinite = False):  #raising_alarm = False):
 		global AttackPhaseEvents
-		Object.__init__(self, x, y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "WUH WOH.")
+		Object.__init__(self, x, y, 384 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "WUH WOH.")
 		argset = (self.x,self.y)
 		AttackPhaseEvents.append((self.burnThings, argset))
 		self.fuel = 45 + randint(0,10)
@@ -1110,7 +1110,7 @@ class Firepit(Object):
 	
 	def __init__(self, x, y):
 
-		Object.__init__(self, x, y, 333 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
+		Object.__init__(self, x, y, 370 + randint(0,1), 'firepit', fire_color, blocks = True, weapon = False, always_visible=False, mouseover = "Mmmm, burny.")
 
 
 
@@ -1159,7 +1159,7 @@ class Firepit(Object):
 class Door(Object):
 	def __init__(self, x, y, easy_open = False):
 
-		Object.__init__(self, x, y, 301, 'door', default_door_color, blocks=True, always_visible=True, jumpable = False, mouseover = "Walk into this door or attack it to open. (Sometimes you need to give it a bit of welly.)")
+		Object.__init__(self, x, y, 368, 'door', default_door_color, blocks=True, always_visible=True, jumpable = False, mouseover = "Walk into this door or attack it to open. (Sometimes you need to give it a bit of welly.)")
 		map[self.x][self.y].block_sight = True
 		# decide stickiness - when it hits 0, door will automatically open when walked into
 		if easy_open or randint( 0, 1) == 0:
@@ -2107,7 +2107,7 @@ class Decider:
 
 # Something that can spot the player and raise/lower the alarm
 class Alarmer:
-	def __init__(self, alarm_time = 4, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, assoc_fighter = None):
+	def __init__(self, alarm_time = 4, pre_alarm_time = 1, alarm_value = 2, dead_alarm_value = 1, idle_color = color_alarmer_idle, suspicious_color = color_alarmer_suspicious, alarmed_color = color_alarmer_alarmed, idle_char = 320, suspicious_char = 321,  alarmed_char = 322,  assoc_fighter = None):
 		self.status = 'idle'			# 5 possible statuses: inert, pre-suspicious, suspicious, raising-alarm, alarm-raised
 		self.alarm_time = alarm_time		# How long you have to spot intruder for before raising alarm
 		self.pre_alarm_time = pre_alarm_time	# Delayed reaction time before realizing you've spotted an intruder
@@ -2116,6 +2116,9 @@ class Alarmer:
 		self.idle_color = idle_color
 		self.suspicious_color = suspicious_color
 		self.alarmed_color = alarmed_color
+		self.idle_char = idle_char
+		self.suspicious_char = suspicious_char
+		self.alarmed_char = alarmed_char
 		self.alarm_countdown = alarm_time
 		self.pre_alarm_countdown = pre_alarm_time
 		self.prev_suspicious = False
@@ -5839,7 +5842,7 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Faerie_AI(weapon = Weapon_Unarmed(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
 		decider_component = Decider(ai_component)
 		# faeries don't block, right?
-		monster = Object(x, y, 312, 'faerie', PLAYER_COLOR, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
+		monster = Object(x, y, 278, 'faerie', PLAYER_COLOR, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
 
 
 	elif name == 'rogue':
@@ -5856,7 +5859,8 @@ def create_monster(x,y, name, guard_duty = False):
 		fighter_component = Fighter(hp=3, defense=0, power=1, death_function=monster_death, attack_color = color_boman, faded_attack_color = color_boman)
 		ai_component =  BasicMonster(weapon = Weapon_Hammer())
 		decider_component = Decider(ai_component)
-		monster = Object(x, y, 'H', 'hammerer', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "The secret long lost character.")
+		monster = Object(x, y, data_symbol, data_name, color_white, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = data_description) 
+		#monster = Object(x, y, 'H', 'hammerer', color_boman, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "The secret long lost character.")
 
 
 	elif name == 'ninja':
@@ -5889,7 +5893,7 @@ def create_monster(x,y, name, guard_duty = False):
 			if  dungeon_level == 0:
 				temp_alarm_time += 1
 		alarmer_component = Alarmer(alarm_time = temp_alarm_time, pre_alarm_time = 0, assoc_fighter = strawman_component)
-		monster = Object(x, y, 275, 'security drone', color_alarmer_idle, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
+		monster = Object(x, y, 320, 'security drone', color_white, blocks=True, fighter=strawman_component, decider=decider_component, alarmer = alarmer_component, always_visible = True, mouseover = "Raises the alarm level by 2 if it can see you for too many turns. Killing it after it has sounded the alarm reduces the alarm level by 1. Destroy it for keys and favour.")
 		alarmer_component.owner = monster
 
 
@@ -6046,7 +6050,7 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 		#	num = randint( 0, 2) 
 		#	if num == 0:
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_healer.name, altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True) 	
-			shrine = Object(od.x, od.y, 274, 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True, mouseover = "Home to a small god. Favour can be exchanged here for a possibly useful upgrade.") 	
+			shrine = Object(od.x, od.y, 353, 'shrine', altar_color, blocks=False, shrine= Shrine(god_healer), always_visible=True, mouseover = "Home to a small god. Favour can be exchanged here for a possibly useful upgrade.") 	
 		#	elif num == 1:
 		#		shrine = Object(od.x, od.y, '&', 'shrine2', altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
 				#shrine = Object(od.x, od.y, '&', 'shrine to ' + god_destroyer.name, altar_color, blocks=False, shrine= Shrine(god_destroyer), always_visible=True) 
@@ -6105,10 +6109,10 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 			worldEntitiesList.append(new_door)
 
 		elif od.name == 'key':
-			new_key = Object(od.x, od.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
+			new_key = Object(od.x, od.y, 400, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True, mouseover = "Gain enough of these to get access to the next floor.")
 			objectsArray[od.x][od.y].append(new_key)
 		elif od.name == 'water':
-			new_water = Object(od.x, od.y, 285, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
+			new_water = Object(od.x, od.y, 352, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
 			objectsArray[od.x][od.y].append(new_water)
 		elif od.name == 'fire':
 			#new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
@@ -6125,22 +6129,22 @@ def make_map(start_ele_direction = None, start_ele_spawn = None):
 			objectsArray[od.x][od.y].append(new_firepit)
 		elif od.name == 'plant':
 			flower_part = Flower(flower_type = od.info, state = 'blooming')
-			new_plant = Object(od.x, od.y, 290, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
+			new_plant = Object(od.x, od.y, 402, flower_part.name, default_flower_color, blocks = False, plant = flower_part,  always_visible=True, mouseover = "Nutritious and delicious. Heals 1 wound when you pick it up, thereby restoring your max energy.")
 			objectsArray[od.x][od.y].append(new_plant)
 			worldEntitiesList.append(new_plant)
 		elif od.name == 'tree':
-			new_tree = Object(od.x, od.y, 306, 'tree', default_door_color, blocks = True,  always_visible=True, mouseover = "Sturdy and wooden.")
+			new_tree = Object(od.x, od.y, 369, 'tree', default_door_color, blocks = True,  always_visible=True, mouseover = "Sturdy and wooden.")
 			objectsArray[od.x][od.y].append(new_tree)
 			worldEntitiesList.append(new_tree)
 		elif od.name == 'grass':
-			new_grass = Object(od.x, od.y, 308 + randint(0,2), 'grass', default_flower_color, blocks = False,  always_visible=False, mouseover = "It sways as if in an outdoor breeze.")
+			new_grass = Object(od.x, od.y, 345 + randint(0,2), 'grass', default_flower_color, blocks = False,  always_visible=False, mouseover = "It sways as if in an outdoor breeze.")
 			objectsArray[od.x][od.y].append(new_grass)
 			worldEntitiesList.append(new_grass)
 		elif od.name == 'message':
 			message_color = color_light_ground_alt
 			if background_map[od.x][od.y] == 2:
 				message_color = color_light_ground
-			floor_message = Object(od.x, od.y, '~', 'message', message_color, blocks=False, floor_message = Floor_Message(od.info), mouseover = "A helpful message. The writing is too small to read from this distance.")
+			floor_message = Object(od.x, od.y, 354, 'message', message_color, blocks=False, floor_message = Floor_Message(od.info), mouseover = "A helpful message. The writing is too small to read from this distance.")
 			objectsArray[od.x][od.y].append(floor_message)
 			floor_message.send_to_back()
 		elif od.name == 'decoration':
@@ -6615,7 +6619,7 @@ def player_death(player):
 	game_state = 'dead'
  
 	#for added effect, transform the player into a corpse!
-	player.char = '%'
+	player.char = 257
 	#player.color = libtcod.dark_red
  
 def monster_death(monster):
@@ -6630,7 +6634,7 @@ def monster_death(monster):
 					if item.name == 'ring of power':
 						drop_weapon(item)
 						reorder_objects(item.x, item.y)
-					else:
+					elif item.name != 'unarmed':	# don't drop 'unarmed', the game crashes when you pick it up
 						num = randint(0, 100)
 						if num <= CHANCE_OF_ENEMY_DROP:
 							drop_weapon(item)
@@ -6683,7 +6687,7 @@ def monster_death(monster):
 
 	#monster may drop a key?
 	if monster.drops_key == True:
-		new_key = Object(monster.x,monster.y, 300, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
+		new_key = Object(monster.x,monster.y, 400, 'key', PLAYER_COLOR, blocks = False, weapon = False, always_visible=True)
 		objectsArray[monster.x][monster.y].append(new_key)
 		# trigger a draw order cleanup, because otherwise you get enemies hiding under keys
 #		reorder_objects(monster.x, monster.y)
@@ -7028,54 +7032,54 @@ def get_item_from_name(x,y, name):
 	mouseover_text = '...'
 	object = None
 	if name == 'sword':
-		char = 302
+		char = 280#302
 		mouseover_text = "A lightweight, short range, versatile weapon. Stabby stabby."
 	elif name == 'dagger':
-		char = 'd' 
+		char = 300
 		mouseover_text = "Like a sword, if a sword was heavier and did more damage. Yes, this is the opposite of how things actually work."
 	elif name == 'bo staff':
-		char = 'b'
+		char = 302
 		mouseover_text = "Surprisingly good for what looks like a giant stick."		
 	elif name == 'spear':
-		char = 'l'
+		char = 296
 		mouseover_text = "A weapon with great reach but only in cardinal directions."	
 	elif name == 'sai':
-		char = 'f'
+		char = 298
 		mouseover_text = "Great for attacking two enemies at once, as long as they're not standing next to each other."	
 	elif name == 'nunchaku':
-		char = 'n'
+		char = 313
 		mouseover_text = "Easy to learn. Impossible to master."	
 	elif name == 'axe':
-		char = 'x'
+		char = 316
 		mouseover_text = "Slow and destructive, like an overfilled shopping trolley."	
 	elif name == 'katana':
 		char = 'k'
 		mouseover_text = "Flexibility. Precision. Rotational symmetry."
 	elif name == 'hammer':
-		char = 'h'
+		char = 312
 		mouseover_text = "I can't remember what the hammer does."
 	elif name == 'trident':
-		char = 't'
+		char = 283
 		mouseover_text = "Everyone's favourite undersea weapon with three pointy bits."
 	elif name == 'broom':
-		char = 292
+		char = 297
 		mouseover_text = "Attacks three adjacent spaces in a cardinal direction. Great in crowds."
 	elif name == 'pike':
-		char = 'p'
+		char = 299
 		mouseover_text = "Great for attacking diagonally and nothing else."
 	elif name == 'halberd':
-		char = 'h'
+		char = 301
 		mouseover_text = "Long range only weapon. Equally terrifying for you and your opponent."
 	elif name == 'shiv':
 		char = 's'
 		mouseover_text = "A lightweight, short range, versatile weapon."
 	elif name == 'gun':
-		char = 'g'
+		char = 314
 		mouseover_text = "A weapon of terrifying range."
 	elif name == 'ring of power':
-		char = 'o'
+		char = 333
 		mouseover_text = "Ancient weapon of mass destruction. Currently seeking new collaborators."
-	object = Object(x, y, char, name, default_weapon_color, blocks=False, weapon = True, always_visible = True, mouseover = mouseover_text)
+	object = Object(x, y, char, name, color_white, blocks=False, weapon = True, always_visible = True, mouseover = mouseover_text)
 	return object
 
 
@@ -8254,7 +8258,7 @@ def initialise_game():
 	fighter_component = Energy_Fighter(hp=STARTING_ENERGY, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	#fighter_component = Fighter(hp=10, defense=2, power=5, death_function=player_death, jump_array = [0,0,0,0])
 	decider_component = Decider()
-	player = Object(0, 0, 320, 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
+	player = Object(0, 0, 256, 'player', PLAYER_COLOR, blocks=True, fighter=fighter_component, decider=decider_component, mouseover = "It's you! Our protagonist, engaged on a quest of dubious honor.")
 	camera = Location(player.x, player.y)
 
 
@@ -8820,18 +8824,22 @@ def doGlobalPreDrawPhaseEvents():
 			#ob.alarmer.update(libtcod.map_is_in_fov(fov_map, ob.x, ob.y))
 			# next, do things depending on the alarmer's state
 			if ob.alarmer.status == 'idle' or  ob.alarmer.status == 'pre-suspicious':
-				ob.color = ob.alarmer.idle_color
+				#ob.color = ob.alarmer.idle_color
+				ob.char = ob.alarmer.idle_char
 			elif ob.alarmer.status == 'suspicious':
 				if ob.alarmer.prev_suspicious == False:
 					message('The ' + ob.name + ' is suspicious!', Color_Interesting_In_World)	
-					ob.color = ob.alarmer.suspicious_color
+					#ob.color = ob.alarmer.suspicious_color
+					ob.char = ob.alarmer.suspicious_char
 			elif ob.alarmer.status == 'raising-alarm':
 				#alarm_level += ob.alarmer.alarm_value
 				spawn_timer = 1		#run the  spawn clock forwards so new enemies appear
 				message('The ' + ob.name + ' sounds a loud alarm!', Color_Interesting_In_World)
-				ob.color = ob.alarmer.alarmed_color
+				#ob.color = ob.alarmer.alarmed_color
+				ob.char = ob.alarmer.alarmed_char
 			elif ob.alarmer.status == 'alarm-raised':
-				ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
+				#ob.color =  color_alarmer_alarmed #ob.alarmer.alarmed_color	
+				ob.char = ob.alarmer.alarmed_char
 
 
 
@@ -9005,7 +9013,8 @@ def doGlobalPostDrawPhaseEvents():
 # (I wonder if it's possible to change the fonts on different sub-consoles...)
 # libtcod.set_font('terminal16x16.png', greyscale=True, altLayout=False)
 font_choice = 'terminal16x16.png'
-sprite_choice = 'terminal16x16plusSprites.png'
+#sprite_choice = 'terminal16x16plusSprites.png'
+sprite_choice = 'terminal16x16Current.png'
 
 #But hang on maybe I just need to change the 'altLayout' settings to make my original file work...
 #libtcod.set_font('arial14x14.png', greyscale=True, altLayout=False)
