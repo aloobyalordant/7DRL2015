@@ -1732,7 +1732,7 @@ class Weapon_Nunchuck(Generic_Weapon):
 class Weapon_Axe(Generic_Weapon):
 	# A different version of the axe. Wider circles! Probably a nightmare to fight against in narrow corridors
 	def __init__(self):
-		Generic_Weapon.__init__(self, 'axe', 2, 2, 2, force = 2)
+		Generic_Weapon.__init__(self, 'scythe', 2, 2, 2, force = 0)
 		default_usage = self.default_usage
 	
 		self.command_items = []
@@ -2271,6 +2271,7 @@ class Weapon_Ring_Of_Power(Generic_Weapon):
 		self.current_charge = 8
 		self.default_usage = 2
 		self.durability = 1000
+		self.force = 0
 		self.just_attacked = False
 		default_usage = self.default_usage
 	

@@ -110,7 +110,7 @@ WEAPON_FAILURE_WARNING_PERIOD = 10
 ELEVATOR_DOOR_CLOSURE_PERIOD = 5
 ELEVATOR_DISTANCE_CHECK = 4
 
-ALARMER_RANGE = 10
+ALARMER_RANGE = 5
 
 CHANCE_OF_ENEMY_DROP = 30
 
@@ -1256,9 +1256,9 @@ class EnemyDispenser(Object):
 		Object.__init__(self, x, y, char = 9, name = 'Dispenser', color = color_white, mouseover = "Bad Things come out of this Hole.", tags = ['listener'], always_visible = True)
 		self.status = 'idle'
 		self.cooldown_timer = 1
-		self.cooldown_length = 10
+		self.cooldown_length = 20
 		self.progency = []	# list of (currently alive?) enemies this dispenser has spawned
-		self.max_progency = 5
+		self.max_progency = 4
 
 	def notify(self):
 		self.color = color_alarmer_alarmed
@@ -4873,6 +4873,11 @@ def handle_keys(user_input_event):
 			something_changed = True
 			game_state = 'control screen'
 			player_action = player_action_before_pause
+		elif key_char == 't' and dungeon_level == 0:
+			something_changed = True
+			game_state = 'playing'
+			player_action = player_action_before_pause
+			load_test_level()
 
 	elif game_state == 'control screen':
 		#key_char = chr(key.c) 
@@ -5937,15 +5942,16 @@ def create_projectile(x,y,name,direction, attacker):
 
 
 #todo probably add objectsarray as a global here? and then find the place to initialise it
-def make_map(start_ele_direction = None, start_ele_spawn = None):
+def make_map(start_ele_direction = None, start_ele_spawn = None, test_level = False):
 	global map, background_map, stairs, game_level_settings, dungeon_level, spawn_points, elevators, center_points, nearest_points_array, room_adjacencies, MAP_HEIGHT, MAP_WIDTH, number_alarmers, camera, alarm_level, key_count, currency_count, lev_set, decoration_count, TEMP_player_previous_center, objectsArray, bgColorArray, worldAttackList, worldEntitiesList, worldArrowsList, total_monsters, shrine_list
+	global pathname
 
-	lev_gen = Level_Generator()
+	lev_gen = Level_Generator(pathname)
 	lev_set = game_level_settings.get_setting(dungeon_level)
 	# update level settings with what sort of elevator situation we want the player to start in
 	lev_set.start_ele_direction = start_ele_direction
 	lev_set.start_ele_spawn = start_ele_spawn
-	level_data = lev_gen.make_level(dungeon_level, lev_set)
+	level_data = lev_gen.make_level(dungeon_level, lev_set, test_level)
 
 	number_alarmers = 0		# how many things in the level do stuff with the alarm? If this becomes 0, all alarms stuff
 	total_monsters = 0
@@ -6707,6 +6713,61 @@ def monster_death(monster):
 
 
 
+def load_test_level():
+
+	#objects = []
+	make_map(test_level = True)
+	objectsArray[player.x][player.y].append(player)
+	worldEntitiesList.append(player)
+	#print( 'heyo (' + str(player.x) + ',' + str(player.y))	
+
+
+	# display some stuff about level effects maybe?
+	#print ('word' + str(lev_set.effects))
+	if 'waterlogged' in lev_set.effects:
+		message('There must be a leak somewhere. This floor is waterlogged!', Color_Stat_Info)
+	if 'cold' in lev_set.effects:
+		message('Brrrr! It\'s so cold! You gain energy slowly', Color_Stat_Info)
+		
+
+
+
+   	#make_map()  #create a fresh new level!
+	#objects = [player]				#TODO/NOTE: When changing to 'objectsArray', this might cause problems?
+							# Think it's enough to move this to after make_map(), and then use player's x and y
+							# well... there might be an issue of initialising arrays as well...
+
+
+	x_offset = int(camera.x-(SCREEN_WIDTH + MESSAGE_PANEL_WIDTH)/2)
+	y_offset = int(camera.y-(SCREEN_HEIGHT-PANEL_HEIGHT)/2)
+	for yOff in range(ACTION_SCREEN_HEIGHT):
+		y = yOff + y_offset
+		for xOff in range(ACTION_SCREEN_WIDTH):
+			x = xOff + x_offset + ACTION_SCREEN_X
+			if (y >= MAP_HEIGHT or x>= MAP_WIDTH):
+				translated_console_set_char_background(con, x, y, color_big_alert, color_big_alert)
+			else:
+				if y in range(MAP_HEIGHT) and x in range(MAP_WIDTH):
+					map[x][y].explored = False
+					translated_console_set_char_background(con, x, y, color_fog_of_war, libtcod_BKGND_SET)
+
+
+	initialize_fov()
+
+
+	enemy_spawn_rate = lev_set.enemy_spawn_rate
+	spawn_timer = decide_spawn_time(enemy_spawn_rate,alarm_level)
+
+	# Final thing... reset all the different event phases because otherwise you get some game-crashing bugs, especially involving things trying to remove themselves from lists they are no longer part of
+	
+	PreliminaryEvents = []
+	MovementPhaseEvents = []
+	AttackPhaseEvents = []
+	DamagePhaseEvents = []
+	MiscPhaseEvents = []
+	FinalPreDrawEvents = []
+	FinalPostDrawEvents = []
+
 
 def next_level():
 	global colorHandler
@@ -6968,7 +7029,7 @@ def get_weapon_from_name(name, bonus_max_charge = 0):
 		new_weapon =  Weapon_Sai()
 	elif name == 'nunchaku':
 		new_weapon =  Weapon_Nunchuck()
-	elif name == 'axe':
+	elif name == 'scythe':
 		new_weapon =  Weapon_Axe()
 	elif name == 'katana':
 		new_weapon =  Weapon_Katana()
@@ -7049,7 +7110,7 @@ def get_item_from_name(x,y, name):
 	elif name == 'nunchaku':
 		char = 313
 		mouseover_text = "Easy to learn. Impossible to master."	
-	elif name == 'axe':
+	elif name == 'scythe':
 		char = 316
 		mouseover_text = "Slow and destructive, like an overfilled shopping trolley."	
 	elif name == 'katana':

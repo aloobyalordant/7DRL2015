@@ -2,6 +2,7 @@ import tdl as libtcod
 #import libtcodpy as libtcod
 from objectClass import Object
 from random import randint
+from enemyArtHandler import EnemyArtHandler
 
 import math
 
@@ -78,7 +79,7 @@ elif ControlMode == 'Crypsis':
 	ATTCKDOWNALT	 = 's'
 
 ELEVATOR_DOOR_CLOSURE_PERIOD = 5
-ALARMER_RANGE = 10	# How close to an alarmer a dispenser has to be to be activated by it
+ALARMER_RANGE = 5	# How close to an alarmer a dispenser has to be to be activated by it
 
 class Object_Datum:
 
@@ -232,8 +233,10 @@ class Elevator_Door:
 		self.horizontal = horizontal
 
 class Level_Generator:
+	def __init__(self, pathname):
+		self.pathname = pathname
 
-	def make_level(self, dungeon_level, level_settings):
+	def make_level(self, dungeon_level, level_settings, test_level = False):
 
 
 		lev_set = level_settings
@@ -271,8 +274,35 @@ class Level_Generator:
 		elevators = []
 		room_adjacencies = []
  
+		if test_level:
 	
-		if dungeon_level == 0:
+			max_map_height = 100
+			max_map_width = 100
+			map_width = 100
+			map_height = 100
+			#fill map with "blocked" tiles
+			map = [[ Tile(True)
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]
+	
+			nearest_points_array  = [[ None
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]		
+
+
+			#map to allow variation in background tiles
+			background_map = [[ 0
+				for y in range(max_map_height) ]
+					for x in range(max_map_width) ]
+
+			# return  test room, depending
+			self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			# self.test_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			#self.new_tutorial(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
+			player_start_x = 11
+			player_start_y = 62
+
+		elif dungeon_level == 0:
 			#self.original_tutorial(object_data, map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies)
 			#player_start_x = 12
 			#player_start_y = 12
@@ -3007,6 +3037,39 @@ class Level_Generator:
 
 
 
+	def make_lower_enemy_room(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, room_x, room_y, enemy_name, weapon_name):
+		(data_name, data_symbol, data_color, data_description) = enemyArtHandler.getEnemyArtData(enemy_name)
+		E =  Object_Name('monster', enemy_name)
+		W = Object_Name('weapon', weapon_name)
+		M = Object_Name('message', "Herein lies enemy " + data_name + ", codename " + enemy_name+ ".")
+		D = Object_Name('easydoor')
+
+		seg_map =      [[0,0,M,0,0],
+				[1,1,D,1,1],
+				[1,0,0,0,1],
+				[1,0,E,0,1],
+				[1,0,W,0,1],
+				[1,1,1,1,1]]
+
+		self.append_segment(map, background_map, self.create_segment(seg_map), room_x, room_y, object_data)
+
+	def make_upper_enemy_room(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, room_x, room_y, enemy_name, weapon_name):
+		(data_name, data_symbol, data_color, data_description) = enemyArtHandler.getEnemyArtData(enemy_name)
+		E =  Object_Name('monster', enemy_name)
+		W = Object_Name('weapon', weapon_name)
+		M = Object_Name('message', "Herein lies enemy " + data_name + ", codename " + enemy_name+ ".")
+		D = Object_Name('easydoor')
+
+		seg_map =      [[1,1,1,1,1],
+				[1,0,W,0,1],
+				[1,0,E,0,1],
+				[1,0,0,0,1],
+				[1,1,D,1,1],
+				[0,0,M,0,0]]
+
+		self.append_segment(map, background_map, self.create_segment(seg_map), room_x, room_y, object_data)
+
+
 	def test_room(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
 
@@ -3016,21 +3079,21 @@ class Level_Generator:
 		new_room = Rect(tut_rm_width,7*tut_rm_height,tut_rm_width,tut_rm_height)
 		self.create_room(new_room, map, center_points, nearest_points_array)
 		C = Object_Name('door')	# a door that may stick!
-		#D = Object_Name('message', "Welcome to the training area! Please walk through the door above to begin your training. (press #MOVEUP#)")
+		M = Object_Name('message', "Welcome to the secret testing area! Beware of SPOILERS.")
 		D = Object_Name('weapon', 'sword')
 		W = Object_Name('monster', 'gunslinger')
 		F = Object_Name('fire')
 		#G = Object_Name('firepit')
 		G = Object_Name('shrine')
 		H = Object_Name('plant')
-		seg_map =      [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-				[1,1,1,0,0,0,0,0,H,0,0,0,0,0,W,0,0,0,0,1,1,1,1],
-				[1,1,1,C,0,0,0,0,0,0,0,0,C,0,0,0,C,0,0,0,0,0,1],
-				[1,0,0,0,0,0,0,0,0,C,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[0,0,0,0,0,G,0,C,0,0,0,G,0,G,0,G,0,0,G,0,C,1,1],
-				[0,0,0,D,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-				[1,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1],
-				[1,0,0,0,0,0,0,0,0,C,H,C,0,0,0,C,H,C,0,0,0,1,1]]
+		seg_map =      [[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[0,0,0,0,M,D,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+				[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]]
 		#seg_map = self.rotateSegment(seg_map)
 
 		#old_room = new_room
@@ -3039,6 +3102,33 @@ class Level_Generator:
 #		(prev_x, prev_y) = old_room.center()
 		self.append_segment(map, background_map, self.create_segment(seg_map), tut_rm_width,7*tut_rm_height, object_data)
 
+		enemyArtHandler = EnemyArtHandler(self.pathname)
+		enemy_room_width = 4
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width, 8*tut_rm_height, 'greenhorn', 'sword')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 1*enemy_room_width,8*tut_rm_height, 'greenhorn-aggro', 'sword')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 2*enemy_room_width,8*tut_rm_height, 'greenhorn-cautious', 'sword')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 3*enemy_room_width,8*tut_rm_height, 'ninja', 'dagger')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 4*enemy_room_width,8*tut_rm_height, 'crane', 'broom')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 5*enemy_room_width,8*tut_rm_height, 'bustard', 'spear')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 6*enemy_room_width,8*tut_rm_height, 'gunslinger', 'gun')
+		self.make_lower_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 7*enemy_room_width,8*tut_rm_height, 'nunchuck fanatic', 'nunchaku')
+
+
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 1*enemy_room_width, 7*tut_rm_height, 'dove', 'pike')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 2*enemy_room_width,7*tut_rm_height, 'eagle', 'halberd')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 3*enemy_room_width,7*tut_rm_height, 'falcon', 'sai')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 4*enemy_room_width,7*tut_rm_height, 'tridentor', 'trident')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 5*enemy_room_width,7*tut_rm_height, 'hammerer', 'hammer')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 6*enemy_room_width,7*tut_rm_height, 'axe maniac', 'scythe')
+		self.make_upper_enemy_room(object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies, enemyArtHandler, tut_rm_width + 7*enemy_room_width,7*tut_rm_height, 'wizard', 'ring of power')
+
+
+#'gunslinger'
+#'nunchuck fanatic'
+#'axe maniac'
+#'samurai'
+#'grenadier'?
+#'wizard'
 
 	def first_level(self, object_data, map, background_map, center_points, nearest_points_array, rooms, num_rooms, spawn_points, elevators, room_adjacencies):
 
