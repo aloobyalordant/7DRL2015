@@ -5847,7 +5847,7 @@ def create_monster(x,y, name, guard_duty = False):
 		ai_component = Faerie_AI(weapon = Weapon_Unarmed(), guard_duty = False)	#faeries are ill-suited for guard duty and always wander
 		decider_component = Decider(ai_component)
 		# faeries don't block, right?
-		monster = Object(x, y, 278, 'faerie', PLAYER_COLOR, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
+		monster = Object(x, y, 379, 'faerie', PLAYER_COLOR, blocks=False, fighter=fighter_component, decider=decider_component, mouseover = "Catch it before it gets away!", phantasmal = True)
 
 
 	elif name == 'rogue':
@@ -7281,6 +7281,7 @@ def translateCommands(msg):
 def pause_screen():
 	global test_save_message, gameSaveDataHandler, play_count
 	global game_level_settings
+	global enemyArtHandler
 
 	# print the pause screen I guess 
 	translated_console_set_default_background(pause_menu, default_background_color)
@@ -7301,10 +7302,29 @@ def pause_screen():
 	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, 8, libtcod_BKGND_NONE, libtcod_CENTER, "Levels: ")
 	temp_lev_num = 0
 	current_line = 10		
-	for temp_lev_num in range (0, len(game_level_settings.bigArray)-1):
+	for temp_lev_num in range (1, len(game_level_settings.bigArray)-1):
 		temp_lev_set = game_level_settings.bigArray[temp_lev_num]
 		translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, str(temp_lev_num) + " " + str(temp_lev_set.effects))
 		current_line += 1
+
+
+		# Display sprites of the enemies that will be in this level
+		enemy_count = 0
+		for (enemy_name, enemy_prob) in temp_lev_set.enemy_probabilities:
+			(data_name, data_symbol, data_color, data_description) = enemyArtHandler.getEnemyArtData(enemy_name)
+
+
+			#con.draw_char(self.x - x_offset, self.y - y_offset, self.char, bg=bg_color, fg = self.color)
+			pause_menu.draw_char(int(SCREEN_WIDTH/2) + enemy_count, current_line, data_symbol, bg=None, fg = color_white) #, bg = libtcod_BKGND_NONE, fg = color_white)
+			enemy_count += 2
+			#translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, str(enemy_name) + " ")
+			
+		current_line += 1
+
+
+		current_line += 1
+
+
 	#	translated_console_print_ex_center(pause_menu, SCREEN_WIDTH/2, current_line, libtcod_BKGND_NONE, libtcod_CENTER, str(temp_lev_num) + " " + str(temp_lev_set.enemy_probabilities))
 	#	current_line += 1
 	

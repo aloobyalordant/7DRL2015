@@ -139,40 +139,45 @@ class Level_Settings:
 		# Ok so. Let's try and clean up that enemy probabilities 
 		
 		# Initially: It could be a greenhorn and crane, it could be a greenhorn and a bustard!
-		enemyprobs1 = []
-		enemybench = []		# enemies not currently being used, but that we might soon
-	#	if randint(0,1) == 0:	TEMP COMMENTED OUT RANDOMIZATION TO MAKE TESTING EASIER
-		if 0 == 0:
-			#enemyprobs1 = [('greenhorn', 20), ('crane',10), ('gunslinger',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
-			enemyprobs1 = [('greenhorn-cautious', 20), ('crane',10), ('hammerer',10)] 
-			enemybench = [('bustard',10), ('dove', 10),  ('falcon', 10)]
-		else:
-			enemyprobs1 = [('greenhorn', 20), ('bustard',10)] 
-			enemybench = [('crane', 10), ('dove', 10),  ('falcon', 10)]
-
-		# For level 2: Take one enemy out (probably not the greenhorn?), and add one new one from the bench
-		# Actually... let's not do that. let's keep all the enemies from level &, and just add one more
-		enemyprobs2 = list(enemyprobs1)
-		#if randint(0,2) == 0:
-		#	enemy_to_drop = enemyprobs2[0]
-		#else:
-		#	enemy_to_drop = enemyprobs2[0]
-		enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
-		#enemyprobs2.remove(enemy_to_drop)
-		enemyprobs2.append(enemy_to_add)
-		enemybench.remove(enemy_to_add)
+	#	enemyprobs1 = []
+	#	enemybench = []		# enemies not currently being used, but that we might soon
+	##	if randint(0,1) == 0:	TEMP COMMENTED OUT RANDOMIZATION TO MAKE TESTING EASIER
+	#	if 0 == 0:
+	#		#enemyprobs1 = [('greenhorn', 20), ('crane',10), ('gunslinger',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
+	#		enemyprobs1 = [('greenhorn-cautious', 20), ('crane',10), ('hammerer',10)] 
+	#		enemybench = [('bustard',10), ('dove', 10),  ('falcon', 10)]
+	#	else:
+	#		enemyprobs1 = [('greenhorn', 20), ('bustard',10)] 
+	#		enemybench = [('crane', 10), ('dove', 10),  ('falcon', 10)]
+#
+	#	# For level 2: Take one enemy out (probably not the greenhorn?), and add one new one from the bench
+	#	# Actually... let's not do that. let's keep all the enemies from level &, and just add one more
+	#	enemyprobs2 = list(enemyprobs1)
+	#	#if randint(0,2) == 0:
+	#	#	enemy_to_drop = enemyprobs2[0]
+	#	#else:
+	#	#	enemy_to_drop = enemyprobs2[0]
+	#	enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
+	#	#enemyprobs2.remove(enemy_to_drop)
+	#	enemyprobs2.append(enemy_to_add)
+	#	enemybench.remove(enemy_to_add)
 
 		
 
-		# Now add the eagle to the bench! And drop a random enemy, and add a new one from the bench
-		enemybench.append(('eagle',5))
-		enemyprobs3 = list(enemyprobs2)
-		enemy_to_drop = enemyprobs3[randint(0, len(enemyprobs3) - 1)]
-		enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
-		enemyprobs3.remove(enemy_to_drop)
-		enemyprobs3.append(enemy_to_add)
-		enemybench.remove(enemy_to_add)
+	#	# Now add the eagle to the bench! And drop a random enemy, and add a new one from the bench
+	#	enemybench.append(('eagle',5))
+	#	enemyprobs3 = list(enemyprobs2)
+	#	enemy_to_drop = enemyprobs3[randint(0, len(enemyprobs3) - 1)]
+	#	enemy_to_add = enemybench[randint(0, len(enemybench) - 1)]
+	#	enemyprobs3.remove(enemy_to_drop)
+	#	enemyprobs3.append(enemy_to_add)
+	#	enemybench.remove(enemy_to_add)
 
+		enemyprobs1 = self.makeEnemyProbs(1)
+		enemyprobs2 = self.makeEnemyProbs(2)
+		enemyprobs3 = self.makeEnemyProbs(3)
+		enemyprobs4 = self.makeEnemyProbs(4)
+		enemyprobs5 = self.makeEnemyProbs(5)
 
 
 
@@ -291,11 +296,12 @@ class Level_Settings:
 
 
 		# Level 3 has swordsmen,  bomen, and axe maniacs.
-		enemy_probs = []
-		enemy_probs.append(('swordsman', 50))
-		enemy_probs.append(('boman', 50))
-		enemy_probs.append(('axe maniac', 30))
-		enemy_probs.append(('ninja', 5))
+		#enemy_probs = []
+		enemy_probs = enemyprobs4
+		#enemy_probs.append(('swordsman', 50))
+		#enemy_probs.append(('boman', 50))
+		#enemy_probs.append(('axe maniac', 30))
+		#enemy_probs.append(('ninja', 5))
 		temp_keys_req = len(self.bigArray) + 1
 		temp_keys_here = 2*temp_keys_req
 		temp_number_sec_drones = 3*temp_keys_req
@@ -344,14 +350,15 @@ class Level_Settings:
 
 
 		# Level 4 seems to have  it all.  # except now we replaced swrodsmen with Tridentors
-		enemy_probs = []
-		# enemy_probs.append(('swordsman', 30))
-		enemy_probs.append(('tridentor', 30))
-		enemy_probs.append(('boman', 10))
-		enemy_probs.append(('axe maniac', 10))
-		enemy_probs.append(('ninja', 10))
-		enemy_probs.append(('bustard', 10))
-		enemy_probs.append(('nunchuck fanatic', 10))
+		#enemy_probs = []
+		enemy_probs = enemyprobs5
+		## enemy_probs.append(('swordsman', 30))
+		#enemy_probs.append(('tridentor', 30))
+		#enemy_probs.append(('boman', 10))
+		#enemy_probs.append(('axe maniac', 10))
+		#enemy_probs.append(('ninja', 10))
+		#enemy_probs.append(('bustard', 10))
+		#enemy_probs.append(('nunchuck fanatic', 10))
 		temp_keys_req = len(self.bigArray) + 1
 		temp_keys_here = 2*temp_keys_req
 		temp_number_sec_drones = 3*temp_keys_req
@@ -375,7 +382,7 @@ class Level_Settings:
 
 		# Last level has the wizard! And some other dudes for flavour, I guess.
 		enemy_probs = []
-		enemy_probs.append(('swordsman', 10))
+		enemy_probs.append(('greenhorn', 10))
 		enemy_probs.append(('ninja', 10))
 		last_lev = Level_Setting(
 			level_type = 'modern',
@@ -453,7 +460,7 @@ class Level_Settings:
 				# take out swordsmen and add tridentors if level is waterlogged
 				swordsman_found = False
 				for (name, prob) in lev_set.enemy_probabilities:
-					if name == 'swordsman':
+					if name == 'greenhorn':
 						swordsman_found = True
 						lev_set.enemy_probabilities.remove((name,prob))
 						lev_set.enemy_probabilities.append(('tridentor', prob))
@@ -471,7 +478,47 @@ class Level_Settings:
 				lev_set.room_size_first_dice = (2,2)
 
 	def get_setting(self, level_num):
-		return self.bigArray[level_num]			
+		return self.bigArray[level_num]		
+
+	
+	# Make enemy probs for a given level.
+	def makeEnemyProbs(self, level_num):
+		# current idea: every level has greenhorns...
+
+		return_array = [('greenhorn', 20)] # turning greenhorns into tridentors will be handled later
+
+		total_enemy_count = 3
+		if level_num > 3:
+			total_enemy_count = 4
+
+			
+		# restircted enemy pool for level 1
+		enemy_bench = [('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10) ]
+
+		if level_num > 1:
+			enemy_bench = [('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10), ('gunslinger',10), ('hammerer',10),  ('ninja',5), ('nunchuck fanatic',5)]
+
+		if level_num >= 5:
+			enemy_bench = [('bustard', 10), ('dove', 10),  ('falcon', 10), ('gunslinger',10), ('hammerer',10),  ('ninja',5), ('nunchuck fanatic',5), ('axe maniac',10), ('boman',10)]
+
+
+
+		while (len(return_array) < total_enemy_count):
+			j = randint( 0, len(enemy_bench)-1)
+			enemy_choice = enemy_bench[j]
+			return_array.append(enemy_choice)
+			enemy_bench.remove(enemy_choice)
+
+		return return_array
+
+#enemyprobs1 = [('greenhorn', 20), ('crane',10), ('gunslinger',10)]   #[('bustard', 10), ('crane', 10), ('dove', 10),  ('falcon', 10)]
+	#		enemyprobs1 = [('greenhorn-cautious', 20), ('crane',10), ('hammerer',10)] 
+	#		enemybench = [('bustard',10), ('dove', 10),  ('falcon', 10)]
+	#	else:
+	#		enemyprobs1 = [('greenhorn', 20), ('bustard',10)] 
+	#		enemybench = [('crane', 10), ('dove', 10),  ('falcon', 10)]
+
+		
 		
 
 
