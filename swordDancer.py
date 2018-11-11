@@ -1479,6 +1479,73 @@ class Bullet(Projectile):
 
 
 
+# todo write actual code (in the Projectile class) for bouncing off walls.
+# For now it's fine because we're just having droppable, non-moving grenades. Butt later there may be grenade launchers
+class Grenade(Projectile):
+
+	def __init__(self, x, y, tags = set(), shooter = None, direction = 'none', damage = 1, momentum = 1, timer = 5) : 
+		global FinalPreDrawEvents
+		if shooter is not None:
+			color = shooter.color
+		else:
+			color = color_white
+		Projectile.__init__(self, x, y, '.', 'grenade', color, "tick, tick, tick.", tags, shooter, direction, speed = 1, momentum = momentum, damage = 1, bounces = True, attacksOnHit = False, passesThroughJumpables = False)
+		self.timer = timer
+		argset = (self.x,self.y)
+		
+		# start a countdown
+		FinalPreDrawEvents.append((self.countdown , argset))
+
+
+	# count down to explodey time
+	def countdown(self, args):	# FinalPreDrawEvents phase
+		global MiscPhaseEvents, FinalPreDrawEvents
+		if self.timer > 0:
+			self.timer -= 1
+			FinalPreDrawEvents.append((self.countdown , args))
+		else:
+
+			MiscPhaseEvents.append((self.explode, args))
+
+	def explode(self, arg_set): # MiscPhaseEvents
+		message('boom')
+		message('The ' + self.name + ' explodes', Color_Boring_Combat)
+		for x in range (self.x - 2, self.x+3):
+			for y in range (self.y - 2, self.y + 3):
+				if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and ((x-self.x)*(x-self.x)) + ((y-self.y)*(y-self.y)) <= 4 and not map[x][y].blocked:
+					fire_already_here = False
+					for ob in objectsArray[x][y]:
+						if ob.name == 'fire':
+							fire_already_here = True
+					if not fire_already_here:
+						new_fire = Fire(x,y)
+						objectsArray[x][y].append(new_fire)
+						worldEntitiesList.append(new_fire)
+
+						
+		garbage_list.append(self)
+			
+
+class Water_Grenade(Grenade):
+
+	def explode(self, arg_set): # MiscPhaseEvents
+		message('boom')
+		message('The ' + self.name + ' splooshes', Color_Boring_Combat)
+		for x in range (self.x - 2, self.x+3):
+			for y in range (self.y - 2, self.y + 3):
+				if x >= 0  and x < MAP_WIDTH and y >= 0  and y < MAP_HEIGHT and ((x-self.x)*(x-self.x)) + ((y-self.y)*(y-self.y)) <= 4 and not map[x][y].blocked:
+					water_already_here = False
+					for ob in objectsArray[x][y]:
+						if ob.name == 'water':
+							water_already_here = True
+					if not water_already_here:
+						new_water = Object(x, y, 352, 'water', water_foreground_color, blocks = False, weapon = False, always_visible=True, mouseover = "A pool of water. Most people can't attack while swimming.")
+						objectsArray[x][y].append(new_water)
+
+						
+		garbage_list.append(self)
+			
+
 ####################################
 #
 #
@@ -4723,6 +4790,8 @@ def getVectorFromDirectionAndSpeed(direction, speed):
 		vector = (-speed, speed)
 	elif direction == 'left':
 		vector = (-speed, 0)
+	elif direction == 'none':
+		vector = (0,0)
 
 	return vector
 
@@ -5321,6 +5390,17 @@ def handle_keys(user_input_event):
 					message_string = 'Your legs are too tired to jump.'
 					message(message_string, Color_Not_Allowed)
 					return 'invalid-move'
+
+
+			elif actionCommand == "DROP":
+				# gonna be very lazy here buttt
+				choice =  randint( 0, 1)
+				if choice == 0:
+					new_grenade = Grenade(player.x, player.y)
+				else:
+					new_grenade = Water_Grenade(player.x, player.y)
+				drop_item(new_grenade)
+				message("You drop a " + new_grenade.name + ".", Color_Personal_Action)
 
 			#attacky keys!
 			else :			
@@ -6125,6 +6205,11 @@ def make_map(start_ele_direction = None, start_ele_spawn = None, test_level = Fa
 			new_fire = Fire(od.x,od.y)
 			objectsArray[od.x][od.y].append(new_fire)
 			worldEntitiesList.append(new_fire)
+		elif od.name == 'grenade':
+			#new_fire = Object(od.x, od.y, 317 + randint(0,1), 'fire', fire_color, blocks = False, weapon = False, always_visible=False, mouseover = "Uh oh.")
+			new_grenade = Grenade(od.x,od.y)
+			objectsArray[od.x][od.y].append(new_grenade)
+			worldEntitiesList.append(new_grenade)
 		elif od.name == 'infinifire':
 			new_fire = Fire(od.x,od.y, infinite = True)
 			objectsArray[od.x][od.y].append(new_fire)
@@ -7160,6 +7245,13 @@ def drop_weapon(weapon_item):
 		objectsArray[weapon_x][weapon_y].append(weapon_item)
 		#weapon_item.send_to_back()
 		reorder_objects(weapon_x, weapon_y)
+
+
+def drop_item(item):
+	item_x = item.x
+	item_y= item.y
+	objectsArray[item_x][item_y].append(item)
+	reorder_objects(item_x, item_y)
 
 def create_shrine(x,y,god_type):
 		global god_healer, god_destroyer, god_deliverer
